@@ -55,6 +55,9 @@ void InstancingAndCullingApp::LoadTextures()
 	std::vector<std::wstring> filenames{ L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
 
+	TCHAR programpath[_MAX_PATH];
+	GetCurrentDirectory(_MAX_PATH, programpath);
+
 	for_each(filenames.begin(), filenames.end(), [&](auto& curFilename) {
 		auto tex = std::make_unique<Texture>();
 		tex->Filename = L"../Textures/" + curFilename;

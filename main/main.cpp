@@ -4,7 +4,6 @@
 #pragma comment(lib, "../Lib/FirstPage.lib")
 #endif
 
-
 #include "../FirstPage/UserInterface.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, int showCmd)
