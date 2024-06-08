@@ -21,7 +21,7 @@ public:
 	virtual void Excute(int a, int b) = 0;
 };
 
-class ConsoleRenderer : public Renderer
+class TestRenderer : public Renderer
 {
 public:
 	void Excute(int a, int b) override
@@ -48,7 +48,7 @@ private:
 	int _b = 0;
 };
 
-TEST(UserInterfaceTest, Excute)
+TEST(RendererTest, Excute)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
 	InstancingAndCullingApp userInterface(hInstance);
@@ -60,6 +60,12 @@ TEST(UserInterfaceTest, Excute)
 
 	UITest uiTest(10, 20);
 
-	ConsoleRenderer consoleUI;
-	uiTest.Draw(consoleUI);
+	TestRenderer testUI;
+	uiTest.Draw(testUI);
+}
+
+TEST(UserInterfaceTest, model)
+{
+	//Renderer renderer;
+	//Model model(renderer);
 }
