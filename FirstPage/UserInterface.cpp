@@ -55,12 +55,9 @@ void InstancingAndCullingApp::LoadTextures()
 	std::vector<std::wstring> filenames{ L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
 
-	TCHAR programpath[_MAX_PATH];
-	GetCurrentDirectory(_MAX_PATH, programpath);
-
 	for_each(filenames.begin(), filenames.end(), [&](auto& curFilename) {
 		auto tex = std::make_unique<Texture>();
-		tex->Filename = L"../Textures/" + curFilename;
+		tex->Filename = L"../Resource/Textures/" + curFilename;
 		ThrowIfFailed(CreateDDSTextureFromFile12(md3dDevice.Get(), mCommandList.Get(),
 			tex->Filename.c_str(), tex->Resource, tex->UploadHeap));
 		mTextures.emplace_back(std::move(tex));
@@ -126,8 +123,8 @@ void InstancingAndCullingApp::BuildDescriptorHeaps()
 
 void InstancingAndCullingApp::BuildShadersAndInputLayout()
 {
-	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders/VertexShader.hlsl", nullptr, "main", "vs_5_1");
-	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders/PixelShader.hlsl", nullptr, "main", "ps_5_1");
+	mShaders["standardVS"] = d3dUtil::CompileShader(L"../Resource/Shaders/VertexShader.hlsl", nullptr, "main", "vs_5_1");
+	mShaders["opaquePS"] = d3dUtil::CompileShader(L"../Resource/Shaders/PixelShader.hlsl", nullptr, "main", "ps_5_1");
 
 	mInputLayout =
 	{
@@ -139,7 +136,7 @@ void InstancingAndCullingApp::BuildShadersAndInputLayout()
 
 void InstancingAndCullingApp::BuildSkullGeometry()
 {
-	std::ifstream fin("Models/skull.txt");
+	std::ifstream fin("../Resource/Models/skull.txt");
 	if (fin.bad())
 	{
 		MessageBox(0, L"Models/Skull.txt not found", 0, 0);
