@@ -634,3 +634,208 @@ void InstancingAndCullingApp::OnMouseMove(WPARAM btnState, int x, int y)
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;
 }
+
+ID3D12Device* InstancingAndCullingApp::GetDevice()
+{ 
+	return md3dDevice.Get(); 
+}
+
+ID3D12GraphicsCommandList* InstancingAndCullingApp::GetCommandList()
+{
+	return mCommandList.Get(); 
+}
+
+///////////////////////////////////////////
+
+Model::Model(std::shared_ptr<Renderer>& renderer)
+	: m_renderer(renderer)
+	, mGeometries()
+	, mMaterials()
+	, mAllRitems()
+	, mOpaqueRitems()
+{
+	LoadSkull();
+	BuildMaterials();
+	BuildRenderItems();
+}
+
+void Model::LoadSkull()
+{
+	std::ifstream fin("../Resource/Models/skull.txt");
+	if (fin.bad())
+	{
+		MessageBox(0, L"Models/Skull.txt not found", 0, 0);
+		return;
+	}
+
+	UINT vCount = 0;
+	UINT iCount = 0;
+	std::string ignore;
+	fin >> ignore >> vCount;
+	fin >> ignore >> iCount;
+	fin >> ignore >> ignore >> ignore >> ignore;
+
+	XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
+	XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
+
+	XMVECTOR vMin = XMLoadFloat3(&vMinf3);
+	XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
+
+	std::vector<Vertex> vertices(vCount);
+	for (auto i : Range(0, vCount))
+	{
+		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
+		fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
+
+		XMVECTOR P = XMLoadFloat3(&vertices[i].Pos);
+
+		XMFLOAT3 spherePos;
+		XMStoreFloat3(&spherePos, XMVector3Normalize(P));
+
+		float theta = atan2f(spherePos.z, spherePos.x);
+
+		if (theta < 0.0f) theta += XM_2PI;
+
+		float phi = acosf(spherePos.y);
+
+		float u = theta / (2.0f * XM_PI);
+		float v = phi / XM_PI;
+
+		vertices[i].TexC = { u, v };
+
+		vMin = XMVectorMin(vMin, P);
+		vMax = XMVectorMax(vMax, P);
+	}
+
+	BoundingBox boundingBoxBounds;
+	XMStoreFloat3(&boundingBoxBounds.Center, 0.5f * (vMin + vMax));
+	XMStoreFloat3(&boundingBoxBounds.Extents, 0.5f * (vMax - vMin));
+
+	BoundingSphere boundingSphere;
+	XMStoreFloat3(&boundingSphere.Center, 0.5f * (vMin + vMax));
+	boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
+
+	fin >> ignore >> ignore >> ignore;
+
+	std::vector<std::int32_t> indices(iCount * 3);
+	for (auto i : Range(0, iCount))
+	{
+		fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
+	}
+	fin.close();
+
+	UINT vbByteSize = static_cast<UINT>(vertices.size()) * sizeof(Vertex);
+	UINT ibByteSize = static_cast<UINT>(indices.size()) * sizeof(std::int32_t);
+
+	auto geo = std::make_unique<MeshGeometry>();
+	geo->Name = "skullGeo";
+
+	auto& submesh = geo->DrawArgs["skull"];
+	submesh.IndexCount = static_cast<UINT>(indices.size());
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+	submesh.BBounds = boundingBoxBounds;
+	submesh.BSphere = boundingSphere;
+	
+	geo->VertexBufferByteSize = vbByteSize;
+	geo->VertexByteStride = sizeof(Vertex);
+	geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_renderer->GetDevice(), m_renderer->GetCommandList(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
+
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+	geo->IndexFormat = DXGI_FORMAT_R32_UINT;
+	geo->IndexBufferByteSize = ibByteSize;
+	geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_renderer->GetDevice(), m_renderer->GetCommandList(), indices.data(), ibByteSize, geo->IndexBufferUploader);
+
+	mGeometries[geo->Name] = std::move(geo);
+}
+
+void Model::BuildMaterials()
+{
+	auto MakeMaterial = [&](std::string&& name, int matCBIdx, int diffuseSrvHeapIdx,
+		XMFLOAT4 diffuseAlbedo, XMFLOAT3 fresnelR0, float rough) {
+			auto curMat = std::make_unique<Material>();
+			curMat->Name = name;
+			curMat->MatCBIndex = matCBIdx;
+			curMat->DiffuseSrvHeapIndex = diffuseSrvHeapIdx;
+			curMat->DiffuseAlbedo = diffuseAlbedo;
+			curMat->FresnelR0 = fresnelR0;
+			curMat->Roughness = rough;
+			mMaterials[name] = std::move(curMat);
+		};
+
+	MakeMaterial("bricks0", 0, 0, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f);
+	MakeMaterial("stone0", 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f);
+	MakeMaterial("tile0", 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f);
+	MakeMaterial("checkboard0", 3, 3, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("ice0", 4, 4, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
+	MakeMaterial("grass0", 5, 5, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
+}
+
+void Model::BuildRenderItems()
+{
+	auto renderItem = std::make_unique<RenderItem>();
+	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& geoName, std::string&& smName, std::string&& matName,
+		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
+			auto& sm = mGeometries[geoName]->DrawArgs[smName];
+			renderItem->Geo = mGeometries[geoName].get();
+			renderItem->Mat = mMaterials[matName].get();
+			renderItem->ObjCBIndex = objIdx++;
+			renderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			XMStoreFloat4x4(&renderItem->World, world);
+			XMStoreFloat4x4(&renderItem->TexTransform, texTransform);
+			renderItem->StartIndexLocation = sm.StartIndexLocation;
+			renderItem->BaseVertexLocation = sm.BaseVertexLocation;
+			renderItem->IndexCount = sm.IndexCount;
+			renderItem->BoundingBoxBounds = sm.BBounds;
+			renderItem->BoundingSphere = sm.BSphere; };
+	MakeRenderItem("skullGeo", "skull", "tile0", XMMatrixIdentity(), XMMatrixIdentity());
+
+	const int n = 5;
+	renderItem->Instances.resize(n * n * n);
+
+	float width = 200.0f;
+	float height = 200.0f;
+	float depth = 200.0f;
+
+	float x = -0.5f * width;
+	float y = -0.5f * height;
+	float z = -0.5f * depth;
+	float dx = width / (n - 1);
+	float dy = height / (n - 1);
+	float dz = depth / (n - 1);
+	for (int k = 0; k < n; ++k)
+	{
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				int index = k * n * n + i * n + j;
+				renderItem->Instances[index].World = XMFLOAT4X4(
+					1.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 1.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f,
+					x + j * dx, y + i * dy, z + k * dz, 1.0f);
+
+				XMStoreFloat4x4(&renderItem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
+				renderItem->Instances[index].MaterialIndex = index % mMaterials.size();
+			}
+		}
+	}
+
+	mAllRitems.emplace_back(std::move(renderItem));
+
+	for (auto& e : mAllRitems)
+		mOpaqueRitems.emplace_back(e.get());
+}
+
+void Model::Draw()
+{
+}

@@ -15,13 +15,13 @@ void lambdaTest(int a, int b, std::function<void(int, int)> arg)
 	arg(a, b);
 }
 
-class Renderer
+class TestRenderer
 {
 public:
 	virtual void Excute(int a, int b) = 0;
 };
 
-class TestRenderer : public Renderer
+class GTestRenderer : public TestRenderer
 {
 public:
 	void Excute(int a, int b) override
@@ -38,7 +38,7 @@ public:
 		: _a(a), _b(b)
 	{}
 
-	void Draw(Renderer& renderer)
+	void Draw(TestRenderer& renderer)
 	{
 		renderer.Excute(_a, _b);
 	}
@@ -60,12 +60,14 @@ TEST(RendererTest, Excute)
 
 	UITest uiTest(10, 20);
 
-	TestRenderer testUI;
+	GTestRenderer testUI;
 	uiTest.Draw(testUI);
 }
 
 TEST(UserInterfaceTest, model)
 {
-	//Renderer renderer;
-	//Model model(renderer);
+	HINSTANCE hInstance = GetModuleHandle(nullptr);
+	std::shared_ptr<Renderer> dxRenderer(std::make_shared<InstancingAndCullingApp>(hInstance));
+	Model model(dxRenderer);
+	model.Draw();
 }

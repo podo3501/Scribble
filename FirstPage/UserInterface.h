@@ -38,6 +38,35 @@ struct RenderItem
 	UINT InstanceCount = 0;
 };
 
+class Renderer
+{
+public:
+	virtual void Render() = 0;
+	virtual ~Renderer() {};
+
+	virtual ID3D12Device* GetDevice() { return nullptr; };
+	virtual ID3D12GraphicsCommandList* GetCommandList() { return nullptr; };
+};
+
+class Model
+{
+public:
+	Model(std::shared_ptr<Renderer>& renderer);
+	void Draw();
+
+private:
+	void LoadSkull();
+	void BuildMaterials();
+	void BuildRenderItems();
+
+private:
+	std::shared_ptr<Renderer> m_renderer;
+	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
+	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
+	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
+	std::vector<RenderItem*> mOpaqueRitems;
+};
+
 enum class GraphicsPSO : int
 {
 	Opaque,
@@ -49,15 +78,19 @@ constexpr std::array<GraphicsPSO, static_cast<size_t>(GraphicsPSO::Count)> Graph
 	GraphicsPSO::Opaque,
 };
 
-class InstancingAndCullingApp : public D3DApp
+class InstancingAndCullingApp : public D3DApp, public Renderer
 {
 public:
+	//InstancingAndCullingApp() = delete;
 	InstancingAndCullingApp(HINSTANCE hInstance);
 	InstancingAndCullingApp(const InstancingAndCullingApp& rhs) = delete;
 	InstancingAndCullingApp& operator=(const InstancingAndCullingApp& rhs) = delete;
 	~InstancingAndCullingApp();
 
 	virtual bool Initialize() override;
+
+	virtual ID3D12Device* GetDevice() override;
+	virtual ID3D12GraphicsCommandList* GetCommandList() override;
 
 private:
 	virtual void OnResize() override;
@@ -86,6 +119,8 @@ private:
 	void BuildPSOs();
 	void BuildRenderItems();
 	void DrawRenderItems(const std::vector<RenderItem*>& ritems);
+
+	void Render() override {};
 
 private:
 	std::vector<std::unique_ptr<Texture>> mTextures;
