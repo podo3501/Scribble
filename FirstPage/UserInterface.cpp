@@ -640,7 +640,7 @@ void InstancingAndCullingApp::OnMouseMove(WPARAM btnState, int x, int y)
 Model::Model(std::shared_ptr<Renderer>& renderer)
 	: m_renderer(renderer)
 	, mGeometries()
-	, mMaterials()
+	, m_materials()
 	, mAllRitems()
 	, mOpaqueRitems()
 {
@@ -757,7 +757,7 @@ void Model::BuildMaterials()
 			curMat->DiffuseAlbedo = diffuseAlbedo;
 			curMat->FresnelR0 = fresnelR0;
 			curMat->Roughness = rough;
-			mMaterials[name] = std::move(curMat);
+			m_materials[name] = std::move(curMat);
 		};
 
 	MakeMaterial("bricks0", 0, 0, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f);
@@ -776,7 +776,7 @@ void Model::BuildRenderItems()
 		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
 			auto& sm = mGeometries[geoName]->DrawArgs[smName];
 			renderItem->Geo = mGeometries[geoName].get();
-			renderItem->Mat = mMaterials[matName].get();
+			renderItem->Mat = m_materials[matName].get();
 			renderItem->ObjCBIndex = objIdx++;
 			renderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 			XMStoreFloat4x4(&renderItem->World, world);
@@ -815,7 +815,7 @@ void Model::BuildRenderItems()
 					x + j * dx, y + i * dy, z + k * dz, 1.0f);
 
 				XMStoreFloat4x4(&renderItem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
-				renderItem->Instances[index].MaterialIndex = index % mMaterials.size();
+				renderItem->Instances[index].MaterialIndex = index % m_materials.size();
 			}
 		}
 	}
@@ -826,12 +826,40 @@ void Model::BuildRenderItems()
 		mOpaqueRitems.emplace_back(e.get());
 }
 
-void Model::UpdateInstanceData(const GameTimer& gt)
+void Model::UpdateMaterialBuffer(FrameResource* curFrameRes)
 {
-	XMMATRIX view = mCamera.GetView();
+	auto curMaterialBuf = curFrameRes->MaterialBuffer.get();
+	for (auto& e : m_materials)
+	{
+		Material* m = e.second.get();
+		if (m->NumFramesDirty <= 0)
+			continue;
+
+		XMMATRIX matTransform = XMLoadFloat4x4(&m->MatTransform);
+
+		MaterialData matData;
+		matData.DiffuseAlbedo = m->DiffuseAlbedo;
+		matData.FresnelR0 = m->FresnelR0;
+		matData.Roughness = m->Roughness;
+		XMStoreFloat4x4(&matData.MatTransform, XMMatrixTranspose(matTransform));
+		matData.DiffuseMapIndex = m->DiffuseSrvHeapIndex;
+
+		curMaterialBuf->CopyData(m->MatCBIndex, matData);
+
+		m->NumFramesDirty--;
+	}
+}
+
+void Model::Update(const GameTimer& gt, 
+	const Camera& camera, 
+	FrameResource* curFrameRes,
+	DirectX::BoundingFrustum& camFrustum,
+	bool frustumCullingEnabled)
+{
+	XMMATRIX view = camera.GetView();
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 
-	auto currInstanceBuffer = mCurFrameRes->InstanceBuffer.get();
+	auto currInstanceBuffer = curFrameRes->InstanceBuffer.get();
 	for (auto& e : mAllRitems)
 	{
 		const auto& instanceData = e->Instances;
@@ -850,11 +878,11 @@ void Model::UpdateInstanceData(const GameTimer& gt)
 
 			// Transform the camera frustum from view space to the object's local space.
 			BoundingFrustum localSpaceFrustum;
-			mCamFrustum.Transform(localSpaceFrustum, viewToLocal);
+			camFrustum.Transform(localSpaceFrustum, viewToLocal);
 
 			// Perform the box/frustum intersection test in local space.
 			//if ((localSpaceFrustum.Contains(e->BoundingBoxBounds) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
-			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
+			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (frustumCullingEnabled == false))
 			{
 				InstanceData data;
 				XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
@@ -868,25 +896,22 @@ void Model::UpdateInstanceData(const GameTimer& gt)
 
 		e->InstanceCount = visibleInstanceCount;
 
-		std::wostringstream outs;
-		outs.precision(6);
-		outs << L"Instancing and Culling Demo" <<
-			L"    " << e->InstanceCount <<
-			L" objects visible out of " << e->Instances.size();
-		mMainWndCaption = outs.str();
+		//std::wostringstream outs;
+		//outs.precision(6);
+		//outs << L"Instancing and Culling Demo" <<
+		//	L"    " << e->InstanceCount <<
+		//	L" objects visible out of " << e->Instances.size();
+		//mMainWndCaption = outs.str();
 	}
-}
-
-void Model::Update(const GameTimer& gt)
-{
-	UpdateInstanceData(gt);
 }
 
 ////////////////////////////////////////////
 
 MainLoop::MainLoop(std::shared_ptr<Model>& model, std::shared_ptr<Renderer>& renderer)
 	: m_model(model), m_renderer(renderer)
-{}
+{
+	m_camera.SetPosition(0.0f, 2.0f, -15.0f);
+}
 
 void MainLoop::CalculateFrameStats()
 {
@@ -915,6 +940,74 @@ void MainLoop::CalculateFrameStats()
 	}
 }
 
+void MainLoop::OnKeyboardInput()
+{
+	const float dt = m_timer.DeltaTime();
+
+	float speed = 10.0f;
+	float angle = 0.2f;
+	float walkSpeed = 0.0f;
+	float strafeSpeed = 0.0f;
+
+	std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
+	for_each(keyList.begin(), keyList.end(), [&](int vKey) {
+		bool bPressed = GetAsyncKeyState(vKey) & 0x8000;
+		if (bPressed)
+		{
+			switch (vKey)
+			{
+			case 'W':		walkSpeed += speed;		break;
+			case 'S':		walkSpeed += -speed;		break;
+			case 'D':		strafeSpeed += speed;		break;
+			case 'A':		strafeSpeed += -speed;		break;
+			case '1':		m_frustumCullingEnabled = true;			break;
+			case '2':		m_frustumCullingEnabled = false;		break;
+			}
+		}});
+
+	m_camera.Move(Camera::eWalk, walkSpeed * dt);
+	m_camera.Move(Camera::eStrafe, strafeSpeed * dt);
+
+	m_camera.UpdateViewMatrix();
+}
+
+void MainLoop::UpdateMainPassCB()
+{
+	auto& passCB = m_curFrameRes->PassCB;
+	XMMATRIX view = m_camera.GetView();
+	XMMATRIX proj = m_camera.GetProj();
+
+	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+
+	PassConstants pc;
+	StoreMatrix4x4(pc.View, view);
+	StoreMatrix4x4(pc.InvView, Inverse(view));
+	StoreMatrix4x4(pc.Proj, proj);
+	StoreMatrix4x4(pc.InvProj, Inverse(proj));
+	StoreMatrix4x4(pc.ViewProj, viewProj);
+	StoreMatrix4x4(pc.InvViewProj, Inverse(viewProj));
+	pc.EyePosW = m_camera.GetPosition3f();
+
+	auto clientWidth = static_cast<float>(m_renderer->GetClientWidth());
+	auto clientHeight = static_cast<float>(m_renderer->GetClientHeight());
+
+	pc.RenderTargetSize = { clientWidth, clientHeight };
+	pc.InvRenderTargetSize = { 1.0f / clientWidth, 1.0f / clientHeight };
+	pc.NearZ = 1.0f;
+	pc.FarZ = 1000.0f;
+	pc.TotalTime = m_timer.TotalTime();
+	pc.DeltaTime = m_timer.DeltaTime();
+	pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+	pc.Lights[0].Strength = { 0.8f, 0.8f, 0.8f };
+	pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+	pc.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
+	pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
+	pc.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+
+	passCB->CopyData(0, pc);
+}
+
 int MainLoop::Run()
 {
 	MSG msg = { 0 };
@@ -935,7 +1028,26 @@ int MainLoop::Run()
 			if (!m_appPaused)
 			{
 				CalculateFrameStats();
-				m_model->Update(m_timer);
+
+				OnKeyboardInput();
+
+				ID3D12Fence* pFence = m_renderer->GetFence();
+				m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
+				m_curFrameRes = m_frameResources[m_frameResIdx].get();
+				if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
+				{
+					HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+					ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
+					WaitForSingleObject(hEvent, INFINITE);
+					CloseHandle(hEvent);
+				}
+
+				m_model->Update(m_timer, m_camera, m_curFrameRes, m_camFrustum, m_frustumCullingEnabled);
+				m_model->UpdateMaterialBuffer(m_curFrameRes);
+
+				UpdateMainPassCB();
+
+				//update ÇÔ¼öÇÒ Â÷·Ê
 				m_renderer->Update(m_timer);
 				m_renderer->Draw(m_timer);
 			}

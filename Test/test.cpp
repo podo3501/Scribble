@@ -9,6 +9,8 @@ TEST(MainTest, Initialize)
 	InstancingAndCullingApp theApp(hInstance);
 	auto result = theApp.Initialize();
 	EXPECT_EQ(result, true);
+
+	theApp.Run();
 }
 
 void lambdaTest(int a, int b, std::function<void(int, int)> arg)

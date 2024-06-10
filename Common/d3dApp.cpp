@@ -57,6 +57,11 @@ HWND D3DApp::GetMainWnd() const
 	return mhMainWnd;
 }
 
+ID3D12Fence* D3DApp::GetFence()
+{
+	return mFence.Get();
+}
+
 float D3DApp::AspectRatio() const
 {
 	return static_cast<float>(mClientWidth) / mClientHeight;

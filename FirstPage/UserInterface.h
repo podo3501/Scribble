@@ -43,19 +43,22 @@ class Model
 public:
 	Model();
 	Model(std::shared_ptr<Renderer>& renderer);
-	void Update(const GameTimer& gt);
+	void Update(const GameTimer& gt,
+		const Camera& camera,
+		FrameResource* curFrameRes,
+		DirectX::BoundingFrustum& camFrustum,
+		bool frustumCullingEnabled);
+	void UpdateMaterialBuffer(FrameResource* curFrameRes);
 
 private:
 	void LoadSkull();
 	void BuildMaterials();
 	void BuildRenderItems();
 
-	void UpdateInstanceData(const GameTimer& gt);
-
 private:
 	std::shared_ptr<Renderer> m_renderer = nullptr;
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
-	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
+	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials;
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
 	std::vector<RenderItem*> mOpaqueRitems;
 };
@@ -68,13 +71,24 @@ public:
 
 private:
 	void CalculateFrameStats();
+	void OnKeyboardInput();
+	void UpdateMainPassCB();
 
 private:
 	std::shared_ptr<Model> m_model = nullptr;
 	std::shared_ptr<Renderer> m_renderer = nullptr;
+	FrameResource* m_curFrameRes = nullptr;
+
+	std::vector<std::unique_ptr<FrameResource>> m_frameResources;
+
+	DirectX::BoundingFrustum m_camFrustum{};
 
 	GameTimer m_timer;
+	Camera m_camera;
 	bool m_appPaused = false;
+	bool m_frustumCullingEnabled = true;
+	UINT m_frameResIdx = 0;
+
 	std::wstring m_mainWndCaption = L"d3d App";
 };
 
