@@ -11,6 +11,7 @@
 
 #include "d3dUtil.h"
 #include "GameTimer.h"
+#include <functional>
 
 // Link necessary d3d12 libraries.
 #pragma comment(lib,"d3dcompiler.lib")
@@ -39,8 +40,7 @@ public:
 		const GameTimer& gt,
 		FrameResource* pCurrFrameRes,
 		std::vector<RenderItem*> renderItem) {};
-
-	virtual bool Initialize() { return false; };
+	virtual bool Initialize(WNDPROC wndProc) { return false; };
 };
 
 class D3DApp : public Renderer
@@ -64,7 +64,7 @@ public:
 
 	int Run();
  
-    virtual bool Initialize();
+	virtual bool Initialize(WNDPROC wndProc);
     virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	virtual HWND GetMainWnd() const override;
@@ -95,7 +95,7 @@ protected:
 
 protected:
 
-	bool InitMainWindow();
+	bool InitMainWindow(WNDPROC wndProc);
 	bool InitDirect3D();
 	void CreateCommandObjects();
     void CreateSwapChain();

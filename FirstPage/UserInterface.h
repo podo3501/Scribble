@@ -68,8 +68,13 @@ private:
 class MainLoop
 {
 public:
-	MainLoop(std::shared_ptr<Model>& model, std::shared_ptr<Renderer>& renderer);
+	static MainLoop* GetMainLoop();
+	//MainLoop(std::shared_ptr<Model>& model, std::shared_ptr<Renderer>& renderer);
+	MainLoop(HINSTANCE hInstance);
 	int Run();
+	void OnResize();
+
+	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 private:
 	void CalculateFrameStats();
@@ -93,6 +98,8 @@ private:
 	UINT m_frameResIdx = 0;
 
 	std::wstring m_mainWndCaption = L"d3d App";
+
+	static MainLoop* g_mainLoop = nullptr;
 };
 
 enum class GraphicsPSO : int
@@ -115,7 +122,7 @@ public:
 	InstancingAndCullingApp& operator=(const InstancingAndCullingApp& rhs) = delete;
 	~InstancingAndCullingApp();
 
-	virtual bool Initialize() override;
+	virtual bool Initialize(WNDPROC wndProc) override;
 
 private:
 	virtual void OnResize() override;

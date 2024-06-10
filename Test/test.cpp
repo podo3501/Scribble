@@ -7,7 +7,7 @@ TEST(MainTest, Initialize)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
 	InstancingAndCullingApp theApp(hInstance);
-	auto result = theApp.Initialize();
+	auto result = theApp.Initialize(nullptr);
 	EXPECT_EQ(result, true);
 
 	theApp.Run();
@@ -70,10 +70,7 @@ TEST(RendererTest, Excute)
 TEST(UserInterfaceTest, model)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
-	std::shared_ptr<Renderer> dxRenderer(std::make_shared<InstancingAndCullingApp>(hInstance));
-	auto result = dxRenderer->Initialize();
-	std::shared_ptr<Model> model(std::make_shared<Model>(dxRenderer));
-
-	MainLoop mainLoop(model, dxRenderer);
+	MainLoop mainLoop(hInstance);
+	mainLoop.OnResize();
 	mainLoop.Run();
 }

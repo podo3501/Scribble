@@ -118,10 +118,13 @@ int D3DApp::Run()
 
 	return (int)msg.wParam;
 }
-
-bool D3DApp::Initialize()
+ 
+bool D3DApp::Initialize(WNDPROC wndProc)
 {
-	if(!InitMainWindow())
+	WNDPROC currProc = nullptr;
+	if (wndProc == nullptr)
+		currProc = MainWndProc;
+	if(!InitMainWindow(currProc))
 		return false;
 
 	if(!InitDirect3D())
@@ -377,11 +380,11 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-bool D3DApp::InitMainWindow()
+bool D3DApp::InitMainWindow(LRESULT(CALLBACK* wndProc)(HWND, UINT, WPARAM, LPARAM))
 {
 	WNDCLASS wc;
 	wc.style         = CS_HREDRAW | CS_VREDRAW;
-	wc.lpfnWndProc   = MainWndProc; 
+	wc.lpfnWndProc   = wndProc;
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
 	wc.hInstance     = mhAppInst;
