@@ -37,22 +37,32 @@ D3DApp::~D3DApp()
 		FlushCommandQueue();
 }
 
-HINSTANCE D3DApp::AppInst()const
+ID3D12Device* D3DApp::GetDevice()
+{
+	return md3dDevice.Get();
+}
+
+ID3D12GraphicsCommandList* D3DApp::GetCommandList()
+{
+	return mCommandList.Get();
+}
+
+HINSTANCE D3DApp::AppInst() const
 {
 	return mhAppInst;
 }
 
-HWND D3DApp::MainWnd()const
+HWND D3DApp::GetMainWnd() const
 {
 	return mhMainWnd;
 }
 
-float D3DApp::AspectRatio()const
+float D3DApp::AspectRatio() const
 {
 	return static_cast<float>(mClientWidth) / mClientHeight;
 }
 
-bool D3DApp::Get4xMsaaState()const
+bool D3DApp::Get4xMsaaState() const
 {
     return m4xMsaaState;
 }

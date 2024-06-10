@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../FirstPage/UserInterface.h"
+#include "../FirstPage/FrameResource.h"
 #include <functional>
 
 TEST(MainTest, Initialize)
@@ -68,6 +69,8 @@ TEST(UserInterfaceTest, model)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
 	std::shared_ptr<Renderer> dxRenderer(std::make_shared<InstancingAndCullingApp>(hInstance));
-	Model model(dxRenderer);
-	model.Draw();
+	std::shared_ptr<Model> model(std::make_shared<Model>(dxRenderer));
+
+	MainLoop mainLoop(model, dxRenderer);
+	mainLoop.Run();
 }

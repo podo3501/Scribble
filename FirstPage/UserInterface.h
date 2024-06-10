@@ -38,33 +38,44 @@ struct RenderItem
 	UINT InstanceCount = 0;
 };
 
-class Renderer
-{
-public:
-	virtual void Render() = 0;
-	virtual ~Renderer() {};
-
-	virtual ID3D12Device* GetDevice() { return nullptr; };
-	virtual ID3D12GraphicsCommandList* GetCommandList() { return nullptr; };
-};
-
 class Model
 {
 public:
+	Model();
 	Model(std::shared_ptr<Renderer>& renderer);
-	void Draw();
+	void Update(const GameTimer& gt);
 
 private:
 	void LoadSkull();
 	void BuildMaterials();
 	void BuildRenderItems();
 
+	void UpdateInstanceData(const GameTimer& gt);
+
 private:
-	std::shared_ptr<Renderer> m_renderer;
+	std::shared_ptr<Renderer> m_renderer = nullptr;
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
 	std::vector<RenderItem*> mOpaqueRitems;
+};
+
+class MainLoop
+{
+public:
+	MainLoop(std::shared_ptr<Model>& model, std::shared_ptr<Renderer>& renderer);
+	int Run();
+
+private:
+	void CalculateFrameStats();
+
+private:
+	std::shared_ptr<Model> m_model = nullptr;
+	std::shared_ptr<Renderer> m_renderer = nullptr;
+
+	GameTimer m_timer;
+	bool m_appPaused = false;
+	std::wstring m_mainWndCaption = L"d3d App";
 };
 
 enum class GraphicsPSO : int
@@ -78,7 +89,7 @@ constexpr std::array<GraphicsPSO, static_cast<size_t>(GraphicsPSO::Count)> Graph
 	GraphicsPSO::Opaque,
 };
 
-class InstancingAndCullingApp : public D3DApp, public Renderer
+class InstancingAndCullingApp : public D3DApp
 {
 public:
 	//InstancingAndCullingApp() = delete;
@@ -88,9 +99,6 @@ public:
 	~InstancingAndCullingApp();
 
 	virtual bool Initialize() override;
-
-	virtual ID3D12Device* GetDevice() override;
-	virtual ID3D12GraphicsCommandList* GetCommandList() override;
 
 private:
 	virtual void OnResize() override;

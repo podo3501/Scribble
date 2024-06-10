@@ -17,8 +17,22 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-class D3DApp
+class Renderer
 {
+public:
+	virtual void Render() = 0;
+	virtual ~Renderer() {};
+
+	virtual ID3D12Device* GetDevice() { return nullptr; };
+	virtual ID3D12GraphicsCommandList* GetCommandList() { return nullptr; };
+	virtual HWND GetMainWnd() const { return 0; };
+
+	virtual void Update(const GameTimer& gt) {};
+	virtual void Draw(const GameTimer& gt) {};
+};
+
+class D3DApp : public Renderer
+{ 
 protected:
 
     D3DApp(HINSTANCE hInstance);
@@ -31,7 +45,6 @@ public:
     static D3DApp* GetApp();
     
 	HINSTANCE AppInst()const;
-	HWND      MainWnd()const;
 	float     AspectRatio()const;
 
     bool Get4xMsaaState()const;
@@ -42,11 +55,15 @@ public:
     virtual bool Initialize();
     virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+	virtual HWND GetMainWnd() const override;
+	virtual ID3D12Device* GetDevice() override;
+	virtual ID3D12GraphicsCommandList* GetCommandList() override;
+	virtual void Update(const GameTimer& gt) override {};
+	virtual void Draw(const GameTimer& gt) override {};
+
 protected:
     virtual void CreateRtvAndDsvDescriptorHeaps();
 	virtual void OnResize(); 
-	virtual void Update(const GameTimer& gt)=0;
-    virtual void Draw(const GameTimer& gt)=0;
 
 	// Convenience overrides for handling mouse input.
 	virtual void OnMouseDown(WPARAM btnState, int x, int y){ }

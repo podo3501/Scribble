@@ -635,16 +635,6 @@ void InstancingAndCullingApp::OnMouseMove(WPARAM btnState, int x, int y)
 	mLastMousePos.y = y;
 }
 
-ID3D12Device* InstancingAndCullingApp::GetDevice()
-{ 
-	return md3dDevice.Get(); 
-}
-
-ID3D12GraphicsCommandList* InstancingAndCullingApp::GetCommandList()
-{
-	return mCommandList.Get(); 
-}
-
 ///////////////////////////////////////////
 
 Model::Model(std::shared_ptr<Renderer>& renderer)
@@ -836,6 +826,125 @@ void Model::BuildRenderItems()
 		mOpaqueRitems.emplace_back(e.get());
 }
 
-void Model::Draw()
+void Model::UpdateInstanceData(const GameTimer& gt)
 {
+	XMMATRIX view = mCamera.GetView();
+	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
+
+	auto currInstanceBuffer = mCurFrameRes->InstanceBuffer.get();
+	for (auto& e : mAllRitems)
+	{
+		const auto& instanceData = e->Instances;
+
+		int visibleInstanceCount = 0;
+
+		for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
+		{
+			XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
+			XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
+
+			XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
+
+			// View space to the object's local space.
+			XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+
+			// Transform the camera frustum from view space to the object's local space.
+			BoundingFrustum localSpaceFrustum;
+			mCamFrustum.Transform(localSpaceFrustum, viewToLocal);
+
+			// Perform the box/frustum intersection test in local space.
+			//if ((localSpaceFrustum.Contains(e->BoundingBoxBounds) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
+			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
+			{
+				InstanceData data;
+				XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+				XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
+				data.MaterialIndex = instanceData[i].MaterialIndex;
+
+				// Write the instance data to structured buffer for the visible objects.
+				currInstanceBuffer->CopyData(visibleInstanceCount++, data);
+			}
+		}
+
+		e->InstanceCount = visibleInstanceCount;
+
+		std::wostringstream outs;
+		outs.precision(6);
+		outs << L"Instancing and Culling Demo" <<
+			L"    " << e->InstanceCount <<
+			L" objects visible out of " << e->Instances.size();
+		mMainWndCaption = outs.str();
+	}
+}
+
+void Model::Update(const GameTimer& gt)
+{
+	UpdateInstanceData(gt);
+}
+
+////////////////////////////////////////////
+
+MainLoop::MainLoop(std::shared_ptr<Model>& model, std::shared_ptr<Renderer>& renderer)
+	: m_model(model), m_renderer(renderer)
+{}
+
+void MainLoop::CalculateFrameStats()
+{
+	static int frameCnt = 0;
+	static float timeElapsed = 0.0f;
+
+	frameCnt++;
+
+	if ((m_timer.TotalTime() - timeElapsed) >= 1.0f)
+	{
+		float fps = (float)frameCnt; // fps = frameCnt / 1
+		float mspf = 1000.0f / fps;
+
+		std::wstring fpsStr = std::to_wstring(fps);
+		std::wstring mspfStr = std::to_wstring(mspf);
+
+		std::wstring windowText = m_mainWndCaption +
+			L"    fps: " + fpsStr +
+			L"   mspf: " + mspfStr;
+
+		SetWindowText(m_renderer->GetMainWnd(), windowText.c_str());
+
+		// Reset for next average.
+		frameCnt = 0;
+		timeElapsed += 1.0f;
+	}
+}
+
+int MainLoop::Run()
+{
+	MSG msg = { 0 };
+
+	m_timer.Reset();
+
+	while (msg.message != WM_QUIT)
+	{
+		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			m_timer.Tick();
+
+			if (!m_appPaused)
+			{
+				CalculateFrameStats();
+				m_model->Update(m_timer);
+				m_renderer->Update(m_timer);
+				m_renderer->Draw(m_timer);
+			}
+			else
+			{
+				Sleep(100);
+			}
+		}
+	}
+
+	return (int)msg.wParam;
 }
