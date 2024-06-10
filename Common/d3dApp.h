@@ -17,6 +17,9 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+struct FrameResource;
+struct RenderItem;
+
 class Renderer
 {
 public:
@@ -32,6 +35,12 @@ public:
 
 	virtual void Update(const GameTimer& gt) {};
 	virtual void Draw(const GameTimer& gt) {};
+	virtual void Draw(
+		const GameTimer& gt,
+		FrameResource* pCurrFrameRes,
+		std::vector<RenderItem*> renderItem) {};
+
+	virtual bool Initialize() { return false; };
 };
 
 class D3DApp : public Renderer

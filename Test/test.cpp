@@ -71,6 +71,7 @@ TEST(UserInterfaceTest, model)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
 	std::shared_ptr<Renderer> dxRenderer(std::make_shared<InstancingAndCullingApp>(hInstance));
+	auto result = dxRenderer->Initialize();
 	std::shared_ptr<Model> model(std::make_shared<Model>(dxRenderer));
 
 	MainLoop mainLoop(model, dxRenderer);

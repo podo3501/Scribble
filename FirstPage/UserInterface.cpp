@@ -561,6 +561,71 @@ void InstancingAndCullingApp::DrawRenderItems(const std::vector<RenderItem*>& ri
 	}
 }
 
+void InstancingAndCullingApp::DrawRenderItems(FrameResource* pCurrFrameRes, const std::vector<RenderItem*>& ritems)
+{
+	for (auto& ri : ritems)
+	{
+		mCommandList->IASetVertexBuffers(0, 1, &RvToLv(ri->Geo->VertexBufferView()));
+		mCommandList->IASetIndexBuffer(&RvToLv(ri->Geo->IndexBufferView()));
+		mCommandList->IASetPrimitiveTopology(ri->PrimitiveType);
+
+		auto instanceBuffer = pCurrFrameRes->InstanceBuffer->Resource();
+		mCommandList->SetGraphicsRootShaderResourceView(0, instanceBuffer->GetGPUVirtualAddress());
+
+		mCommandList->DrawIndexedInstanced(ri->IndexCount, ri->InstanceCount,
+			ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+	}
+}
+
+void InstancingAndCullingApp::Draw(
+	const GameTimer& gt,
+	FrameResource* pCurrFrameRes,
+	std::vector<RenderItem*> renderItem)
+{
+	auto cmdListAlloc = pCurrFrameRes->CmdListAlloc;
+	ThrowIfFailed(cmdListAlloc->Reset());
+	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs[GraphicsPSO::Opaque].Get()));
+
+	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+	mCommandList->RSSetViewports(1, &mScreenViewport);
+	mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+	mCommandList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
+
+	mCommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+	mCommandList->ClearDepthStencilView(DepthStencilView(),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	mCommandList->OMSetRenderTargets(1, &RvToLv(CurrentBackBufferView()), true, &RvToLv(DepthStencilView()));
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
+	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	auto matBuf = pCurrFrameRes->MaterialBuffer->Resource();
+	mCommandList->SetGraphicsRootShaderResourceView(1, matBuf->GetGPUVirtualAddress());
+
+	auto passCB = pCurrFrameRes->PassCB->Resource();
+	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+
+	mCommandList->SetGraphicsRootDescriptorTable(3, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+	DrawRenderItems(pCurrFrameRes, renderItem);
+
+	mCommandList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
+	ThrowIfFailed(mCommandList->Close());
+
+	ID3D12CommandList* ppCommandLists[] = { mCommandList.Get() };
+	mCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	ThrowIfFailed(mSwapChain->Present(0, 0));
+	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+
+	pCurrFrameRes->Fence = ++mCurrentFence;
+	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+}
+
 
 void InstancingAndCullingApp::Draw(const GameTimer& gt)
 {
@@ -647,6 +712,16 @@ Model::Model(std::shared_ptr<Renderer>& renderer)
 	LoadSkull();
 	BuildMaterials();
 	BuildRenderItems();
+}
+
+UINT Model::GetMaterialsCount()
+{
+	return static_cast<UINT>(m_materials.size());
+}
+
+std::vector<RenderItem*> Model::GetRenderItems()
+{
+	return mOpaqueRitems;
 }
 
 void Model::LoadSkull()
@@ -909,9 +984,7 @@ void Model::Update(const GameTimer& gt,
 
 MainLoop::MainLoop(std::shared_ptr<Model>& model, std::shared_ptr<Renderer>& renderer)
 	: m_model(model), m_renderer(renderer)
-{
-	m_camera.SetPosition(0.0f, 2.0f, -15.0f);
-}
+{}
 
 void MainLoop::CalculateFrameStats()
 {
@@ -937,6 +1010,16 @@ void MainLoop::CalculateFrameStats()
 		// Reset for next average.
 		frameCnt = 0;
 		timeElapsed += 1.0f;
+	}
+}
+
+void MainLoop::BuildFrameResources()
+{
+	for (auto i : Range(0, gNumFrameResources))
+	{
+		auto frameRes = std::make_unique<FrameResource>(m_renderer->GetDevice(), 1,
+			125, m_model->GetMaterialsCount());
+		m_frameResources.emplace_back(std::move(frameRes));
 	}
 }
 
@@ -1010,10 +1093,12 @@ void MainLoop::UpdateMainPassCB()
 
 int MainLoop::Run()
 {
+	m_camera.SetPosition(0.0f, 2.0f, -15.0f);
+	BuildFrameResources();
+
 	MSG msg = { 0 };
-
 	m_timer.Reset();
-
+	
 	while (msg.message != WM_QUIT)
 	{
 		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -1047,9 +1132,7 @@ int MainLoop::Run()
 
 				UpdateMainPassCB();
 
-				//update ÇÔ¼öÇÒ Â÷·Ê
-				m_renderer->Update(m_timer);
-				m_renderer->Draw(m_timer);
+				m_renderer->Draw(m_timer, m_curFrameRes, m_model->GetRenderItems());
 			}
 			else
 			{

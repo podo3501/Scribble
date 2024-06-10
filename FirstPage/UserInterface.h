@@ -49,6 +49,8 @@ public:
 		DirectX::BoundingFrustum& camFrustum,
 		bool frustumCullingEnabled);
 	void UpdateMaterialBuffer(FrameResource* curFrameRes);
+	UINT GetMaterialsCount();
+	std::vector<RenderItem*> GetRenderItems();
 
 private:
 	void LoadSkull();
@@ -73,6 +75,7 @@ private:
 	void CalculateFrameStats();
 	void OnKeyboardInput();
 	void UpdateMainPassCB();
+	void BuildFrameResources();
 
 private:
 	std::shared_ptr<Model> m_model = nullptr;
@@ -118,6 +121,10 @@ private:
 	virtual void OnResize() override;
 	virtual void Update(const GameTimer& gt) override;
 	virtual void Draw(const GameTimer& gt) override;
+	virtual void Draw(
+		const GameTimer& gt,
+		FrameResource* pCurrFrameRes,
+		std::vector<RenderItem*> renderItem) override;
 
 	virtual void OnMouseDown(WPARAM btnState, int x, int y) override;
 	virtual void OnMouseUp(WPARAM btnState, int x, int y) override;
@@ -141,6 +148,7 @@ private:
 	void BuildPSOs();
 	void BuildRenderItems();
 	void DrawRenderItems(const std::vector<RenderItem*>& ritems);
+	void DrawRenderItems(FrameResource* pCurrFrameRes, const std::vector<RenderItem*>& ritems);
 
 	void Render() override {};
 
