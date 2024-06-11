@@ -82,6 +82,11 @@ private:
 	void UpdateMainPassCB();
 	void BuildFrameResources();
 
+
+	void OnMouseDown(WPARAM btnState, int x, int y);
+	void OnMouseUp(WPARAM btnState, int x, int y);
+	void OnMouseMove(WPARAM btnState, int x, int y);
+	 
 private:
 	std::shared_ptr<Model> m_model = nullptr;
 	std::shared_ptr<Renderer> m_renderer = nullptr;
@@ -91,15 +96,31 @@ private:
 
 	DirectX::BoundingFrustum m_camFrustum{};
 
+	HINSTANCE mhAppInst = nullptr; // application instance handle
+	HWND      mhMainWnd = nullptr; // main window handle
+	bool      mAppPaused = false;  // is the application paused?
+	bool      mMinimized = false;  // is the application minimized?
+	bool      mMaximized = false;  // is the application maximized?
+	bool      mResizing = false;   // are the resize bars being dragged?
+	bool      mFullscreenState = false;// fullscreen enabled
+
+	// Set true to use 4X MSAA (?.1.8).  The default is false.
+	bool      m4xMsaaState = false;    // 4X MSAA enabled
+	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA
+
 	GameTimer m_timer;
 	Camera m_camera;
 	bool m_appPaused = false;
 	bool m_frustumCullingEnabled = true;
 	UINT m_frameResIdx = 0;
+	POINT mLastMousePos{};
 
 	std::wstring m_mainWndCaption = L"d3d App";
 
-	static MainLoop* g_mainLoop = nullptr;
+	int mClientWidth = 800;
+	int mClientHeight = 600;
+
+	static MainLoop* g_mainLoop;
 };
 
 enum class GraphicsPSO : int

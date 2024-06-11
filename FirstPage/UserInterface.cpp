@@ -4,6 +4,7 @@
 #include "../Common/UploadBuffer.h"
 #include "FrameResource.h"
 #include "../Common/GeometryGenerator.h"
+#include <WindowsX.h>
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -983,7 +984,7 @@ void Model::Update(const GameTimer& gt,
 ////////////////////////////////////////////
 
 LRESULT CALLBACK
-MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+MainLoopWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
 	// before CreateWindow returns, and thus before mhMainWnd is valid.
@@ -994,6 +995,34 @@ MainLoop* MainLoop::g_mainLoop = nullptr;
 MainLoop* MainLoop::GetMainLoop()
 {
 	return g_mainLoop;
+}
+
+
+void MainLoop::OnMouseDown(WPARAM btnState, int x, int y)
+{
+	mLastMousePos.x = x;
+	mLastMousePos.y = y;
+
+	SetCapture(mhMainWnd);
+}
+void MainLoop::OnMouseUp(WPARAM btnState, int x, int y)
+{
+	ReleaseCapture();
+}
+void MainLoop::OnMouseMove(WPARAM btnState, int x, int y)
+{
+	if ((btnState & MK_LBUTTON) != 0)
+	{
+		// Make each pixel correspond to a quarter of a degree.
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+
+		m_camera.Move(Camera::ePitch, dy);
+		m_camera.Move(Camera::eRotateY, dx);
+	}
+
+	mLastMousePos.x = x;
+	mLastMousePos.y = y;
 }
 
 
@@ -1022,7 +1051,7 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// Save the new client area dimensions.
 		mClientWidth = LOWORD(lParam);
 		mClientHeight = HIWORD(lParam);
-		if (md3dDevice)
+		if (m_renderer->GetDevice())
 		{
 			if (wParam == SIZE_MINIMIZED)
 			{
@@ -1086,7 +1115,7 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_EXITSIZEMOVE:
 		mAppPaused = false;
 		mResizing = false;
-		mTimer.Start();
+		m_timer.Start();
 		OnResize();
 		return 0;
 
@@ -1138,7 +1167,9 @@ MainLoop::MainLoop(HINSTANCE hInstance)
 {
 	g_mainLoop = this;
 	m_renderer = std::make_shared<InstancingAndCullingApp>(hInstance);
-	auto result = m_renderer->Initialize(nullptr);
+	auto result = m_renderer->Initialize(MainLoopWndProc);
+	mhMainWnd = m_renderer->GetMainWnd();
+	OnResize();
 	m_model = std::make_shared<Model>(m_renderer);
 }
 

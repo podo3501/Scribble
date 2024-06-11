@@ -121,8 +121,8 @@ int D3DApp::Run()
  
 bool D3DApp::Initialize(WNDPROC wndProc)
 {
-	WNDPROC currProc = nullptr;
-	if (wndProc == nullptr)
+	WNDPROC currProc = wndProc;
+	if (currProc == nullptr)
 		currProc = MainWndProc;
 	if(!InitMainWindow(currProc))
 		return false;

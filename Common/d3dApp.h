@@ -33,6 +33,7 @@ public:
 	virtual ID3D12Fence* GetFence() { return nullptr; };
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
+	virtual void Set4xMsaaState(bool value) = 0;
 
 	virtual void Update(const GameTimer& gt) {};
 	virtual void Draw(const GameTimer& gt) {};
@@ -60,7 +61,7 @@ public:
 	float     AspectRatio()const;
 
     bool Get4xMsaaState()const;
-    void Set4xMsaaState(bool value);
+    
 
 	int Run();
  
@@ -71,6 +72,7 @@ public:
 	virtual ID3D12Device* GetDevice() override;
 	virtual ID3D12GraphicsCommandList* GetCommandList() override;
 	virtual ID3D12Fence* GetFence() override;
+	virtual void Set4xMsaaState(bool value) override;
 
 	int GetClientWidth() 
 	{

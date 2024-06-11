@@ -71,6 +71,5 @@ TEST(UserInterfaceTest, model)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
 	MainLoop mainLoop(hInstance);
-	mainLoop.OnResize();
 	mainLoop.Run();
 }
