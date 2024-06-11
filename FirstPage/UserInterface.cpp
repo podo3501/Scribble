@@ -23,12 +23,26 @@ InstancingAndCullingApp::~InstancingAndCullingApp()
 		FlushCommandQueue();
 }
 
+void InstancingAndCullingApp::ResetCommandLists()
+{
+	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+}
+
+void InstancingAndCullingApp::ExcuteCommandLists()
+{
+	ThrowIfFailed(mCommandList->Close());
+	ID3D12CommandList* cmdsLists2[] = { mCommandList.Get() };
+	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists2), cmdsLists2);
+
+	FlushCommandQueue();
+}
+
 bool InstancingAndCullingApp::Initialize(WNDPROC wndProc)
 {
 	if (!D3DApp::Initialize(wndProc))
 		return false;
 
-	ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+	ResetCommandLists();
 
 	mCamera.SetPosition(0.0f, 2.0f, -15.0f);
 
@@ -41,12 +55,8 @@ bool InstancingAndCullingApp::Initialize(WNDPROC wndProc)
 	BuildRenderItems();
 	BuildFrameResources();
 	BuildPSOs();
-
-	ThrowIfFailed(mCommandList->Close());
-	ID3D12CommandList* cmdsLists2[] = { mCommandList.Get() };
-	mCommandQueue->ExecuteCommandLists(_countof(cmdsLists2), cmdsLists2);
-
-	FlushCommandQueue();
+	
+	ExcuteCommandLists();
 
 	return true;
 }
@@ -705,14 +715,18 @@ void InstancingAndCullingApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 Model::Model(std::shared_ptr<Renderer>& renderer)
 	: m_renderer(renderer)
-	, mGeometries()
+	, m_Geometries()
 	, m_materials()
-	, mAllRitems()
-	, mOpaqueRitems()
+	, m_AllRitems()
+	, m_OpaqueRitems()
 {
+	m_renderer->ResetCommandLists();
+
 	LoadSkull();
 	BuildMaterials();
 	BuildRenderItems();
+
+	m_renderer->ExcuteCommandLists();
 }
 
 UINT Model::GetMaterialsCount()
@@ -722,7 +736,7 @@ UINT Model::GetMaterialsCount()
 
 std::vector<RenderItem*> Model::GetRenderItems()
 {
-	return mOpaqueRitems;
+	return m_OpaqueRitems;
 }
 
 void Model::LoadSkull()
@@ -819,7 +833,7 @@ void Model::LoadSkull()
 	geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
 		m_renderer->GetDevice(), m_renderer->GetCommandList(), indices.data(), ibByteSize, geo->IndexBufferUploader);
 
-	mGeometries[geo->Name] = std::move(geo);
+	m_Geometries[geo->Name] = std::move(geo);
 }
 
 void Model::BuildMaterials()
@@ -850,8 +864,8 @@ void Model::BuildRenderItems()
 	auto renderItem = std::make_unique<RenderItem>();
 	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& geoName, std::string&& smName, std::string&& matName,
 		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
-			auto& sm = mGeometries[geoName]->DrawArgs[smName];
-			renderItem->Geo = mGeometries[geoName].get();
+			auto& sm = m_Geometries[geoName]->DrawArgs[smName];
+			renderItem->Geo = m_Geometries[geoName].get();
 			renderItem->Mat = m_materials[matName].get();
 			renderItem->ObjCBIndex = objIdx++;
 			renderItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -896,10 +910,10 @@ void Model::BuildRenderItems()
 		}
 	}
 
-	mAllRitems.emplace_back(std::move(renderItem));
+	m_AllRitems.emplace_back(std::move(renderItem));
 
-	for (auto& e : mAllRitems)
-		mOpaqueRitems.emplace_back(e.get());
+	for (auto& e : m_AllRitems)
+		m_OpaqueRitems.emplace_back(e.get());
 }
 
 void Model::UpdateMaterialBuffer(FrameResource* curFrameRes)
@@ -936,7 +950,7 @@ void Model::Update(const GameTimer& gt,
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 
 	auto currInstanceBuffer = curFrameRes->InstanceBuffer.get();
-	for (auto& e : mAllRitems)
+	for (auto& e : m_AllRitems)
 	{
 		const auto& instanceData = e->Instances;
 
@@ -1000,10 +1014,10 @@ MainLoop* MainLoop::GetMainLoop()
 
 void MainLoop::OnMouseDown(WPARAM btnState, int x, int y)
 {
-	mLastMousePos.x = x;
-	mLastMousePos.y = y;
+	m_LastMousePos.x = x;
+	m_LastMousePos.y = y;
 
-	SetCapture(mhMainWnd);
+	SetCapture(m_hMainWnd);
 }
 void MainLoop::OnMouseUp(WPARAM btnState, int x, int y)
 {
@@ -1014,15 +1028,15 @@ void MainLoop::OnMouseMove(WPARAM btnState, int x, int y)
 	if ((btnState & MK_LBUTTON) != 0)
 	{
 		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_LastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_LastMousePos.y));
 
 		m_camera.Move(Camera::ePitch, dy);
 		m_camera.Move(Camera::eRotateY, dx);
 	}
 
-	mLastMousePos.x = x;
-	mLastMousePos.y = y;
+	m_LastMousePos.x = x;
+	m_LastMousePos.y = y;
 }
 
 
@@ -1034,14 +1048,14 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// We pause the game when the window is deactivated and unpause it 
 		// when it becomes active.  
 	case WM_ACTIVATE:
-		if (LOWORD(wParam) == WA_INACTIVE)
+		//if (LOWORD(wParam) == WA_INACTIVE)
 		{
-			mAppPaused = true;
-			m_timer.Stop();
+			//m_AppPaused = true;
+			//m_timer.Stop();
 		}
-		else
+		//else
 		{
-			mAppPaused = false;
+			m_AppPaused = false;
 			m_timer.Start();
 		}
 		return 0;
@@ -1049,42 +1063,42 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
 		// Save the new client area dimensions.
-		mClientWidth = LOWORD(lParam);
-		mClientHeight = HIWORD(lParam);
+		m_ClientWidth = LOWORD(lParam);
+		m_ClientHeight = HIWORD(lParam);
 		if (m_renderer->GetDevice())
 		{
 			if (wParam == SIZE_MINIMIZED)
 			{
-				mAppPaused = true;
-				mMinimized = true;
-				mMaximized = false;
+				m_AppPaused = true;
+				m_Minimized = true;
+				m_Maximized = false;
 			}
 			else if (wParam == SIZE_MAXIMIZED)
 			{
-				mAppPaused = false;
-				mMinimized = false;
-				mMaximized = true;
+				m_AppPaused = false;
+				m_Minimized = false;
+				m_Maximized = true;
 				OnResize();
 			}
 			else if (wParam == SIZE_RESTORED)
 			{
 
 				// Restoring from minimized state?
-				if (mMinimized)
+				if (m_Minimized)
 				{
-					mAppPaused = false;
-					mMinimized = false;
+					m_AppPaused = false;
+					m_Minimized = false;
 					OnResize();
 				}
 
 				// Restoring from maximized state?
-				else if (mMaximized)
+				else if (m_Maximized)
 				{
-					mAppPaused = false;
-					mMaximized = false;
+					m_AppPaused = false;
+					m_Maximized = false;
 					OnResize();
 				}
-				else if (mResizing)
+				else if (m_Resizing)
 				{
 					// If user is dragging the resize bars, we do not resize 
 					// the buffers here because as the user continuously 
@@ -1105,16 +1119,16 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
 	case WM_ENTERSIZEMOVE:
-		mAppPaused = true;
-		mResizing = true;
+		m_AppPaused = true;
+		m_Resizing = true;
 		m_timer.Stop();
 		return 0;
 
 		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
 		// Here we reset everything based on the new window dimensions.
 	case WM_EXITSIZEMOVE:
-		mAppPaused = false;
-		mResizing = false;
+		m_AppPaused = false;
+		m_Resizing = false;
 		m_timer.Start();
 		OnResize();
 		return 0;
@@ -1155,7 +1169,7 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(0);
 		}
 		else if ((int)wParam == VK_F2)
-			m_renderer->Set4xMsaaState(!m4xMsaaState);
+			m_renderer->Set4xMsaaState(!m_4xMsaaState);
 
 		return 0;
 	}
@@ -1165,19 +1179,22 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 MainLoop::MainLoop(HINSTANCE hInstance)
 {
+	m_camera.SetPosition(0.0f, 2.0f, -15.0f);
+
 	g_mainLoop = this;
 	m_renderer = std::make_shared<InstancingAndCullingApp>(hInstance);
 	auto result = m_renderer->Initialize(MainLoopWndProc);
-	mhMainWnd = m_renderer->GetMainWnd();
+	m_hMainWnd = m_renderer->GetMainWnd();
 	OnResize();
 	m_model = std::make_shared<Model>(m_renderer);
+	BuildFrameResources();
 }
 
 void MainLoop::OnResize()
 {
 	auto aspectRatio = 
-		static_cast<float>(m_renderer->GetClientWidth()) / 
-		static_cast<float>(m_renderer->GetClientHeight());
+		static_cast<float>(m_ClientWidth) /
+		static_cast<float>(m_ClientHeight);
 	m_camera.SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
 
 	BoundingFrustum::CreateFromMatrix(m_camFrustum, m_camera.GetProj());
@@ -1185,14 +1202,14 @@ void MainLoop::OnResize()
 
 void MainLoop::CalculateFrameStats()
 {
-	static int frameCnt = 0;
-	static float timeElapsed = 0.0f;
+	static int _frameCnt = 0;
+	static float _timeElapsed = 0.0f;
 
-	frameCnt++;
+	_frameCnt++;
 
-	if ((m_timer.TotalTime() - timeElapsed) >= 1.0f)
+	if ((m_timer.TotalTime() - _timeElapsed) >= 1.0f)
 	{
-		float fps = (float)frameCnt; // fps = frameCnt / 1
+		float fps = (float)_frameCnt; // fps = frameCnt / 1
 		float mspf = 1000.0f / fps;
 
 		std::wstring fpsStr = std::to_wstring(fps);
@@ -1205,8 +1222,8 @@ void MainLoop::CalculateFrameStats()
 		SetWindowText(m_renderer->GetMainWnd(), windowText.c_str());
 
 		// Reset for next average.
-		frameCnt = 0;
-		timeElapsed += 1.0f;
+		_frameCnt = 0;
+		_timeElapsed += 1.0f;
 	}
 }
 
@@ -1290,9 +1307,6 @@ void MainLoop::UpdateMainPassCB()
 
 int MainLoop::Run()
 {
-	m_camera.SetPosition(0.0f, 2.0f, -15.0f);
-	BuildFrameResources();
-
 	MSG msg = { 0 };
 	m_timer.Reset();
 	

@@ -59,10 +59,10 @@ private:
 
 private:
 	std::shared_ptr<Renderer> m_renderer = nullptr;
-	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
+	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_Geometries;
 	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials;
-	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
-	std::vector<RenderItem*> mOpaqueRitems;
+	std::vector<std::unique_ptr<RenderItem>> m_AllRitems;
+	std::vector<RenderItem*> m_OpaqueRitems;
 };
 
 class MainLoop
@@ -96,29 +96,29 @@ private:
 
 	DirectX::BoundingFrustum m_camFrustum{};
 
-	HINSTANCE mhAppInst = nullptr; // application instance handle
-	HWND      mhMainWnd = nullptr; // main window handle
-	bool      mAppPaused = false;  // is the application paused?
-	bool      mMinimized = false;  // is the application minimized?
-	bool      mMaximized = false;  // is the application maximized?
-	bool      mResizing = false;   // are the resize bars being dragged?
-	bool      mFullscreenState = false;// fullscreen enabled
+	HINSTANCE m_hAppInst = nullptr; // application instance handle
+	HWND      m_hMainWnd = nullptr; // main window handle
+	bool      m_AppPaused = false;  // is the application paused?
+	bool      m_Minimized = false;  // is the application minimized?
+	bool      m_Maximized = false;  // is the application maximized?
+	bool      m_Resizing = false;   // are the resize bars being dragged?
+	bool      m_FullscreenState = false;// fullscreen enabled
 
 	// Set true to use 4X MSAA (?.1.8).  The default is false.
-	bool      m4xMsaaState = false;    // 4X MSAA enabled
-	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA
+	bool      m_4xMsaaState = false;    // 4X MSAA enabled
+	UINT      m_4xMsaaQuality = 0;      // quality level of 4X MSAA
 
 	GameTimer m_timer;
 	Camera m_camera;
 	bool m_appPaused = false;
 	bool m_frustumCullingEnabled = true;
 	UINT m_frameResIdx = 0;
-	POINT mLastMousePos{};
+	POINT m_LastMousePos{};
 
 	std::wstring m_mainWndCaption = L"d3d App";
 
-	int mClientWidth = 800;
-	int mClientHeight = 600;
+	int m_ClientWidth = 800;
+	int m_ClientHeight = 600;
 
 	static MainLoop* g_mainLoop;
 };
@@ -144,6 +144,8 @@ public:
 	~InstancingAndCullingApp();
 
 	virtual bool Initialize(WNDPROC wndProc) override;
+	virtual void ResetCommandLists() override;
+	virtual void ExcuteCommandLists() override;
 
 private:
 	virtual void OnResize() override;

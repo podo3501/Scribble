@@ -42,6 +42,8 @@ public:
 		FrameResource* pCurrFrameRes,
 		std::vector<RenderItem*> renderItem) {};
 	virtual bool Initialize(WNDPROC wndProc) { return false; };
+	virtual void ResetCommandLists() {};
+	virtual void ExcuteCommandLists() {};
 };
 
 class D3DApp : public Renderer
