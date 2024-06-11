@@ -15,6 +15,11 @@ Camera::~Camera()
 {
 }
 
+void Camera::PressedKey(std::vector<int> keyList)
+{
+
+}
+
 XMVECTOR Camera::GetPosition()const
 {
 	return XMLoadFloat3(&mPosition);

@@ -2,6 +2,7 @@
 #include "../FirstPage/UserInterface.h"
 #include "../FirstPage/FrameResource.h"
 #include "../../Scribble/Common/Camera.h"
+#include "../../Scribble/Common/Interface.h"
 #include <functional>
 
 TEST(MainTest, Initialize)
@@ -84,8 +85,27 @@ public:
 		m_keyList = keyList();
 	}
 
+	void AddListener(KeyInputListener* keyListener)
+	{
+		m_listenerList.emplace_back(keyListener);
+	}
+
+	void Flush()
+	{
+		if (m_keyList.empty() == true)
+			return;
+
+		for (auto listener : m_listenerList)
+		{
+			listener->PressedKey(m_keyList);
+		}
+
+		m_keyList.clear();
+	}
+
 private:
 	std::vector<int> m_keyList;
+	std::vector<KeyInputListener*> m_listenerList;
 };
 
 KeyInput::KeyInput()
@@ -95,9 +115,10 @@ KeyInput::KeyInput()
 TEST(CameraTest, listener)
 {
 	KeyInput keyInput;
-	//Camera camera;
-	//keyInput.addListener(camera);
+	Camera camera;
+	keyInput.AddListener(&camera);
 	keyInput.PressedKeyList([]() {
 		return std::vector<int>{'W'};
 		});
+	keyInput.Flush();
 }
