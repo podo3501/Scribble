@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../FirstPage/UserInterface.h"
 #include "../FirstPage/FrameResource.h"
+#include "../../Scribble/Common/Camera.h"
 #include <functional>
 
 TEST(MainTest, Initialize)
@@ -72,4 +73,31 @@ TEST(UserInterfaceTest, model)
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
 	MainLoop mainLoop(hInstance);
 	mainLoop.Run();
+}
+
+class KeyInput
+{
+public:
+	KeyInput();
+	void PressedKeyList(std::function<std::vector<int>()> keyList)
+	{
+		m_keyList = keyList();
+	}
+
+private:
+	std::vector<int> m_keyList;
+};
+
+KeyInput::KeyInput()
+	: m_keyList()
+{}
+
+TEST(CameraTest, listener)
+{
+	KeyInput keyInput;
+	//Camera camera;
+	//keyInput.addListener(camera);
+	keyInput.PressedKeyList([]() {
+		return std::vector<int>{'W'};
+		});
 }

@@ -1048,12 +1048,12 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// We pause the game when the window is deactivated and unpause it 
 		// when it becomes active.  
 	case WM_ACTIVATE:
-		//if (LOWORD(wParam) == WA_INACTIVE)
+		if (LOWORD(wParam) == WA_INACTIVE)
 		{
-			//m_AppPaused = true;
-			//m_timer.Stop();
+			m_AppPaused = true;
+			m_timer.Stop();
 		}
-		//else
+		else
 		{
 			m_AppPaused = false;
 			m_timer.Start();
