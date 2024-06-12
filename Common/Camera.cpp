@@ -7,6 +7,8 @@
 using namespace DirectX;
 
 Camera::Camera()
+	: m_moveSpeed{}
+	, m_moveDirection{}
 {
 	SetLens(0.25f*MathHelper::Pi, 1.0f, 1.0f, 1000.0f);
 }
@@ -17,7 +19,21 @@ Camera::~Camera()
 
 void Camera::PressedKey(std::vector<int> keyList)
 {
+	for (auto nKey : keyList)
+	{
+		eMove currMove{ eMove::eInit };
+		switch (nKey)
+		{
+			case 'W':		currMove = eMove::eForward;		break;
+			case 'S':		currMove = eMove::eBack;			break;
+			case 'D':		currMove = eMove::eRight;			break;
+			case 'A':		currMove = eMove::eLeft;				break;
+		}
 
+		if (currMove == eMove::eInit) continue;
+
+		m_moveDirection.emplace_back(currMove);
+	}
 }
 
 XMVECTOR Camera::GetPosition()const
@@ -238,18 +254,36 @@ void Camera::RotateY(float angle)
 	mViewDirty = true;
 }
 
+void Camera::SetSpeed(eMove move, float moveSpeed)
+{
+	m_moveSpeed.insert(std::make_pair(move, moveSpeed));
+}
+
 void Camera::Move(eMove move, float speed)
 {
 	if (speed == 0.0f) return;
 
 	switch (move)
 	{
-	case eWalk:			Walk(speed);		break;
-	case eStrafe:		Strafe(speed);		break;
+	case eForward:	Walk(speed);		break;
+	case eBack:			Walk(-speed);		break;
+	case eRight:		Strafe(speed);		break;
+	case eLeft:			Strafe(-speed);	break;
 	case eRoll:			Roll(speed);			break;
 	case ePitch:			Pitch(speed);		break;
 	case eRotateY:	RotateY(speed);	break;
 	}
+}
+
+void Camera::Update(float deltaTime)
+{
+	for (auto moveDir : m_moveDirection)
+	{
+		Move(moveDir, deltaTime * m_moveSpeed[moveDir]);
+	}
+	m_moveDirection.clear();
+
+	UpdateViewMatrix();
 }
 
 void Camera::UpdateViewMatrix()

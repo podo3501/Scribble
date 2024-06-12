@@ -391,31 +391,30 @@ void InstancingAndCullingApp::OnKeyboardInput(const GameTimer& gt)
 {
 	const float dt = gt.DeltaTime();
 
-	float speed = 10.0f;
-	float angle = 0.2f;
-	float walkSpeed = 0.0f;
-	float strafeSpeed = 0.0f;
+	mCamera.SetSpeed(Camera::eForward, 10.0f);
+	mCamera.SetSpeed(Camera::eBack, 10.0f);
+	mCamera.SetSpeed(Camera::eRight, 10.0f);
+	mCamera.SetSpeed(Camera::eLeft, 10.0f);
 
 	std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
+	std::vector<int> pressedKeyList;
 	for_each(keyList.begin(), keyList.end(), [&](int vKey) {
 		bool bPressed = GetAsyncKeyState(vKey) & 0x8000;
 		if (bPressed)
 		{
 			switch (vKey)
 			{
-			case 'W':		walkSpeed += speed;		break;
-			case 'S':		walkSpeed += -speed;		break;
-			case 'D':		strafeSpeed += speed;		break;
-			case 'A':		strafeSpeed += -speed;		break;
+			case 'W':
+			case 'S':
+			case 'D':
+			case 'A':		pressedKeyList.emplace_back(vKey);	break;
 			case '1':		mFrustumCullingEnabled = true;			break;
 			case '2':		mFrustumCullingEnabled = false;			break;
 			}
 		}});
 
-	mCamera.Move(Camera::eWalk, walkSpeed * dt);
-	mCamera.Move(Camera::eStrafe, strafeSpeed * dt);
-
-	mCamera.UpdateViewMatrix();
+	mCamera.PressedKey(pressedKeyList);
+	mCamera.Update(dt);
 }
 
 void InstancingAndCullingApp::AnimateMaterials(const GameTimer& gt)
@@ -1241,31 +1240,30 @@ void MainLoop::OnKeyboardInput()
 {
 	const float dt = m_timer.DeltaTime();
 
-	float speed = 10.0f;
-	float angle = 0.2f;
-	float walkSpeed = 0.0f;
-	float strafeSpeed = 0.0f;
+	m_camera.SetSpeed(Camera::eForward, 10.0f);
+	m_camera.SetSpeed(Camera::eBack, 10.0f);
+	m_camera.SetSpeed(Camera::eRight, 10.0f);
+	m_camera.SetSpeed(Camera::eLeft, 10.0f);
 
 	std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
+	std::vector<int> pressedKeyList;
 	for_each(keyList.begin(), keyList.end(), [&](int vKey) {
 		bool bPressed = GetAsyncKeyState(vKey) & 0x8000;
 		if (bPressed)
 		{
 			switch (vKey)
 			{
-			case 'W':		walkSpeed += speed;		break;
-			case 'S':		walkSpeed += -speed;		break;
-			case 'D':		strafeSpeed += speed;		break;
-			case 'A':		strafeSpeed += -speed;		break;
+			case 'W':
+			case 'S':
+			case 'D':
+			case 'A':		pressedKeyList.emplace_back(vKey);	break;
 			case '1':		m_frustumCullingEnabled = true;			break;
 			case '2':		m_frustumCullingEnabled = false;		break;
 			}
 		}});
 
-	m_camera.Move(Camera::eWalk, walkSpeed * dt);
-	m_camera.Move(Camera::eStrafe, strafeSpeed * dt);
-
-	m_camera.UpdateViewMatrix();
+	m_camera.PressedKey(pressedKeyList);
+	m_camera.Update(dt);
 }
 
 void MainLoop::UpdateMainPassCB()

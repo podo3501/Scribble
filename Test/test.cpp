@@ -85,8 +85,8 @@ public:
 		m_keyList = keyList();
 	}
 
-	using Callback = std::function<void(std::vector<int>)>;
-	void AddListener7(Callback listener)
+	using KeyListener = std::function<void(std::vector<int>)>;
+	void AddListener(KeyListener listener)
 	{
 		m_keyListenerList.emplace_back(std::move(listener));
 	}
@@ -106,23 +106,27 @@ public:
 
 private:
 	std::vector<int> m_keyList;
-	std::vector<KeyInputListener*> m_listenerList;
-
-	std::vector<Callback> m_keyListenerList;
+	std::vector<KeyListener> m_keyListenerList;
 };
 
 KeyInput::KeyInput()
 	: m_keyList()
 {}
-
-TEST(CameraTest, listener)
+TEST(CameraTest, MoveByKeyInput)
 {
+	auto deltaTime = 0.1f; 
+
 	KeyInput keyInput;
 	Camera camera;
-	keyInput.AddListener7([&camera](std::vector<int> keyList) {
+	camera.SetPosition(0.0f, 0.0f, 0.0f);
+	camera.SetSpeed(Camera::eForward, 10.0f);
+	keyInput.AddListener([&camera](std::vector<int> keyList) {
 		camera.PressedKey(keyList); });
 	keyInput.PressedKeyList([]() {
 		return std::vector<int>{'W'};
 		});
 	keyInput.Flush();
+	camera.Update(deltaTime);
+	DirectX::XMFLOAT3 pos = camera.GetPosition3f();
+	EXPECT_EQ(pos.z, 1.0f);
 }

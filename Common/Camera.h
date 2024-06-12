@@ -12,15 +12,18 @@
 #define CAMERA_H
 
 #include "d3dUtil.h"
-#include "Interface.h"
+#include <map>
 
 class Camera
 {
 public:
 	enum eMove
 	{
-		eWalk = 0,
-		eStrafe,
+		eInit = 0,
+		eForward = 1,
+		eBack,
+		eRight,
+		eLeft,
 		eRoll,
 		ePitch,
 		eRotateY,
@@ -82,8 +85,11 @@ public:
 	void Pitch(float angle);
 	void RotateY(float angle);
 
+	void SetSpeed(eMove move, float moveSpeed);
+	void Move(eMove move, bool forward, float deltaTime);
 	void Move(eMove move, float speed);
 
+	void Update(float deltaTime);
 	// After modifying camera position/orientation, call to rebuild the view matrix.
 	void UpdateViewMatrix();
 
@@ -108,6 +114,9 @@ private:
 	// Cache View/Proj matrices.
 	DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4();
 	DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4();
+
+	std::map<eMove, float> m_moveSpeed;
+	std::vector<eMove> m_moveDirection;
 };
 
 #endif // CAMERA_H
