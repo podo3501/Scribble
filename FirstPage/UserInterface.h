@@ -12,6 +12,7 @@
 class Waves;
 struct FrameResource;
 struct InstanceData;
+class KeyInputManager;
 
 struct RenderItem
 {
@@ -73,6 +74,7 @@ public:
 	MainLoop(HINSTANCE hInstance);
 	int Run();
 	void OnResize();
+	void PressedKey(std::vector<int> keyList);
 
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -119,6 +121,8 @@ private:
 
 	int m_ClientWidth = 800;
 	int m_ClientHeight = 600;
+
+	std::unique_ptr<KeyInputManager> m_keyInputManager{ nullptr };
 
 	static MainLoop* g_mainLoop;
 };

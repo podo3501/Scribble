@@ -3,7 +3,7 @@
 #include "../FirstPage/FrameResource.h"
 #include "../../Scribble/Common/Camera.h"
 #include "../../Scribble/Common/Interface.h"
-#include <functional>
+#include "../FirstPage/KeyInputManager.h"
 
 TEST(MainTest, Initialize)
 {
@@ -76,47 +76,11 @@ TEST(UserInterfaceTest, model)
 	mainLoop.Run();
 }
 
-class KeyInput
-{
-public:
-	KeyInput();
-	void PressedKeyList(std::function<std::vector<int>()> keyList)
-	{
-		m_keyList = keyList();
-	}
-
-	using KeyListener = std::function<void(std::vector<int>)>;
-	void AddListener(KeyListener listener)
-	{
-		m_keyListenerList.emplace_back(std::move(listener));
-	}
-
-	void Flush()
-	{
-		if (m_keyList.empty() == true)
-			return;
-
-		for (auto listener : m_keyListenerList)
-		{
-			listener(m_keyList);
-		}
-
-		m_keyList.clear();
-	}
-
-private:
-	std::vector<int> m_keyList;
-	std::vector<KeyListener> m_keyListenerList;
-};
-
-KeyInput::KeyInput()
-	: m_keyList()
-{}
 TEST(CameraTest, MoveByKeyInput)
 {
 	auto deltaTime = 0.1f; 
 
-	KeyInput keyInput;
+	KeyInputManager keyInput;
 	Camera camera;
 	camera.SetPosition(0.0f, 0.0f, 0.0f);
 	camera.SetSpeed(Camera::eForward, 10.0f);
@@ -125,7 +89,6 @@ TEST(CameraTest, MoveByKeyInput)
 	keyInput.PressedKeyList([]() {
 		return std::vector<int>{'W'};
 		});
-	keyInput.Flush();
 	camera.Update(deltaTime);
 	DirectX::XMFLOAT3 pos = camera.GetPosition3f();
 	EXPECT_EQ(pos.z, 1.0f);

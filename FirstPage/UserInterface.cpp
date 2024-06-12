@@ -4,6 +4,7 @@
 #include "../Common/UploadBuffer.h"
 #include "FrameResource.h"
 #include "../Common/GeometryGenerator.h"
+#include "KeyInputManager.h"
 #include <WindowsX.h>
 
 using Microsoft::WRL::ComPtr;
@@ -1179,6 +1180,10 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 MainLoop::MainLoop(HINSTANCE hInstance)
 {
 	m_camera.SetPosition(0.0f, 2.0f, -15.0f);
+	m_camera.SetSpeed(Camera::eForward, 10.0f);
+	m_camera.SetSpeed(Camera::eBack, 10.0f);
+	m_camera.SetSpeed(Camera::eRight, 10.0f);
+	m_camera.SetSpeed(Camera::eLeft, 10.0f);
 
 	g_mainLoop = this;
 	m_renderer = std::make_shared<InstancingAndCullingApp>(hInstance);
@@ -1187,6 +1192,24 @@ MainLoop::MainLoop(HINSTANCE hInstance)
 	OnResize();
 	m_model = std::make_shared<Model>(m_renderer);
 	BuildFrameResources();
+
+	m_keyInputManager = std::make_unique<KeyInputManager>();
+	m_keyInputManager->AddListener([&cam = m_camera](std::vector<int> keyList) {
+		cam.PressedKey(keyList); });
+	m_keyInputManager->AddListener([mainLoop = this](std::vector<int> keyList) {
+		mainLoop->PressedKey(keyList); });
+}
+
+void MainLoop::PressedKey(std::vector<int> keyList)
+{
+	for (auto vKey : keyList)
+	{
+		switch (vKey)
+		{
+			case '1':		m_frustumCullingEnabled = true;			break;
+			case '2':		m_frustumCullingEnabled = false;		break;
+		}
+	}
 }
 
 void MainLoop::OnResize()
@@ -1240,30 +1263,17 @@ void MainLoop::OnKeyboardInput()
 {
 	const float dt = m_timer.DeltaTime();
 
-	m_camera.SetSpeed(Camera::eForward, 10.0f);
-	m_camera.SetSpeed(Camera::eBack, 10.0f);
-	m_camera.SetSpeed(Camera::eRight, 10.0f);
-	m_camera.SetSpeed(Camera::eLeft, 10.0f);
-
-	std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
-	std::vector<int> pressedKeyList;
-	for_each(keyList.begin(), keyList.end(), [&](int vKey) {
-		bool bPressed = GetAsyncKeyState(vKey) & 0x8000;
-		if (bPressed)
-		{
-			switch (vKey)
+	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
+	m_keyInputManager->PressedKeyList([](){
+		std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
+		std::vector<int> pressedKeyList;
+		for_each(keyList.begin(), keyList.end(), [&pressedKeyList](int vKey)
 			{
-			case 'W':
-			case 'S':
-			case 'D':
-			case 'A':		pressedKeyList.emplace_back(vKey);	break;
-			case '1':		m_frustumCullingEnabled = true;			break;
-			case '2':		m_frustumCullingEnabled = false;		break;
-			}
-		}});
-
-	m_camera.PressedKey(pressedKeyList);
-	m_camera.Update(dt);
+				bool bPressed = GetAsyncKeyState(vKey) & 0x8000;
+				if (bPressed)
+					pressedKeyList.emplace_back(vKey);
+			});
+		return pressedKeyList; });
 }
 
 void MainLoop::UpdateMainPassCB()
@@ -1324,6 +1334,8 @@ int MainLoop::Run()
 				CalculateFrameStats();
 
 				OnKeyboardInput();
+
+				m_camera.Update(m_timer.DeltaTime());
 
 				ID3D12Fence* pFence = m_renderer->GetFence();
 				m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
