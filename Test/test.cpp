@@ -85,9 +85,10 @@ public:
 		m_keyList = keyList();
 	}
 
-	void AddListener(KeyInputListener* keyListener)
+	using Callback = std::function<void(std::vector<int>)>;
+	void AddListener7(Callback listener)
 	{
-		m_listenerList.emplace_back(keyListener);
+		m_keyListenerList.emplace_back(std::move(listener));
 	}
 
 	void Flush()
@@ -95,9 +96,9 @@ public:
 		if (m_keyList.empty() == true)
 			return;
 
-		for (auto listener : m_listenerList)
+		for (auto listener : m_keyListenerList)
 		{
-			listener->PressedKey(m_keyList);
+			listener(m_keyList);
 		}
 
 		m_keyList.clear();
@@ -106,6 +107,8 @@ public:
 private:
 	std::vector<int> m_keyList;
 	std::vector<KeyInputListener*> m_listenerList;
+
+	std::vector<Callback> m_keyListenerList;
 };
 
 KeyInput::KeyInput()
@@ -116,7 +119,8 @@ TEST(CameraTest, listener)
 {
 	KeyInput keyInput;
 	Camera camera;
-	keyInput.AddListener(&camera);
+	keyInput.AddListener7([&camera](std::vector<int> keyList) {
+		camera.PressedKey(keyList); });
 	keyInput.PressedKeyList([]() {
 		return std::vector<int>{'W'};
 		});

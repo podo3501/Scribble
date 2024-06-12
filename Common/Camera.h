@@ -14,7 +14,7 @@
 #include "d3dUtil.h"
 #include "Interface.h"
 
-class Camera : public KeyInputListener
+class Camera
 {
 public:
 	enum eMove
@@ -30,7 +30,7 @@ public:
 	Camera();
 	~Camera();
 
-	virtual void PressedKey(std::vector<int> keyList) override;
+	void PressedKey(std::vector<int> keyList);
 
 	// Get/Set world camera position.
 	DirectX::XMVECTOR GetPosition()const;
