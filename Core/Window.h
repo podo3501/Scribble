@@ -10,6 +10,9 @@ public:
 	CWindow(HINSTANCE hInstanc);
 
 	bool Initialize(WNDPROC wndProc);
+	int GetWidth();
+	int GetHeight();
+	HWND GetHandle();
 
 public:
 	CWindow(const CWindow&) = delete;

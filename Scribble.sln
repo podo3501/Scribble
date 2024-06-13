@@ -18,8 +18,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "main", "main\main.vcxproj",
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{3B7CE379-EA7D-47A1-A1B9-05F2C006E5A8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A402ABF0-FF19-406A-A922-0760BDABAF03} = {A402ABF0-FF19-406A-A922-0760BDABAF03}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Core\Core.vcxproj", "{A867A4CD-56A7-4622-967C-9424AC2FA000}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecondPage", "SecondPage\SecondPage.vcxproj", "{A402ABF0-FF19-406A-A922-0760BDABAF03}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +74,14 @@ Global
 		{A867A4CD-56A7-4622-967C-9424AC2FA000}.Release|x64.Build.0 = Release|x64
 		{A867A4CD-56A7-4622-967C-9424AC2FA000}.Release|x86.ActiveCfg = Release|Win32
 		{A867A4CD-56A7-4622-967C-9424AC2FA000}.Release|x86.Build.0 = Release|Win32
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Debug|x64.ActiveCfg = Debug|x64
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Debug|x64.Build.0 = Debug|x64
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Debug|x86.ActiveCfg = Debug|Win32
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Debug|x86.Build.0 = Debug|Win32
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Release|x64.ActiveCfg = Release|x64
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Release|x64.Build.0 = Release|x64
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Release|x86.ActiveCfg = Release|Win32
+		{A402ABF0-FF19-406A-A922-0760BDABAF03}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

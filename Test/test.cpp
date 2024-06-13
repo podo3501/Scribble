@@ -4,6 +4,7 @@
 #include "../../Scribble/Common/Camera.h"
 #include "../../Scribble/Common/Interface.h"
 #include "../FirstPage/KeyInputManager.h"
+
 TEST(MainTest, Initialize)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);

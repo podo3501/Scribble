@@ -4,6 +4,10 @@ CWindow::CWindow(HINSTANCE hInstance)
 	: m_appInst(hInstance)
 {}
 
+int CWindow::GetWidth() { return m_width; }
+int CWindow::GetHeight() { return m_height; }
+HWND CWindow::GetHandle() { return m_wnd; }
+
 bool CWindow::Initialize(WNDPROC wndProc)
 {
 	WNDCLASS wc;
