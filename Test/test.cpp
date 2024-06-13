@@ -4,7 +4,6 @@
 #include "../../Scribble/Common/Camera.h"
 #include "../../Scribble/Common/Interface.h"
 #include "../FirstPage/KeyInputManager.h"
-
 TEST(MainTest, Initialize)
 {
 	HINSTANCE hInstance = GetModuleHandle(nullptr);
@@ -83,7 +82,7 @@ TEST(CameraTest, MoveByKeyInput)
 	KeyInputManager keyInput;
 	Camera camera;
 	camera.SetPosition(0.0f, 0.0f, 0.0f);
-	camera.SetSpeed(Camera::eForward, 10.0f);
+	camera.SetSpeed(eMove::Forward, 10.0f);
 	keyInput.AddListener([&camera](std::vector<int> keyList) {
 		camera.PressedKey(keyList); });
 	keyInput.PressedKeyList([]() {

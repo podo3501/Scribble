@@ -14,21 +14,20 @@
 #include "d3dUtil.h"
 #include <map>
 
+enum class eMove
+{
+	Init = 0,
+	Forward = 1,
+	Back,
+	Right,
+	Left,
+	Roll,
+	Pitch,
+	RotateY,
+};
+
 class Camera
 {
-public:
-	enum eMove
-	{
-		eInit = 0,
-		eForward = 1,
-		eBack,
-		eRight,
-		eLeft,
-		eRoll,
-		ePitch,
-		eRotateY,
-	};
-
 public:
 	Camera();
 	~Camera();

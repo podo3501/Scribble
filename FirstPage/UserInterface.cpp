@@ -392,10 +392,10 @@ void InstancingAndCullingApp::OnKeyboardInput(const GameTimer& gt)
 {
 	const float dt = gt.DeltaTime();
 
-	mCamera.SetSpeed(Camera::eForward, 10.0f);
-	mCamera.SetSpeed(Camera::eBack, 10.0f);
-	mCamera.SetSpeed(Camera::eRight, 10.0f);
-	mCamera.SetSpeed(Camera::eLeft, 10.0f);
+	mCamera.SetSpeed(eMove::Forward, 10.0f);
+	mCamera.SetSpeed(eMove::Back, 10.0f);
+	mCamera.SetSpeed(eMove::Right, 10.0f);
+	mCamera.SetSpeed(eMove::Left, 10.0f);
 
 	std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
 	std::vector<int> pressedKeyList;
@@ -703,8 +703,8 @@ void InstancingAndCullingApp::OnMouseMove(WPARAM btnState, int x, int y)
 		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
 		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
-		mCamera.Move(Camera::ePitch, dy);
-		mCamera.Move(Camera::eRotateY, dx);
+		mCamera.Move(eMove::Pitch, dy);
+		mCamera.Move(eMove::RotateY, dx);
 	}
 
 	mLastMousePos.x = x;
@@ -1031,8 +1031,8 @@ void MainLoop::OnMouseMove(WPARAM btnState, int x, int y)
 		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_LastMousePos.x));
 		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_LastMousePos.y));
 
-		m_camera.Move(Camera::ePitch, dy);
-		m_camera.Move(Camera::eRotateY, dx);
+		m_camera.Move(eMove::Pitch, dy);
+		m_camera.Move(eMove::RotateY, dx);
 	}
 
 	m_LastMousePos.x = x;
@@ -1180,10 +1180,10 @@ LRESULT MainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 MainLoop::MainLoop(HINSTANCE hInstance)
 {
 	m_camera.SetPosition(0.0f, 2.0f, -15.0f);
-	m_camera.SetSpeed(Camera::eForward, 10.0f);
-	m_camera.SetSpeed(Camera::eBack, 10.0f);
-	m_camera.SetSpeed(Camera::eRight, 10.0f);
-	m_camera.SetSpeed(Camera::eLeft, 10.0f);
+	m_camera.SetSpeed(eMove::Forward, 10.0f);
+	m_camera.SetSpeed(eMove::Back, 10.0f);
+	m_camera.SetSpeed(eMove::Right, 10.0f);
+	m_camera.SetSpeed(eMove::Left, 10.0f);
 
 	g_mainLoop = this;
 	m_renderer = std::make_shared<InstancingAndCullingApp>(hInstance);
@@ -1261,8 +1261,6 @@ void MainLoop::BuildFrameResources()
 
 void MainLoop::OnKeyboardInput()
 {
-	const float dt = m_timer.DeltaTime();
-
 	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
 	m_keyInputManager->PressedKeyList([](){
 		std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };

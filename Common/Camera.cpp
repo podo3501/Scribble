@@ -21,16 +21,16 @@ void Camera::PressedKey(std::vector<int> keyList)
 {
 	for (auto nKey : keyList)
 	{
-		eMove currMove{ eMove::eInit };
+		eMove currMove{ eMove::Init };
 		switch (nKey)
 		{
-			case 'W':		currMove = eMove::eForward;		break;
-			case 'S':		currMove = eMove::eBack;			break;
-			case 'D':		currMove = eMove::eRight;			break;
-			case 'A':		currMove = eMove::eLeft;				break;
+			case 'W':		currMove = eMove::Forward;	break;
+			case 'S':		currMove = eMove::Back;			break;
+			case 'D':		currMove = eMove::Right;			break;
+			case 'A':		currMove = eMove::Left;			break;
 		}
 
-		if (currMove == eMove::eInit) continue;
+		if (currMove == eMove::Init) continue;
 
 		m_moveDirection.emplace_back(currMove);
 	}
@@ -254,6 +254,7 @@ void Camera::RotateY(float angle)
 	mViewDirty = true;
 }
 
+//방향에 따라 이동하는 것은 나중에 객체에서도 쓰일 예정이지만 일단 여기에 놔 두고 나중에 떼내자
 void Camera::SetSpeed(eMove move, float moveSpeed)
 {
 	m_moveSpeed.insert(std::make_pair(move, moveSpeed));
@@ -265,13 +266,13 @@ void Camera::Move(eMove move, float speed)
 
 	switch (move)
 	{
-	case eForward:	Walk(speed);		break;
-	case eBack:			Walk(-speed);		break;
-	case eRight:		Strafe(speed);		break;
-	case eLeft:			Strafe(-speed);	break;
-	case eRoll:			Roll(speed);			break;
-	case ePitch:			Pitch(speed);		break;
-	case eRotateY:	RotateY(speed);	break;
+	case eMove::Forward:		Walk(speed);		break;
+	case eMove::Back:			Walk(-speed);		break;
+	case eMove::Right:			Strafe(speed);		break;
+	case eMove::Left:			Strafe(-speed);	break;
+	case eMove::Roll:			Roll(speed);			break;
+	case eMove::Pitch:			Pitch(speed);		break;
+	case eMove::RotateY:		RotateY(speed);	break;
 	}
 }
 
