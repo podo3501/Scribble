@@ -2,6 +2,8 @@
 #include "../Core/Directx3D.h"
 #include "../Core/Window.h"
 #include "../SecondPage/Camera.h"
+#include "../SecondPage/Texture.h"
+#include "../SecondPage/Renderer.h"
 #include <d3d12.h>
 #include <dxgi.h>
 #include <dxgi1_4.h>
@@ -12,48 +14,29 @@ TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-class CRenderer
-{
-public:
-	CRenderer(std::unique_ptr<CDirectx3D>&& directx3d, std::shared_ptr<CCamera>& camera);
-	bool Initialize();
-
-	CRenderer(const CRenderer&) = delete;
-	CRenderer& operator=(const CRenderer&) = delete;
-
-private:
-	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
-	std::shared_ptr<CCamera> m_camera{ nullptr };
-};
-
-CRenderer::CRenderer(std::unique_ptr<CDirectx3D>&& directx3d, std::shared_ptr<CCamera>& camera)
-	: m_directx3D(std::move(directx3d))
-	, m_camera(camera)
-{}
-
-bool CRenderer::Initialize()
-{
-	m_directx3D->ResetCommandLists();
-
-
-
-	m_directx3D->ExcuteCommandLists();
-	m_directx3D->FlushCommandQueue();
-	return true;
-}
-
 namespace core
 {
 	TEST(Renderer, Initialize)
 	{
-		std::unique_ptr<CDirectx3D> directx3d = std::make_unique<CDirectx3D>(GetModuleHandle(nullptr));
-		EXPECT_EQ(directx3d->Initialize(TestWndProc), true);
+		//초기화
+		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(GetModuleHandle(nullptr));
+		EXPECT_EQ(directx3D->Initialize(TestWndProc), true);
 
-		std::shared_ptr<CCamera> camera = std::make_unique<CCamera>();
-		camera->SetPosition(0.0f, 2.0f, -15.0f);
-
-		std::shared_ptr<CRenderer> renderer = std::make_shared<CRenderer>(std::move(directx3d), camera);
+		std::shared_ptr<CRenderer> renderer = std::make_shared<CRenderer>(directx3D.get());
 		EXPECT_EQ(renderer->Initialize(), true);
+
+		//그래픽 메모리에 데이터 올리기
+		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(L"../Resource/Textures/");
+
+		directx3D->ResetCommandLists();
+
+		texture->Load(renderer.get());
+
+		directx3D->ExcuteCommandLists();
+		directx3D->FlushCommandQueue();
+
+		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
+		camera->SetPosition(0.0f, 2.0f, -15.0f);
 	}
 }
 

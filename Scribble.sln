@@ -25,6 +25,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Core\Core.vcxproj", "{A867A4CD-56A7-4622-967C-9424AC2FA000}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecondPage", "SecondPage\SecondPage.vcxproj", "{A402ABF0-FF19-406A-A922-0760BDABAF03}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A867A4CD-56A7-4622-967C-9424AC2FA000} = {A867A4CD-56A7-4622-967C-9424AC2FA000}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

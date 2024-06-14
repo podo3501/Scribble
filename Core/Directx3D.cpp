@@ -25,11 +25,6 @@ bool CDirectx3D::Initialize(WNDPROC wndProc)
 	return true;
 }
 
-inline UINT CDirectx3D::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE type)
-{
-	return m_device->GetDescriptorHandleIncrementSize(type);
-}
-
 bool CDirectx3D::InitDirect3D()
 {
 #if defined(DEBUG) || defined(_DEBUG) 
@@ -267,13 +262,14 @@ void CDirectx3D::OnResize()
 		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
 	m_currBackBuffer = 0;
+	UINT rtvDescHeapSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < SwapChainBufferCount; i++)
 	{
 		ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_swapChainBuffer[i])));
 		m_device->CreateRenderTargetView(m_swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
-		rtvHeapHandle.Offset(1, GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+		rtvHeapHandle.Offset(1, rtvDescHeapSize);
 	}
 
 	// Create the depth/stencil buffer and view.

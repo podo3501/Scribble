@@ -43,7 +43,8 @@ public:
 	void FlushCommandQueue();
 	void OnResize();
 
-	inline UINT GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE type);
+	inline ID3D12Device* GetDevice() const;
+	inline ID3D12GraphicsCommandList* GetCommandList() const;
 
 public:
 	CDirectx3D(const CDirectx3D&) = delete;
@@ -97,3 +98,13 @@ private:
 	D3D12_VIEWPORT m_screenViewport{};
 	D3D12_RECT m_scissorRect{};
 };
+
+inline ID3D12Device* CDirectx3D::GetDevice() const
+{
+	return m_device.Get();
+}
+
+inline ID3D12GraphicsCommandList* CDirectx3D::GetCommandList() const
+{
+	return m_commandList.Get();
+}

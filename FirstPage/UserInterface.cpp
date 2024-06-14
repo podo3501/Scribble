@@ -57,7 +57,7 @@ bool InstancingAndCullingApp::Initialize(WNDPROC wndProc)
 	BuildFrameResources();
 	BuildPSOs();
 	
-	ExcuteCommandLists();
+	ExcuteCommandLists ();
 
 	return true;
 }
