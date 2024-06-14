@@ -43,21 +43,25 @@ bool InstancingAndCullingApp::Initialize(WNDPROC wndProc)
 	if (!D3DApp::Initialize(wndProc))
 		return false;
 
-	ResetCommandLists();
-
 	mCamera.SetPosition(0.0f, 2.0f, -15.0f);
 
-	LoadTextures();
 	BuildRootSignature();
 	BuildDescriptorHeaps();
 	BuildShadersAndInputLayout();
-	BuildSkullGeometry();
-	BuildMaterials();
-	BuildRenderItems();
-	BuildFrameResources();
 	BuildPSOs();
+
+	BuildMaterials();
+	BuildFrameResources();
+
+	ResetCommandLists();
+
+	LoadTextures();
+	LoadGraphicTexture();
+	BuildSkullGeometry();
 	
 	ExcuteCommandLists ();
+
+	BuildRenderItems();
 
 	return true;
 }
@@ -113,11 +117,14 @@ void InstancingAndCullingApp::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
 	heapDesc.NodeMask = 0;
-	heapDesc.NumDescriptors = static_cast<UINT>(mTextures.size());
+	heapDesc.NumDescriptors = 7;// static_cast<UINT>(mTextures.size());
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
+}
 
+void InstancingAndCullingApp::LoadGraphicTexture()
+{
 	for_each(mTextures.begin(), mTextures.end(), [&, index{ 0 }](auto& curTex) mutable {
 		auto& curTexRes = curTex->Resource;
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};

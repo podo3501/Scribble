@@ -173,6 +173,7 @@ private:
 	void UpdateMainPassCB(const GameTimer& gt);
 
 	void LoadTextures();
+	void LoadGraphicTexture();
 	void BuildRootSignature();
 	void BuildDescriptorHeaps();
 	void BuildShadersAndInputLayout();

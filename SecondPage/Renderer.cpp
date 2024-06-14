@@ -2,6 +2,8 @@
 #include "../Core/Directx3D.h"
 #include "../Core/d3dx12.h"
 #include "../Core/d3dUtil.h"
+#include "../Core/Utility.h"
+#include "Shader.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -10,6 +12,7 @@ constexpr UINT DescriptorHeapSize{ 7 };
 
 CRenderer::CRenderer(CDirectx3D* directx3D)
 	: m_directx3D(directx3D)
+	, m_shader(std::make_unique<CShader>())
 	, m_device(directx3D->GetDevice())
 	, m_cmdList(directx3D->GetCommandList())
 {}
@@ -20,6 +23,7 @@ bool CRenderer::Initialize()
 
 	BuildRootSignature();
 	BuildDescriptorHeaps();
+	BuildPSOs();
 
 	m_directx3D->ExcuteCommandLists();
 	m_directx3D->FlushCommandQueue();
@@ -68,3 +72,42 @@ void CRenderer::BuildDescriptorHeaps()
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	ThrowIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvDescHeap)));
 }
+
+void CRenderer::BuildPSOs()
+{
+	for (auto gPso : GraphicsPSO_ALL)
+		MakePSOPipelineState(gPso);
+}
+
+void CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
+{
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
+	MakeOpaqueDesc(&psoDesc);
+
+	switch (psoType)
+	{
+	case GraphicsPSO::Opaque:						break;
+	default: assert(!"wrong type");
+	}
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> currPS;
+	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, 
+		IID_PPV_ARGS(&currPS)));
+
+	m_psoList[toUType(psoType)] = currPS;
+}
+
+void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	inoutDesc->NodeMask = 0;
+	inoutDesc->SampleMask = UINT_MAX;
+	inoutDesc->NumRenderTargets = 1;
+	inoutDesc->pRootSignature = m_rootSignature.Get();
+	inoutDesc->BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	inoutDesc->DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	inoutDesc->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	inoutDesc->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+	m_shader->SetPipelineStateDesc(inoutDesc);
+	m_directx3D->SetPipelineStateDesc(inoutDesc);
+}
+

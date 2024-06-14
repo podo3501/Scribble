@@ -358,3 +358,11 @@ void CDirectx3D::FlushCommandQueue()
 	}
 }
 
+void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	inoutDesc->RTVFormats[0] = m_backBufferFormat;
+	inoutDesc->DSVFormat = m_depthStencilFormat;
+	inoutDesc->SampleDesc.Count = m_4xMsaaState ? 4 : 1;
+	inoutDesc->SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
+}
+

@@ -29,6 +29,7 @@ struct IDXGISwapChain;
 struct ID3D12DescriptorHeap;
 struct ID3D12Resource;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
+struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 
 class CWindow;
 
@@ -42,6 +43,8 @@ public:
 	void ExcuteCommandLists();
 	void FlushCommandQueue();
 	void OnResize();
+
+	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;

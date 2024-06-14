@@ -138,6 +138,7 @@
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Directx3D.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="Utility.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
