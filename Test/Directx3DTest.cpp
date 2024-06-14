@@ -34,6 +34,11 @@ CRenderer::CRenderer(std::unique_ptr<CDirectx3D>&& directx3d, std::shared_ptr<CC
 bool CRenderer::Initialize()
 {
 	m_directx3D->ResetCommandLists();
+
+
+
+	m_directx3D->ExcuteCommandLists();
+	m_directx3D->FlushCommandQueue();
 	return true;
 }
 

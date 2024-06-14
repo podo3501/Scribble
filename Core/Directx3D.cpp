@@ -25,6 +25,11 @@ bool CDirectx3D::Initialize(WNDPROC wndProc)
 	return true;
 }
 
+inline UINT CDirectx3D::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE type)
+{
+	return m_device->GetDescriptorHandleIncrementSize(type);
+}
+
 bool CDirectx3D::InitDirect3D()
 {
 #if defined(DEBUG) || defined(_DEBUG) 
@@ -58,10 +63,6 @@ bool CDirectx3D::InitDirect3D()
 
 	ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
 		IID_PPV_ARGS(&m_fence)));
-
-	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	m_cbvSrvUavDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	// Check 4X MSAA quality support for our back buffer format.
 	// All Direct3D 11 capable devices support 4X MSAA for all render 
@@ -220,24 +221,21 @@ void CDirectx3D::CreateSwapChain()
 		m_swapChain.GetAddressOf()));
 }
 
-void CDirectx3D::CreateRtvAndDsvDescriptorHeaps()
+void CDirectx3D::CreateDescriptorHeap(UINT numDescriptor, D3D12_DESCRIPTOR_HEAP_TYPE heapType, ID3D12DescriptorHeap** descriptorHeap)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.NumDescriptors = numDescriptor;
+	rtvHeapDesc.Type = heapType;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	rtvHeapDesc.NodeMask = 0;
 	ThrowIfFailed(m_device->CreateDescriptorHeap(
-		&rtvHeapDesc, IID_PPV_ARGS(m_rtvHeap.GetAddressOf())));
+		&rtvHeapDesc, IID_PPV_ARGS(descriptorHeap)));
+}
 
-
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	dsvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(m_device->CreateDescriptorHeap(
-		&dsvHeapDesc, IID_PPV_ARGS(m_dsvHeap.GetAddressOf())));
+void CDirectx3D::CreateRtvAndDsvDescriptorHeaps()
+{
+	CreateDescriptorHeap(SwapChainBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_rtvHeap.GetAddressOf());
+	CreateDescriptorHeap(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_dsvHeap.GetAddressOf());
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
@@ -254,7 +252,7 @@ void CDirectx3D::OnResize()
 	// Flush before changing any resources.
 	FlushCommandQueue();
 
-	ThrowIfFailed(m_commandList->Reset(m_cmdListAlloc.Get(), nullptr));
+	ResetCommandLists();
 
 	// Release the previous resources we will be recreating.
 	for (int i = 0; i < SwapChainBufferCount; ++i)
@@ -275,7 +273,7 @@ void CDirectx3D::OnResize()
 	{
 		ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_swapChainBuffer[i])));
 		m_device->CreateRenderTargetView(m_swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
-		rtvHeapHandle.Offset(1, m_rtvDescriptorSize);
+		rtvHeapHandle.Offset(1, GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
 	}
 
 	// Create the depth/stencil buffer and view.
@@ -313,12 +311,8 @@ void CDirectx3D::OnResize()
 		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 	m_commandList->ResourceBarrier(1, &barrier);
 
-	// Execute the resize commands.
-	ThrowIfFailed(m_commandList->Close());
-	ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
-	m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
-
-	// Wait until resize is complete.
+	ExcuteCommandLists();
+	
 	FlushCommandQueue();
 
 	// Update the viewport transform to cover the client area.
@@ -335,6 +329,13 @@ void CDirectx3D::OnResize()
 void CDirectx3D::ResetCommandLists()
 {
 	ThrowIfFailed(m_commandList->Reset(m_cmdListAlloc.Get(), nullptr));
+}
+
+void CDirectx3D::ExcuteCommandLists()
+{
+	ThrowIfFailed(m_commandList->Close());
+	ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
+	m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 }
 
 void CDirectx3D::FlushCommandQueue()

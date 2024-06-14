@@ -39,8 +39,11 @@ public:
 	bool Initialize(WNDPROC wndProc);
 
 	void ResetCommandLists();
+	void ExcuteCommandLists();
 	void FlushCommandQueue();
 	void OnResize();
+
+	inline UINT GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE type);
 
 public:
 	CDirectx3D(const CDirectx3D&) = delete;
@@ -55,6 +58,11 @@ private:
 	void CreateCommandObjects();
 	void CreateSwapChain();
 	void CreateRtvAndDsvDescriptorHeaps();
+
+	void CreateDescriptorHeap(
+		UINT numDescriptor, 
+		D3D12_DESCRIPTOR_HEAP_TYPE heapType, 
+		ID3D12DescriptorHeap** descriptorHeap);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
@@ -79,10 +87,6 @@ private:
 	int m_currBackBuffer{ 0 };
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_swapChainBuffer[SwapChainBufferCount]{ nullptr, };
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_depthStencilBuffer{ nullptr };
-
-	UINT m_rtvDescriptorSize{ 0 };
-	UINT m_dsvDescriptorSize{ 0 };
-	UINT m_cbvSrvUavDescriptorSize{ 0 };
 
 	DXGI_FORMAT m_backBufferFormat{ DXGI_FORMAT_R8G8B8A8_UNORM };
 	DXGI_FORMAT m_depthStencilFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };
