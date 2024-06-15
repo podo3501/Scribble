@@ -15,7 +15,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 	try
 	{
 		InstancingAndCullingApp theApp(hInstance);
-		if (!theApp.Initialize())
+		if (!theApp.Initialize(nullptr))
 			return 0;
 
 		return theApp.Run();

@@ -19,14 +19,14 @@ CRenderer::CRenderer(CDirectx3D* directx3D)
 
 bool CRenderer::Initialize()
 {
-	m_directx3D->ResetCommandLists();
+	//m_directx3D->ResetCommandLists();
 
 	BuildRootSignature();
 	BuildDescriptorHeaps();
 	BuildPSOs();
 
-	m_directx3D->ExcuteCommandLists();
-	m_directx3D->FlushCommandQueue();
+	//m_directx3D->ExcuteCommandLists();
+	//m_directx3D->FlushCommandQueue();
 	return true;
 }
 
@@ -89,11 +89,9 @@ void CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	case GraphicsPSO::Opaque:						break;
 	default: assert(!"wrong type");
 	}
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> currPS;
+	
 	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, 
-		IID_PPV_ARGS(&currPS)));
-
-	m_psoList[toUType(psoType)] = currPS;
+		IID_PPV_ARGS(&m_psoList[toUType(psoType)])));
 }
 
 void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)

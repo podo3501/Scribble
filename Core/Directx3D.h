@@ -50,6 +50,7 @@ public:
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
 
 public:
+	CDirectx3D() = delete;
 	CDirectx3D(const CDirectx3D&) = delete;
 	CDirectx3D& operator=(const CDirectx3D&) = delete;
 

@@ -15,6 +15,65 @@ TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+#include <DirectXMath.h>
+
+using namespace DirectX;
+
+class CMaterial
+{
+public:
+	CMaterial();
+	void Build();
+
+	CMaterial(const CMaterial&) = delete;
+	CMaterial& operator=(const CMaterial&) = delete;
+
+private:
+	.
+	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials{};
+};
+
+CMaterial::CMaterial()
+{}
+
+void CMaterial::Build()
+{
+	auto MakeMaterial = [&](std::string&& name, int matCBIdx, int diffuseSrvHeapIdx,
+		XMFLOAT4 diffuseAlbedo, XMFLOAT3 fresnelR0, float rough) {
+			auto curMat = std::make_unique<Material>();
+			curMat->Name = name;
+			curMat->MatCBIndex = matCBIdx;
+			curMat->DiffuseSrvHeapIndex = diffuseSrvHeapIdx;
+			curMat->DiffuseAlbedo = diffuseAlbedo;
+			curMat->FresnelR0 = fresnelR0;
+			curMat->Roughness = rough;
+			m_materials[name] = std::move(curMat);
+		};
+
+	MakeMaterial("bricks0", 0, 0, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f);
+	MakeMaterial("stone0", 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f);
+	MakeMaterial("tile0", 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f);
+	MakeMaterial("checkboard0", 3, 3, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("ice0", 4, 4, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
+	MakeMaterial("grass0", 5, 5, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
+}
+
+class CModel
+{
+public:
+	CModel();
+	void Read();
+
+	CModel(const CModel&) = delete;
+	CModel& operator=(const CModel&) = delete;
+
+private:
+};
+
+CModel::CModel()
+{}
+
 namespace core
 {
 	TEST(Renderer, Initialize)
@@ -28,9 +87,11 @@ namespace core
 		EXPECT_EQ(renderer->Initialize(), true);
 
 		//데이터를 시스템 메모리에 올리기
+		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
 		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(resourcePath +L"Textures/");
-		.
-		//std::unique_ptr<CModel> model = std::make_unique<CModel>();
+		std::unique_ptr<CModel> model = std::make_unique<CModel>();
+
+		material->Build();
 
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 		directx3D->ResetCommandLists();
