@@ -12,10 +12,14 @@ struct Texture;
 class CTexture
 {
 public:
-	CTexture(const std::wstring& filePath);
+	template<typename T>
+	CTexture(T&& filePath)
+		: m_filePath(std::forward<T>(filePath))
+	{}
 
 	void Load(CRenderer* renderer);
 
+	CTexture() = delete;
 	CTexture(const CTexture&) = delete;
 	CTexture& operator=(const CTexture&) = delete;
 
@@ -27,3 +31,4 @@ private:
 
 	std::vector<std::unique_ptr<Texture>> m_textureList{};
 };
+

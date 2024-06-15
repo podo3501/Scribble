@@ -29,7 +29,6 @@ public:
 	CMaterial& operator=(const CMaterial&) = delete;
 
 private:
-	.
 	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials{};
 };
 
@@ -88,10 +87,13 @@ namespace core
 
 		//데이터를 시스템 메모리에 올리기
 		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
+		material->Build();
+
 		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(resourcePath +L"Textures/");
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
+		//model->Read();
 
-		material->Build();
+		//프레임당 쓰이는 데이터 공간을 확보
 
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 		directx3D->ResetCommandLists();

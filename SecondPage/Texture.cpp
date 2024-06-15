@@ -5,10 +5,6 @@
 
 using namespace DirectX;
 
-CTexture::CTexture(const std::wstring& filePath)
-	: m_filePath( filePath )
-{}
-
 void CTexture::Load(CRenderer* renderer)
 {
 	std::vector<std::wstring> filenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
