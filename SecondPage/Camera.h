@@ -1,7 +1,8 @@
 ﻿#pragma once
 
-#include "../Core/d3dUtil.h"
+#include <vector>
 #include <map>
+#include <DirectXMath.h>
 
 enum class eMove
 {
@@ -100,8 +101,8 @@ private:
 	bool mViewDirty{ true };
 
 	// Cache View/Proj matrices.
-	DirectX::XMFLOAT4X4 mView{ MathHelper::Identity4x4() };
-	DirectX::XMFLOAT4X4 mProj{ MathHelper::Identity4x4() };
+	DirectX::XMFLOAT4X4 mView{};
+	DirectX::XMFLOAT4X4 mProj{};
 
 	std::map<eMove, float> m_moveSpeed{};
 	std::vector<eMove> m_moveDirection{};

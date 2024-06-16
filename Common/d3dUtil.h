@@ -25,9 +25,9 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
-#include "d3dx12.h"
-#include "DDSTextureLoader.h"
-#include "MathHelper.h"
+#include "./d3dx12.h"
+#include "./DDSTextureLoader.h"
+#include "./MathHelper.h"
 
 extern const int gNumFrameResources;
 

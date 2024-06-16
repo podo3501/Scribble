@@ -1,8 +1,11 @@
 ﻿#include "Camera.h"
+#include "../Core/d3dUtil.h"
 
 using namespace DirectX;
 
 CCamera::CCamera()
+	: mView{ MathHelper::Identity4x4() }
+	, mProj{ MathHelper::Identity4x4() }
 {
 	SetLens(0.25f*MathHelper::Pi, 1.0f, 1.0f, 1000.0f);
 }

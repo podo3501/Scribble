@@ -138,13 +138,16 @@
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Directx3D.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="UploadBuffer.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="Directx3D.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="UploadBuffer.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

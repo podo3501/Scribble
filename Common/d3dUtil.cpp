@@ -1,5 +1,5 @@
-﻿#include "d3dUtil.h"
-#include "Util.h"
+﻿#include "./d3dUtil.h"
+#include "./Util.h"
 #include <comdef.h>
 #include <fstream>
 #include "../Common/DirectXTK12Inc/WICTextureLoader.h"

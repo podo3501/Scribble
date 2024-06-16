@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <memory>
 #include <wrl.h>
-//#include "Util.h"
+#include "Utility.h"
 
 #include "DDSTextureLoader.h" 
 
@@ -144,11 +144,6 @@ inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_ const char
 
 };
 
-template <class _Tp>
-_Tp& RvToLv(_Tp&& __value)
-{
-    return __value;
-}
 //--------------------------------------------------------------------------------------
 static HRESULT LoadTextureDataFromFile( _In_z_ const wchar_t* fileName,
                                         std::unique_ptr<uint8_t[]>& ddsData,

@@ -5,9 +5,14 @@
 #include "../SecondPage/Texture.h"
 #include "../SecondPage/Renderer.h"
 #include "../SecondPage/Shader.h"
+#include "../SecondPage/Model.h"
+#include "../SecondPage/FrameResource.h"
+#include "../Core/d3dUtil.h"
 #include <d3d12.h>
 #include <dxgi.h>
 #include <dxgi1_4.h>
+#include <memory>
+#include <unordered_map>
 
 LRESULT CALLBACK
 TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -23,10 +28,13 @@ class CMaterial
 {
 public:
 	CMaterial();
-	void Build();
+	~CMaterial() = default;
 
 	CMaterial(const CMaterial&) = delete;
 	CMaterial& operator=(const CMaterial&) = delete;
+
+	void Build();
+	UINT GetCount();
 
 private:
 	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials{};
@@ -58,20 +66,27 @@ void CMaterial::Build()
 	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
 }
 
-class CModel
+UINT CMaterial::GetCount()
 {
-public:
-	CModel();
-	void Read();
+	return static_cast<UINT>(m_materials.size());
+}
 
-	CModel(const CModel&) = delete;
-	CModel& operator=(const CModel&) = delete;
+void Load(MeshGeometry* meshGeo, CRenderer* renderer)
+{
+	meshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		renderer->GetDevice(), renderer->GetCommandList(), 
+		meshGeo->VertexBufferCPU->GetBufferPointer(), 
+		meshGeo->VertexBufferByteSize,
+		meshGeo->VertexBufferUploader);
+	
+	meshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		renderer->GetDevice(), renderer->GetCommandList(), 
+		meshGeo->IndexBufferCPU->GetBufferPointer(),
+		meshGeo->IndexBufferByteSize,
+		meshGeo->IndexBufferUploader);
 
-private:
-};
-
-CModel::CModel()
-{}
+	return;
+}
 
 namespace core
 {
@@ -91,14 +106,28 @@ namespace core
 
 		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(resourcePath +L"Textures/");
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
-		//model->Read();
+
+		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> geometries;
+		auto geo = std::make_unique<MeshGeometry>();
+		model->Read(geo.get());
+		std::string geoName = geo->Name;
+		geometries[geoName] = std::move(geo);
 
 		//프레임당 쓰이는 데이터 공간을 확보
+		const int gNumFrameResources = 3;
+		std::vector<std::unique_ptr<FrameResource>> m_frameResources;
+		for (auto i{ 0 }; i < gNumFrameResources; ++i)
+		{
+			auto frameRes = std::make_unique<FrameResource>(renderer->GetDevice(), 1,
+				125, material->GetCount());
+			m_frameResources.emplace_back(std::move(frameRes));
+		}
 
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 		directx3D->ResetCommandLists();
 
 		texture->Load(renderer.get());
+		Load(geometries[geoName].get(), renderer.get());
 
 		directx3D->ExcuteCommandLists();
 		directx3D->FlushCommandQueue();
