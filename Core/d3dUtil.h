@@ -296,6 +296,24 @@ struct Texture
 }
 #endif
 
+#ifndef ReturnIfFailed
+#define ReturnIfFailed(x)                                              \
+{                                                                     \
+    HRESULT hr__ = (x);                                               \
+    if(FAILED(hr__))                                            \
+        return hr__;                                                \
+}
+#endif
+
+#ifndef ReturnIfFalse
+#define ReturnIfFalse(x)                                              \
+{                                                                     \
+    bool result = (x);                                               \
+    if(!result)                                            \
+        return E_FAIL;                                                \
+}
+#endif
+
 #ifndef ReleaseCom
 #define ReleaseCom(x) { if(x){ x->Release(); x = 0; } }
 #endif

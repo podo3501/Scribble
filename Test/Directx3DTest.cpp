@@ -7,6 +7,7 @@
 #include "../SecondPage/Shader.h"
 #include "../SecondPage/Model.h"
 #include "../SecondPage/FrameResource.h"
+#include "../SecondPage/Material.h"
 #include "../Core/d3dUtil.h"
 #include <d3d12.h>
 #include <dxgi.h>
@@ -18,57 +19,6 @@ LRESULT CALLBACK
 TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-#include <DirectXMath.h>
-
-using namespace DirectX;
-
-class CMaterial
-{
-public:
-	CMaterial();
-	~CMaterial() = default;
-
-	CMaterial(const CMaterial&) = delete;
-	CMaterial& operator=(const CMaterial&) = delete;
-
-	void Build();
-	UINT GetCount();
-
-private:
-	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials{};
-};
-
-CMaterial::CMaterial()
-{}
-
-void CMaterial::Build()
-{
-	auto MakeMaterial = [&](std::string&& name, int matCBIdx, int diffuseSrvHeapIdx,
-		XMFLOAT4 diffuseAlbedo, XMFLOAT3 fresnelR0, float rough) {
-			auto curMat = std::make_unique<Material>();
-			curMat->Name = name;
-			curMat->MatCBIndex = matCBIdx;
-			curMat->DiffuseSrvHeapIndex = diffuseSrvHeapIdx;
-			curMat->DiffuseAlbedo = diffuseAlbedo;
-			curMat->FresnelR0 = fresnelR0;
-			curMat->Roughness = rough;
-			m_materials[name] = std::move(curMat);
-		};
-
-	MakeMaterial("bricks0", 0, 0, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f);
-	MakeMaterial("stone0", 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f);
-	MakeMaterial("tile0", 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f);
-	MakeMaterial("checkboard0", 3, 3, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
-	MakeMaterial("ice0", 4, 4, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
-	MakeMaterial("grass0", 5, 5, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
-	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
-}
-
-UINT CMaterial::GetCount()
-{
-	return static_cast<UINT>(m_materials.size());
 }
 
 void Load(MeshGeometry* meshGeo, CRenderer* renderer)
@@ -88,9 +38,9 @@ void Load(MeshGeometry* meshGeo, CRenderer* renderer)
 	return;
 }
 
-namespace core
+namespace MainLoop
 {
-	TEST(Renderer, Initialize)
+	TEST(CoreClass, Initialize)
 	{
 		const std::wstring resourcePath = L"../Resource/";
 		//√ ±‚»≠
@@ -119,7 +69,7 @@ namespace core
 		for (auto i{ 0 }; i < gNumFrameResources; ++i)
 		{
 			auto frameRes = std::make_unique<FrameResource>(renderer->GetDevice(), 1,
-				125, material->GetCount());
+				125, static_cast<UINT>(material->GetCount()));
 			m_frameResources.emplace_back(std::move(frameRes));
 		}
 
@@ -134,6 +84,42 @@ namespace core
 
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
 		camera->SetPosition(0.0f, 2.0f, -15.0f);
+	}
+
+	class CMainLoop
+	{
+	public:
+		CMainLoop() = default;
+		~CMainLoop() = default;
+
+		CMainLoop(const CMainLoop&) = delete;
+		CMainLoop& operator=(const CMainLoop&) = delete;
+
+		template<typename T>
+		HRESULT Initialize(HINSTANCE hInstance, T&& resourcePath);
+
+	private:
+		std::wstring m_resourcePath{};
+	};
+
+	template<typename T>
+	HRESULT CMainLoop::Initialize(HINSTANCE hInstance, T&& resourcePath)
+	{
+		m_resourcePath = std::forward<T>(resourcePath);
+		
+		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(GetModuleHandle(nullptr));
+		ReturnIfFailed(directx3D->Initialize(TestWndProc));
+
+		std::shared_ptr<CRenderer> renderer = std::make_shared<CRenderer>(directx3D.get());
+		ReturnIfFalse(renderer->Initialize());
+
+		return S_OK;
+	}
+
+	TEST(MainLoop, Initialize)
+	{
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
+		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr), L"../Resource/"), S_OK);
 	}
 }
 
