@@ -6,6 +6,7 @@
 #include <wrl.h>
 #include <dxgiformat.h>
 #include <d3d12.h>
+#include <functional>
 
 #if defined(DEBUG) || defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC

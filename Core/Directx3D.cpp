@@ -16,7 +16,7 @@ bool CDirectx3D::Initialize(WNDPROC wndProc)
 {
 	if (!m_window->Initialize(wndProc))
 		return false;
-
+	
 	if (!InitDirect3D())
 		return false;
 

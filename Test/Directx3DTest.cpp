@@ -14,6 +14,7 @@
 #include <dxgi1_4.h>
 #include <memory>
 #include <unordered_map>
+#include <functional>
 
 LRESULT CALLBACK
 TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -88,27 +89,46 @@ namespace MainLoop
 
 	class CMainLoop
 	{
+		using WINDOWPROC = std::function<LRESULT CALLBACK(HWND, UINT, WPARAM, LPARAM)>;
+
 	public:
-		CMainLoop() = default;
+		template<typename T>
+		CMainLoop(T&& resourcePath);
 		~CMainLoop() = default;
 
+		CMainLoop() = delete;
 		CMainLoop(const CMainLoop&) = delete;
 		CMainLoop& operator=(const CMainLoop&) = delete;
 
-		template<typename T>
-		HRESULT Initialize(HINSTANCE hInstance, T&& resourcePath);
+		HRESULT Initialize(HINSTANCE hInstance);
+
+	private:
+		LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	private:
 		std::wstring m_resourcePath{};
 	};
 
+	LRESULT CALLBACK
+		CMainLoop::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+	}
+
 	template<typename T>
-	HRESULT CMainLoop::Initialize(HINSTANCE hInstance, T&& resourcePath)
+	CMainLoop::CMainLoop(T&& resourcePath)
 	{
 		m_resourcePath = std::forward<T>(resourcePath);
+	}
+
+	HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
+	{
+		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(hInstance);
 		
-		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(GetModuleHandle(nullptr));
-		ReturnIfFailed(directx3D->Initialize(TestWndProc));
+		static CMainLoop* gMainLoop = this;
+		ReturnIfFailed(directx3D->Initialize([](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)->LRESULT {
+			return gMainLoop->WndProc(hwnd, msg, wParam, lParam);
+		}));
 
 		std::shared_ptr<CRenderer> renderer = std::make_shared<CRenderer>(directx3D.get());
 		ReturnIfFalse(renderer->Initialize());
@@ -118,8 +138,8 @@ namespace MainLoop
 
 	TEST(MainLoop, Initialize)
 	{
-		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
-		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr), L"../Resource/"), S_OK);
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
+		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);
 	}
 }
 
