@@ -39,6 +39,9 @@
     <ClCompile Include="MainLoop.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="KeyInputManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -66,6 +69,15 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="MainLoop.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RendererData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RendererDefine.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyInputManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

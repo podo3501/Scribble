@@ -16,12 +16,8 @@
 #include "../SecondPage/FrameResource.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
-
-LRESULT CALLBACK
-TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
+#include "../SecondPage/RendererData.h"
+#include "../SecondPage/KeyInputManager.h"
 
 void Load(MeshGeometry* meshGeo, CRenderer* renderer)
 {
@@ -46,8 +42,11 @@ namespace MainLoop
 	{
 		const std::wstring resourcePath = L"../Resource/";
 		//√ ±‚»≠
-		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(GetModuleHandle(nullptr));
-		EXPECT_EQ(directx3D->Initialize(TestWndProc), true);
+		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
+		EXPECT_EQ(window->Initialize(), true);
+
+		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(window.get());
+		EXPECT_EQ(directx3D->Initialize(), true);
 
 		std::shared_ptr<CRenderer> renderer = std::make_shared<CRenderer>(directx3D.get());
 		EXPECT_EQ(renderer->Initialize(), true);
@@ -92,6 +91,7 @@ namespace MainLoop
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);
+		mainLoop->Run();
 	}
 }
 

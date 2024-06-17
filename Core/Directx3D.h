@@ -18,6 +18,7 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+class CWindow;
 struct IDXGIFactory4;
 struct ID3D12Device;
 struct ID3D12Fence;
@@ -32,13 +33,11 @@ struct ID3D12Resource;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 
-class CWindow;
-
 class CDirectx3D
 {
 public:
-	CDirectx3D(HINSTANCE hInstance);
-	bool Initialize(WNDPROC wndProc);
+	CDirectx3D(CWindow* pWindow);
+	bool Initialize();
 
 	void ResetCommandLists();
 	void ExcuteCommandLists();
@@ -73,8 +72,7 @@ private:
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
 private:
-	std::unique_ptr<CWindow> m_window{ nullptr };
-
+	CWindow* m_window{ nullptr };
 	Microsoft::WRL::ComPtr<IDXGIFactory4> m_dxgiFactory{ nullptr };
 	Microsoft::WRL::ComPtr<IDXGISwapChain> m_swapChain{ nullptr };
 	Microsoft::WRL::ComPtr<ID3D12Device> m_device{ nullptr };

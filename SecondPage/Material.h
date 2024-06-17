@@ -19,6 +19,7 @@ public:
 	CMaterial& operator=(const CMaterial&) = delete;
 
 	void Build();
+	Material* GetMaterial(const std::string& matName);
 	size_t GetCount();
 
 private:

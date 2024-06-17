@@ -2,6 +2,8 @@
 #include "../Core/d3dUtil.h"
 #include <DirectXMath.h>
 #include "FrameResource.h"
+#include "./RendererData.h"
+#include "./Material.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -99,34 +101,59 @@ bool CModel::Read(MeshGeometry* meshGeo)
 	meshGeo->IndexBufferByteSize = ibByteSize;
 
 	return true;
+}
 
-	///////
+void CModel::BuildRenderItems(
+	MeshGeometry* pGeo, CMaterial* pMaterial, std::vector<std::unique_ptr<RenderItem>>& renderItems)
+{
+	auto rItem = std::make_unique<RenderItem>();
+	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& smName, std::string&& matName,
+		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
+			auto& sm = pGeo->DrawArgs[smName];
+			rItem->Geo = pGeo;
+			rItem->Mat = pMaterial->GetMaterial(matName);
+			rItem->ObjCBIndex = objIdx++;
+			rItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			XMStoreFloat4x4(&rItem->World, world);
+			XMStoreFloat4x4(&rItem->TexTransform, texTransform);
+			rItem->StartIndexLocation = sm.StartIndexLocation;
+			rItem->BaseVertexLocation = sm.BaseVertexLocation;
+			rItem->IndexCount = sm.IndexCount;
+			rItem->BoundingBoxBounds = sm.BBounds;
+			rItem->BoundingSphere = sm.BSphere; };
+	MakeRenderItem("skull", "tile0", XMMatrixIdentity(), XMMatrixIdentity());
 
-	//auto geo = std::make_unique<MeshGeometry>();
-	//geo->Name = "skullGeo";
+	const int n = 5;
+	rItem->Instances.resize(n * n * n);
 
-	//auto& submesh = geo->DrawArgs["skull"];
-	//submesh.IndexCount = static_cast<UINT>(indices.size());
-	//submesh.StartIndexLocation = 0;
-	//submesh.BaseVertexLocation = 0;
-	//submesh.BBounds = boundingBoxBounds;
-	//submesh.BSphere = boundingSphere;
+	float width = 200.0f;
+	float height = 200.0f;
+	float depth = 200.0f;
 
-	//geo->VertexBufferByteSize = vbByteSize;
-	//geo->VertexByteStride = sizeof(Vertex);
-	//geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
-	//	m_renderer->GetDevice(), m_renderer->GetCommandList(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
+	float x = -0.5f * width;
+	float y = -0.5f * height;
+	float z = -0.5f * depth;
+	float dx = width / (n - 1);
+	float dy = height / (n - 1);
+	float dz = depth / (n - 1);
+	for (int k = 0; k < n; ++k)
+	{
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				int index = k * n * n + i * n + j;
+				rItem->Instances[index].World = XMFLOAT4X4(
+					1.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 1.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f,
+					x + j * dx, y + i * dy, z + k * dz, 1.0f);
 
-	//ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-	//CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+				XMStoreFloat4x4(&rItem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
+				rItem->Instances[index].MaterialIndex = index % pMaterial->GetCount();
+			}
+		}
+	}
 
-	//ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-	//CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-	//geo->IndexFormat = DXGI_FORMAT_R32_UINT;
-	//geo->IndexBufferByteSize = ibByteSize;
-	//geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
-	//	m_renderer->GetDevice(), m_renderer->GetCommandList(), indices.data(), ibByteSize, geo->IndexBufferUploader);
-
-	//m_Geometries[geo->Name] = std::move(geo);
+	renderItems.emplace_back(std::move(rItem));
 }

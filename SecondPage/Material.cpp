@@ -27,6 +27,15 @@ void CMaterial::Build()
 	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
 }
 
+Material* CMaterial::GetMaterial(const std::string& matName)
+{
+	auto find = m_materials.find(matName);
+	if (find == m_materials.end())
+		return nullptr;
+
+	return find->second.get();
+}
+
 size_t CMaterial::GetCount()
 {
 	return m_materials.size();

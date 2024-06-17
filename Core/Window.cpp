@@ -1,5 +1,10 @@
 #include "Window.h"
 
+LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
 CWindow::CWindow(HINSTANCE hInstance)
 	: m_appInst(hInstance)
 {}
@@ -8,11 +13,16 @@ int CWindow::GetWidth() { return m_width; }
 int CWindow::GetHeight() { return m_height; }
 HWND CWindow::GetHandle() { return m_wnd; }
 
-bool CWindow::Initialize(WNDPROC wndProc)
+bool CWindow::Initialize()
 {
+	static CWindow* gWindow = this;
+	auto windowProc = [](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)->LRESULT {
+		return gWindow->WndProc(hwnd, msg, wParam, lParam);
+		};
+
 	WNDCLASS wc;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.lpfnWndProc = wndProc;
+	wc.lpfnWndProc = windowProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = m_appInst;
@@ -46,4 +56,9 @@ bool CWindow::Initialize(WNDPROC wndProc)
 	UpdateWindow(m_wnd);
 
 	return true;
+}
+
+void CWindow::AddWndProcListener(WndProcListener listener)
+{
+	m_wndProcListeners.emplace_back(std::move(listener));
 }

@@ -19,14 +19,10 @@ CRenderer::CRenderer(CDirectx3D* directx3D)
 
 bool CRenderer::Initialize()
 {
-	//m_directx3D->ResetCommandLists();
-
 	BuildRootSignature();
 	BuildDescriptorHeaps();
 	BuildPSOs();
 
-	//m_directx3D->ExcuteCommandLists();
-	//m_directx3D->FlushCommandQueue();
 	return true;
 }
 

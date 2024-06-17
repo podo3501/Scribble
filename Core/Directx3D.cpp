@@ -7,16 +7,12 @@ using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace DirectX;
 
-CDirectx3D::CDirectx3D(HINSTANCE hInstance)
-{
-	m_window = std::make_unique<CWindow>(hInstance);
-}
+CDirectx3D::CDirectx3D(CWindow* pWindow)
+	: m_window(pWindow)
+{}
 
-bool CDirectx3D::Initialize(WNDPROC wndProc)
+bool CDirectx3D::Initialize()
 {
-	if (!m_window->Initialize(wndProc))
-		return false;
-	
 	if (!InitDirect3D())
 		return false;
 

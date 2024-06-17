@@ -5,33 +5,35 @@
 #include "../Core/Directx3D.h"
 #include "./Shader.h"
 #include "./Renderer.h"
+#include "./RendererDefine.h"
 #include "./Material.h"
 #include "./Model.h"
 #include "./FrameResource.h"
 #include "./Texture.h"
 #include "./Camera.h"
+#include "./KeyInputManager.h"
 
-LRESULT CALLBACK
-CMainLoop::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+void CMainLoop::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	return DefWindowProc(hwnd, msg, wParam, lParam);
+	return;
 }
 
 HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 {
-	m_directx3D = std::make_unique<CDirectx3D>(hInstance);
-
-	//window클래스를 한단계 올려서 windowproc에 add시키는 구조로가자
 	static CMainLoop* gMainLoop = this;
-	ReturnIfFailed(m_directx3D->Initialize([](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)->LRESULT {
-		return gMainLoop->WndProc(hwnd, msg, wParam, lParam);
-		}));
+	m_window = std::make_unique<CWindow>(hInstance);
+	ReturnIfFailed(m_window->Initialize());
+	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp) {
+		mainLoop->WndProc(wnd, msg, wp, lp); });
+
+	m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
+	ReturnIfFailed(m_directx3D->Initialize());;
 
 	m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
 	ReturnIfFalse(m_renderer->Initialize());
 
-	std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
-	camera->SetPosition(0.0f, 2.0f, -15.0f);
+	m_camera = std::make_unique<CCamera>();
+	m_camera->SetPosition(0.0f, 2.0f, -15.0f);
 
 	//데이터를 시스템 메모리에 올리기
 	m_material = std::make_unique<CMaterial>();
@@ -42,21 +44,20 @@ HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 
 	auto geo = std::make_unique<MeshGeometry>();
 	m_model->Read(geo.get());
+	m_model->BuildRenderItems(geo.get(), m_material.get(), m_renderItems);
 	std::string geoName = geo->Name;
 	m_geometries[geoName] = std::move(geo);
 
-	//프레임당 쓰이는 데이터 공간을 확보
-	BuildFrameResource();
-	BuildGraphicMemory();
+	BuildFrameResource();			//프레임당 쓰이는 데이터 공간을 확보
+	BuildGraphicMemory();			//시스템 메모리에서 그래픽 메모리에 데이터 올리기
+	AddKeyListener();
 
 	return S_OK;
 }
-//initialize 다 한다음 키 리스너 작업
 
 void CMainLoop::BuildFrameResource()
 {
-	const int gNumFrameResources = 3;
-	for (auto i{ 0 }; i < gNumFrameResources; ++i)
+	for (auto i{ 0 }; i < gFrameResourceCount; ++i)
 	{
 		auto frameRes = std::make_unique<FrameResource>(m_renderer->GetDevice(), 1,
 			125, static_cast<UINT>(m_material->GetCount()));
@@ -93,4 +94,25 @@ void CMainLoop::Load(MeshGeometry* meshGeo)
 		meshGeo->IndexBufferUploader);
 
 	return;
+}
+
+void CMainLoop::AddKeyListener()
+{
+	m_keyInputManager = std::make_unique<CKeyInputManager>();
+	m_keyInputManager->AddListener([&cam = m_camera](std::vector<int> keyList) {
+		cam->PressedKey(keyList); });
+	m_keyInputManager->AddListener([mainLoop = this](std::vector<int> keyList) {
+		mainLoop->PressedKey(keyList); });
+}
+
+void CMainLoop::PressedKey(std::vector<int> keyList)
+{
+	for (auto vKey : keyList)
+	{
+		switch (vKey)
+		{
+		case '1':		m_frustumCullingEnabled = true;			break;
+		case '2':		m_frustumCullingEnabled = false;		break;
+		}
+	}
 }
