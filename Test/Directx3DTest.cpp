@@ -1,6 +1,13 @@
 #include "pch.h"
+#include <d3d12.h>
+#include <dxgi.h>
+#include <dxgi1_4.h>
+#include <memory>
+#include <unordered_map>
+#include <functional>
 #include "../Core/Directx3D.h"
 #include "../Core/Window.h"
+#include "../Core/d3dUtil.h"
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Texture.h"
 #include "../SecondPage/Renderer.h"
@@ -8,13 +15,7 @@
 #include "../SecondPage/Model.h"
 #include "../SecondPage/FrameResource.h"
 #include "../SecondPage/Material.h"
-#include "../Core/d3dUtil.h"
-#include <d3d12.h>
-#include <dxgi.h>
-#include <dxgi1_4.h>
-#include <memory>
-#include <unordered_map>
-#include <functional>
+#include "../SecondPage/MainLoop.h"
 
 LRESULT CALLBACK
 TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -85,55 +86,6 @@ namespace MainLoop
 
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
 		camera->SetPosition(0.0f, 2.0f, -15.0f);
-	}
-
-	class CMainLoop
-	{
-		using WINDOWPROC = std::function<LRESULT CALLBACK(HWND, UINT, WPARAM, LPARAM)>;
-
-	public:
-		template<typename T>
-		CMainLoop(T&& resourcePath);
-		~CMainLoop() = default;
-
-		CMainLoop() = delete;
-		CMainLoop(const CMainLoop&) = delete;
-		CMainLoop& operator=(const CMainLoop&) = delete;
-
-		HRESULT Initialize(HINSTANCE hInstance);
-
-	private:
-		LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-	private:
-		std::wstring m_resourcePath{};
-	};
-
-	LRESULT CALLBACK
-		CMainLoop::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-		return DefWindowProc(hwnd, msg, wParam, lParam);
-	}
-
-	template<typename T>
-	CMainLoop::CMainLoop(T&& resourcePath)
-	{
-		m_resourcePath = std::forward<T>(resourcePath);
-	}
-
-	HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
-	{
-		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(hInstance);
-		
-		static CMainLoop* gMainLoop = this;
-		ReturnIfFailed(directx3D->Initialize([](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)->LRESULT {
-			return gMainLoop->WndProc(hwnd, msg, wParam, lParam);
-		}));
-
-		std::shared_ptr<CRenderer> renderer = std::make_shared<CRenderer>(directx3D.get());
-		ReturnIfFalse(renderer->Initialize());
-
-		return S_OK;
 	}
 
 	TEST(MainLoop, Initialize)
