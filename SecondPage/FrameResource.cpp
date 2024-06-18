@@ -1,6 +1,7 @@
 ﻿#include "FrameResource.h"
 #include <d3d12.h>
 #include "../Core/d3dUtil.h"
+#include "../Core/UploadBuffer.h"
 
 FrameResource::FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount)
 {

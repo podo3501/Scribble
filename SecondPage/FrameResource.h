@@ -1,9 +1,10 @@
 ﻿#pragma once
 
-#include "../Core/UploadBuffer.h"
 #include "./FrameResourceData.h"
 #include <memory>
 
+class UploadBuffer;
+struct ID3D12Device;
 struct ID3D12CommandAllocator;
 
 // Stores the resources needed for the CPU to build the command lists

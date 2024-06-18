@@ -15,6 +15,8 @@
 #include "./KeyInputManager.h"
 #include "../Core/GameTimer.h"
 
+using namespace DirectX;
+
 bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
 {
 	switch (msg)
@@ -256,4 +258,94 @@ void CMainLoop::OnMouseMove(WPARAM btnState, int x, int y)
 
 	m_lastMousePos.x = x;
 	m_lastMousePos.y = y;
+}
+
+int CMainLoop::Run()
+{
+	MSG msg = { 0 };
+	m_timer->Reset();
+
+	while (msg.message != WM_QUIT)
+	{
+		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			m_timer->Tick();
+
+			if (!m_appPaused)
+			{
+				CalculateFrameStats();
+
+				OnKeyboardInput();
+
+				m_camera->Update(m_timer->DeltaTime());
+
+				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
+				//ID3D12Fence* pFence = m_renderer->GetFence();
+				//m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
+				//m_curFrameRes = m_frameResources[m_frameResIdx].get();
+				//if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
+				//{
+				//	HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+				//	ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
+				//	WaitForSingleObject(hEvent, INFINITE);
+				//	CloseHandle(hEvent);
+				//}
+
+				//m_model->Update(m_timer, m_camera, m_curFrameRes, m_camFrustum, m_frustumCullingEnabled);
+				//m_model->UpdateMaterialBuffer(m_curFrameRes);
+
+				//UpdateMainPassCB();
+
+				//m_renderer->Draw(m_timer, m_curFrameRes, m_model->GetRenderItems());
+			}
+			else
+			{
+				Sleep(100);
+			}
+		}
+	}
+
+	return (int)msg.wParam;
+}
+
+void CMainLoop::CalculateFrameStats()
+{
+	static int _frameCnt = 0;
+	static float _timeElapsed = 0.0f;
+
+	_frameCnt++;
+
+	if ((m_timer->TotalTime() - _timeElapsed) >= 1.0f)
+	{
+		float fps = (float)_frameCnt; // fps = frameCnt / 1
+		float mspf = 1000.0f / fps;
+
+		std::wstring caption = L"d3d App";
+		std::wstring fpsStr = std::to_wstring(fps);
+		std::wstring mspfStr = std::to_wstring(mspf);
+		m_window->SetText(caption + L"    fps: " + fpsStr + L"   mspf: " + mspfStr);
+
+		_frameCnt = 0;
+		_timeElapsed += 1.0f;
+	}
+}
+
+void CMainLoop::OnKeyboardInput()
+{
+	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
+	m_keyInputManager->PressedKeyList([]() {
+		std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
+		std::vector<int> pressedKeyList;
+		for_each(keyList.begin(), keyList.end(), [&pressedKeyList](int vKey)
+			{
+				bool bPressed = GetAsyncKeyState(vKey) & 0x8000;
+				if (bPressed)
+					pressedKeyList.emplace_back(vKey);
+			});
+		return pressedKeyList; });
 }

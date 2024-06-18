@@ -1,5 +1,9 @@
 #include "./Material.h"
 #include "../Core/d3dUtil.h"
+#include "../Core/UploadBuffer.h"
+#include "./FrameResource.h"
+
+using namespace DirectX;
 
 CMaterial::CMaterial()
 {}
@@ -25,6 +29,34 @@ void CMaterial::Build()
 	MakeMaterial("ice0", 4, 4, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
 	MakeMaterial("grass0", 5, 5, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
 	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
+}
+
+bool CMaterial::UpdateMaterialBuffer(FrameResource* curFrameRes)
+{
+	auto result = false;
+	auto curMaterialBuf = curFrameRes->MaterialBuffer.get();
+	for (auto& e : m_materials)
+	{
+		Material* m = e.second.get();
+		if (m->NumFramesDirty <= 0)
+			continue;
+
+		XMMATRIX matTransform = XMLoadFloat4x4(&m->MatTransform);
+
+		MaterialData matData;
+		matData.DiffuseAlbedo = m->DiffuseAlbedo;
+		matData.FresnelR0 = m->FresnelR0;
+		matData.Roughness = m->Roughness;
+		XMStoreFloat4x4(&matData.MatTransform, XMMatrixTranspose(matTransform));
+		matData.DiffuseMapIndex = m->DiffuseSrvHeapIndex;
+
+		curMaterialBuf->CopyData(m->MatCBIndex, matData);
+
+		m->NumFramesDirty--;
+		result = true;
+	}
+
+	return result;
 }
 
 Material* CMaterial::GetMaterial(const std::string& matName)

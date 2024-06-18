@@ -1,9 +1,14 @@
 #include "Model.h"
-#include "../Core/d3dUtil.h"
 #include <DirectXMath.h>
-#include "FrameResource.h"
+#include "../Core/d3dUtil.h"
+#include "../Core/Utility.h"
+#include "../Core/GameTimer.h"
+#include "../Core/UploadBuffer.h"
+#include "./FrameResource.h"
 #include "./RendererData.h"
 #include "./Material.h"
+#include "./Camera.h"
+
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -156,4 +161,61 @@ void CModel::BuildRenderItems(
 	}
 
 	renderItems.emplace_back(std::move(rItem));
+}
+
+
+void CModel::Update(const CGameTimer* gt,
+	const CCamera* camera,
+	FrameResource* curFrameRes,
+	DirectX::BoundingFrustum& camFrustum,
+	bool frustumCullingEnabled,
+	std::vector<std::unique_ptr<RenderItem>>& renderItems)
+{
+	XMMATRIX view = camera->GetView();
+	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
+
+	auto currInstanceBuffer = curFrameRes->InstanceBuffer.get();
+	for (auto& e : renderItems)
+	{
+		const auto& instanceData = e->Instances;
+
+		int visibleInstanceCount = 0;
+
+		for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
+		{
+			XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
+			XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
+
+			XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
+
+			// View space to the object's local space.
+			XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+
+			// Transform the camera frustum from view space to the object's local space.
+			BoundingFrustum localSpaceFrustum;
+			camFrustum.Transform(localSpaceFrustum, viewToLocal);
+
+			// Perform the box/frustum intersection test in local space.
+			//if ((localSpaceFrustum.Contains(e->BoundingBoxBounds) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
+			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (frustumCullingEnabled == false))
+			{
+				InstanceData data;
+				XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+				XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
+				data.MaterialIndex = instanceData[i].MaterialIndex;
+
+				// Write the instance data to structured buffer for the visible objects.
+				currInstanceBuffer->CopyData(visibleInstanceCount++, data);
+			}
+		}
+
+		e->InstanceCount = visibleInstanceCount;
+
+		//std::wostringstream outs;
+		//outs.precision(6);
+		//outs << L"Instancing and Culling Demo" <<
+		//	L"    " << e->InstanceCount <<
+		//	L" objects visible out of " << e->Instances.size();
+		//mMainWndCaption = outs.str();
+	}
 }

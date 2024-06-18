@@ -1,9 +1,10 @@
 #pragma once
 
-#include<wtypes.h>
-#include<string>
-#include<functional>
-#include"CoreInterface.h"
+#include <wtypes.h>
+#include <string>
+#include <functional>
+#include <utility>
+#include "CoreInterface.h"
 
 class CWindow
 {
@@ -24,6 +25,8 @@ public:
 	int GetHeight();
 	HWND GetHandle();
 
+	inline void SetText(std::wstring text);
+
 private:
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& result);
@@ -38,3 +41,8 @@ private:
 	int m_width{ 800 };
 	int m_height{ 600 };
 };
+
+inline void CWindow::SetText(std::wstring text)
+{
+	SetWindowText(m_wnd, text.c_str());
+}

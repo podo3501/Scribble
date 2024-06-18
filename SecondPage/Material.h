@@ -6,8 +6,7 @@
 #include <string>
 
 struct Material;
-
-using namespace DirectX;
+struct FrameResource;
 
 class CMaterial
 {
@@ -19,6 +18,8 @@ public:
 	CMaterial& operator=(const CMaterial&) = delete;
 
 	void Build();
+	bool UpdateMaterialBuffer(FrameResource* curFrameRes);
+
 	Material* GetMaterial(const std::string& matName);
 	size_t GetCount();
 

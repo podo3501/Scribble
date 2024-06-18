@@ -111,3 +111,4 @@ inline void CWindow::AddWndProcListener(WndProcListener listener)
 {
 	m_wndProcListeners.emplace_back(std::move(listener));
 }
+

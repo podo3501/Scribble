@@ -31,6 +31,7 @@ public:
 	CMainLoop& operator=(const CMainLoop&) = delete;
 
 	HRESULT Initialize(HINSTANCE hInstance);
+	int Run();
 
 private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
@@ -45,6 +46,9 @@ private:
 	void OnMouseDown(WPARAM btnState, int x, int y);
 	void OnMouseUp(WPARAM btnState, int x, int y);
 	void OnMouseMove(WPARAM btnState, int x, int y);
+
+	void CalculateFrameStats();
+	void OnKeyboardInput();
 
 private:
 	std::wstring m_resourcePath{};

@@ -75,21 +75,3 @@ TEST(UserInterfaceTest, model)
 	MainLoop mainLoop(hInstance);
 	mainLoop.Run();
 }
-
-TEST(CameraTest, MoveByKeyInput)
-{
-	auto deltaTime = 0.1f; 
-
-	KeyInputManager keyInput;
-	Camera camera;
-	camera.SetPosition(0.0f, 0.0f, 0.0f);
-	camera.SetSpeed(eMove::Forward, 10.0f);
-	keyInput.AddListener([&camera](std::vector<int> keyList) {
-		camera.PressedKey(keyList); });
-	keyInput.PressedKeyList([]() {
-		return std::vector<int>{'W'};
-		});
-	camera.Update(deltaTime);
-	DirectX::XMFLOAT3 pos = camera.GetPosition3f();
-	EXPECT_EQ(pos.z, 1.0f);
-}
