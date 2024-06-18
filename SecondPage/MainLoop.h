@@ -31,7 +31,7 @@ public:
 	HRESULT Initialize(HINSTANCE hInstance);
 
 private:
-	void WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	bool WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 
 	void BuildFrameResource();
 	void BuildGraphicMemory();

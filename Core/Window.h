@@ -8,7 +8,7 @@
 class CWindow
 {
 public:
-	using WndProcListener = std::function<void(HWND, UINT, WPARAM, LPARAM)>;
+	using WndProcListener = std::function<bool(HWND, UINT, WPARAM, LPARAM, LRESULT&)>;
 
 public:
 	CWindow(HINSTANCE hInstance);
@@ -18,7 +18,7 @@ public:
 	CWindow& operator=(const CWindow&) = delete;
 
 	bool Initialize();
-	void AddWndProcListener(WndProcListener listener);
+	inline void AddWndProcListener(WndProcListener listener);
 
 	int GetWidth();
 	int GetHeight();
@@ -26,6 +26,7 @@ public:
 
 private:
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& result);
 
 private:
 	HINSTANCE m_appInst{ nullptr };

@@ -91,7 +91,24 @@ namespace MainLoop
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);
-		mainLoop->Run();
 	}
+
+	TEST(MainLoop, Message)
+	{
+		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
+		EXPECT_EQ(window->Initialize(), true);
+
+		MSG msg = { 0 };
+		msg.hwnd = window->GetHandle();
+		msg.message = WM_SIZE;
+		msg.lParam = MAKELONG(1024, 768);
+
+		DispatchMessage(&msg);
+
+		EXPECT_EQ(window->GetWidth(), 1024);
+		EXPECT_EQ(window->GetHeight(), 768);
+	}
+
+
 }
 

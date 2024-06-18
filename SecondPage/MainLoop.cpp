@@ -13,18 +13,17 @@
 #include "./Camera.h"
 #include "./KeyInputManager.h"
 
-void CMainLoop::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+bool CMainLoop::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
 {
-	return;
+	return false;
 }
 
 HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 {
-	static CMainLoop* gMainLoop = this;
 	m_window = std::make_unique<CWindow>(hInstance);
 	ReturnIfFailed(m_window->Initialize());
-	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp) {
-		mainLoop->WndProc(wnd, msg, wp, lp); });
+	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return mainLoop->WndProc(wnd, msg, wp, lp, lr); });
 
 	m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
 	ReturnIfFailed(m_directx3D->Initialize());;
