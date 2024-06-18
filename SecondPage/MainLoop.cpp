@@ -1,5 +1,6 @@
 #include "MainLoop.h"
 #include <WinUser.h>
+#include <windowsx.h>
 #include "../Core/d3dUtil.h"
 #include "../Core/Window.h"
 #include "../Core/Directx3D.h"
@@ -12,9 +13,113 @@
 #include "./Texture.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
+#include "../Core/GameTimer.h"
 
-bool CMainLoop::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
+bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
 {
+	switch (msg)
+	{
+		// WM_ACTIVATE is sent when the window is activated or deactivated.  
+		// We pause the game when the window is deactivated and unpause it 
+		// when it becomes active.  
+	case WM_ACTIVATE:
+		if (LOWORD(wParam) == WA_INACTIVE)
+		{
+			m_appPaused = true;
+			m_timer->Stop();
+		}
+		else
+		{
+			m_appPaused = false;
+			m_timer->Start();
+		}
+		return true;
+
+		// WM_SIZE is sent when the user resizes the window.  
+	case WM_SIZE:
+		if (m_renderer->GetDevice())
+		{
+			if (wParam == SIZE_MINIMIZED)
+			{
+				m_appPaused = true;
+				m_minimized = true;
+				m_maximized = false;
+			}
+			else if (wParam == SIZE_MAXIMIZED)
+			{
+				m_appPaused = false;
+				m_minimized = false;
+				m_maximized = true;
+				OnResize();
+			}
+			else if (wParam == SIZE_RESTORED)
+			{
+
+				// Restoring from minimized state?
+				if (m_minimized)
+				{
+					m_appPaused = false;
+					m_minimized = false;
+					OnResize();
+				}
+
+				// Restoring from maximized state?
+				else if (m_maximized)
+				{
+					m_appPaused = false;
+					m_maximized = false;
+					OnResize();
+				}
+				else if (m_resizing)
+				{
+					// If user is dragging the resize bars, we do not resize 
+					// the buffers here because as the user continuously 
+					// drags the resize bars, a stream of WM_SIZE messages are
+					// sent to the window, and it would be pointless (and slow)
+					// to resize for each WM_SIZE message received from dragging
+					// the resize bars.  So instead, we reset after the user is 
+					// done resizing the window and releases the resize bars, which 
+					// sends a WM_EXITSIZEMOVE message.
+				}
+				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
+				{
+					OnResize();
+				}
+			}
+		}
+		return true;
+
+		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
+	case WM_ENTERSIZEMOVE:
+		m_appPaused = true;
+		m_resizing = true;
+		m_timer->Stop();
+		return true;
+
+		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
+		// Here we reset everything based on the new window dimensions.
+	case WM_EXITSIZEMOVE:
+		m_appPaused = false;
+		m_resizing = false;
+		m_timer->Start();
+		OnResize();
+		return true;
+
+	case WM_LBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return true;
+	case WM_LBUTTONUP:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONUP:
+		OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return true;
+	case WM_MOUSEMOVE:
+		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return true;
+	}
+
 	return false;
 }
 
@@ -23,7 +128,7 @@ HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 	m_window = std::make_unique<CWindow>(hInstance);
 	ReturnIfFailed(m_window->Initialize());
 	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
-		return mainLoop->WndProc(wnd, msg, wp, lp, lr); });
+		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
 
 	m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
 	ReturnIfFailed(m_directx3D->Initialize());;
@@ -95,6 +200,16 @@ void CMainLoop::Load(MeshGeometry* meshGeo)
 	return;
 }
 
+void CMainLoop::OnResize()
+{
+	auto aspectRatio =
+		static_cast<float>(m_window->GetWidth()) /
+		static_cast<float>(m_window->GetHeight());
+	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
+
+	BoundingFrustum::CreateFromMatrix(m_camFrustum, m_camera->GetProj());
+}
+
 void CMainLoop::AddKeyListener()
 {
 	m_keyInputManager = std::make_unique<CKeyInputManager>();
@@ -114,4 +229,31 @@ void CMainLoop::PressedKey(std::vector<int> keyList)
 		case '2':		m_frustumCullingEnabled = false;		break;
 		}
 	}
+}
+
+void CMainLoop::OnMouseDown(WPARAM btnState, int x, int y)
+{
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
+
+	SetCapture(m_window->GetHandle());
+}
+void CMainLoop::OnMouseUp(WPARAM btnState, int x, int y)
+{
+	ReleaseCapture();
+}
+void CMainLoop::OnMouseMove(WPARAM btnState, int x, int y)
+{
+	if ((btnState & MK_LBUTTON) != 0)
+	{
+		// Make each pixel correspond to a quarter of a degree.
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_lastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_lastMousePos.y));
+
+		m_camera->Move(eMove::Pitch, dy);
+		m_camera->Move(eMove::RotateY, dx);
+	}
+
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
 }

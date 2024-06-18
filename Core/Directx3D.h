@@ -37,8 +37,12 @@ class CDirectx3D
 {
 public:
 	CDirectx3D(CWindow* pWindow);
-	bool Initialize();
 
+	CDirectx3D() = delete;
+	CDirectx3D(const CDirectx3D&) = delete;
+	CDirectx3D& operator=(const CDirectx3D&) = delete;
+
+	bool Initialize();
 	void ResetCommandLists();
 	void ExcuteCommandLists();
 	void FlushCommandQueue();
@@ -48,11 +52,6 @@ public:
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
-
-public:
-	CDirectx3D() = delete;
-	CDirectx3D(const CDirectx3D&) = delete;
-	CDirectx3D& operator=(const CDirectx3D&) = delete;
 
 private:
 	bool InitDirect3D();
@@ -70,6 +69,9 @@ private:
 		ID3D12DescriptorHeap** descriptorHeap);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
+
+	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
+	void Set4xMsaaState(bool value);
 
 private:
 	CWindow* m_window{ nullptr };

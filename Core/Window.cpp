@@ -24,7 +24,7 @@ bool CWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT
 	case WM_SIZE:
 		m_width = static_cast<int>(LOWORD(lParam));
 		m_height = static_cast<int>(HIWORD(lParam));
-		return true;
+		return false;	//다른 MsgProc에서 처리할 게 남았다.
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -44,7 +44,7 @@ bool CWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT
 	case WM_KEYUP:
 		if (wParam == VK_ESCAPE)
 			PostQuitMessage(0);
-		return true;
+		return false;
 	}
 
 	return false;

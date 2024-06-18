@@ -7,9 +7,25 @@ using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace DirectX;
 
+bool CDirectx3D::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
+{
+	switch (msg)
+	{
+	case WM_KEYUP:
+		if ((int)wParam == VK_F2)
+			Set4xMsaaState(!m_4xMsaaState);
+		return true;
+	}
+
+	return false;
+}
+
 CDirectx3D::CDirectx3D(CWindow* pWindow)
 	: m_window(pWindow)
-{}
+{
+	m_window->AddWndProcListener([directx3D = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return directx3D->MsgProc(wnd, msg, wp, lp, lr); });
+}
 
 bool CDirectx3D::Initialize()
 {
@@ -360,5 +376,15 @@ void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutD
 	inoutDesc->DSVFormat = m_depthStencilFormat;
 	inoutDesc->SampleDesc.Count = m_4xMsaaState ? 4 : 1;
 	inoutDesc->SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
+}
+
+void CDirectx3D::Set4xMsaaState(bool value)
+{
+	if (m_4xMsaaState == value)
+		return;
+	
+	m_4xMsaaState = value;
+	CreateSwapChain();
+	OnResize();
 }
 

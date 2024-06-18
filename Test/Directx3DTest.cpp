@@ -18,6 +18,7 @@
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/RendererData.h"
 #include "../SecondPage/KeyInputManager.h"
+#include "../Core/GameTimer.h"
 
 void Load(MeshGeometry* meshGeo, CRenderer* renderer)
 {
@@ -93,7 +94,7 @@ namespace MainLoop
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);
 	}
 
-	TEST(MainLoop, Message)
+	TEST(MainLoop, WindowMessage)
 	{
 		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 		EXPECT_EQ(window->Initialize(), true);
@@ -108,7 +109,5 @@ namespace MainLoop
 		EXPECT_EQ(window->GetWidth(), 1024);
 		EXPECT_EQ(window->GetHeight(), 768);
 	}
-
-
 }
 
