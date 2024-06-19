@@ -2,8 +2,10 @@
 
 #include "./FrameResourceData.h"
 #include <memory>
+#include <vector>
 
 class UploadBuffer;
+struct ID3D12Fence;
 struct ID3D12Device;
 struct ID3D12CommandAllocator;
 
@@ -31,4 +33,34 @@ public:
     // Fence value to mark commands up to this fence point.  This lets us
     // check if these frame resources are still in use by the GPU.
     UINT64 Fence = 0;
+};
+
+enum class eBufferType : int
+{
+	NoType = 0,
+	PassCB,
+	Material,
+	Instance,
+	Count,
+};
+
+class CFrameResource
+{
+	static const int FrameResourceCount = 3;
+
+public:
+	CFrameResource() = default;
+
+	CFrameResource(const CFrameResource&) = delete;
+	CFrameResource& operator=(const CFrameResource&) = delete;
+
+	bool BuildFrameResource(ID3D12Device* device,
+		UINT passCount, UINT instanceCount, UINT matCount);
+	void Synchronize(ID3D12Fence* pFence);
+	UploadBuffer* GetUploadBuffer(eBufferType bufferType);
+
+private:
+	std::vector<std::unique_ptr<FrameResource>> m_resources{};
+	FrameResource* m_curFrameRes{ nullptr };
+	UINT m_frameResIdx{ 0 };
 };

@@ -41,31 +41,49 @@ namespace SecondPage
 {
 	class MainLoopTest : public ::testing::Test
 	{
+	public:
+		MainLoopTest()
+		{
+			//초기화
+			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
+			EXPECT_EQ(m_window->Initialize(), true);
+
+			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
+			EXPECT_EQ(m_directx3D->Initialize(), true);
+
+			m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
+			EXPECT_EQ(m_renderer->Initialize(), true);
+
+			m_material = std::make_unique<CMaterial>();
+			m_material->Build();
+		}
+
 	protected:
 		void SetUp() override
 		{}
 
-	public:
+	protected:
+		const std::wstring m_resourcePath = L"../Resource/";
+
+		std::unique_ptr<CWindow> m_window{ nullptr };
+		std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
+		std::shared_ptr<CRenderer> m_renderer{ nullptr };
+		std::unique_ptr<CMaterial> m_material{ nullptr };
 	};
+
+	TEST_F(MainLoopTest, FrameResourceTest)
+	{
+		std::unique_ptr<CFrameResource> frameResource = std::make_unique<CFrameResource>();
+		EXPECT_EQ(frameResource->BuildFrameResource(
+			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true );
+		frameResource->Synchronize(m_directx3D->GetFence());
+		EXPECT_EQ(frameResource->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
+	}
 
 	TEST_F(MainLoopTest, Initialize)
 	{
-		const std::wstring resourcePath = L"../Resource/";
-		//초기화
-		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-		EXPECT_EQ(window->Initialize(), true);
-
-		std::unique_ptr<CDirectx3D> directx3D = std::make_unique<CDirectx3D>(window.get());
-		EXPECT_EQ(directx3D->Initialize(), true);
-
-		std::shared_ptr<CRenderer> renderer = std::make_shared<CRenderer>(directx3D.get());
-		EXPECT_EQ(renderer->Initialize(), true);
-
 		//데이터를 시스템 메모리에 올리기
-		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
-		material->Build();
-
-		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(resourcePath + L"Textures/");
+		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_resourcePath + L"Textures/");
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
 
 		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> geometries;
@@ -79,19 +97,19 @@ namespace SecondPage
 		std::vector<std::unique_ptr<FrameResource>> m_frameResources;
 		for (auto i{ 0 }; i < gNumFrameResources; ++i)
 		{
-			auto frameRes = std::make_unique<FrameResource>(renderer->GetDevice(), 1,
-				125, static_cast<UINT>(material->GetCount()));
+			auto frameRes = std::make_unique<FrameResource>(m_renderer->GetDevice(), 1,
+				125, static_cast<UINT>(m_material->GetCount()));
 			m_frameResources.emplace_back(std::move(frameRes));
 		}
 
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-		directx3D->ResetCommandLists();
+		m_directx3D->ResetCommandLists();
 
-		texture->Load(renderer.get());
-		Load(geometries[geoName].get(), renderer.get());
+		texture->Load(m_renderer.get());
+		Load(geometries[geoName].get(), m_renderer.get());
 
-		directx3D->ExcuteCommandLists();
-		directx3D->FlushCommandQueue();
+		m_directx3D->ExcuteCommandLists();
+		m_directx3D->FlushCommandQueue();
 
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
 		camera->SetPosition(0.0f, 2.0f, -15.0f);
@@ -99,18 +117,15 @@ namespace SecondPage
 
 	TEST_F(MainLoopTest, WindowMessage)
 	{
-		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-		EXPECT_EQ(window->Initialize(), true);
-
 		MSG msg = { 0 };
-		msg.hwnd = window->GetHandle();
+		msg.hwnd = m_window->GetHandle();
 		msg.message = WM_SIZE;
 		msg.lParam = MAKELONG(1024, 768);
 
 		DispatchMessage(&msg);
 
-		EXPECT_EQ(window->GetWidth(), 1024);
-		EXPECT_EQ(window->GetHeight(), 768);
+		EXPECT_EQ(m_window->GetWidth(), 1024);
+		EXPECT_EQ(m_window->GetHeight(), 768);
 	}
 
 	TEST_F(MainLoopTest, CameraUpdate)
@@ -178,7 +193,6 @@ namespace SecondPage
 		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_geometries{};
 		std::unique_ptr<FrameResource> m_frameResource{ nullptr };
 	};
-
 	TEST_F(MainLoopUpdateTest, UpdateModel)
 	{
 		CGameTimer timer;
@@ -197,5 +211,4 @@ namespace SecondPage
 	{
 		EXPECT_EQ(m_material->UpdateMaterialBuffer(m_frameResource.get()), true);
 	}
-
 } //SecondPage

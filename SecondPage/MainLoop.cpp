@@ -269,61 +269,6 @@ void CMainLoop::OnMouseMove(WPARAM btnState, int x, int y)
 	m_lastMousePos.y = y;
 }
 
-int CMainLoop::Run()
-{
-	MSG msg = { 0 };
-	m_timer = std::make_unique<CGameTimer>();
-	m_timer->Reset();
-
-	while (msg.message != WM_QUIT)
-	{
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		else
-		{
-			m_timer->Tick();
-
-			if (!m_appPaused)
-			{
-				CalculateFrameStats();
-
-				OnKeyboardInput();
-
-				m_camera->Update(m_timer->DeltaTime());
-
-				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
-				ID3D12Fence* pFence = m_directx3D->GetFence();
-				m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
-				m_curFrameRes = m_frameResources[m_frameResIdx].get();
-				if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
-				{
-					HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-					ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
-					WaitForSingleObject(hEvent, INFINITE);
-					CloseHandle(hEvent);
-				}
-
-				m_model->Update(m_timer.get(), m_camera.get(), 
-					m_curFrameRes, m_camFrustum, m_frustumCullingEnabled, m_renderItems);
-				m_material->UpdateMaterialBuffer(m_curFrameRes);
-
-				UpdateMainPassCB(m_timer.get());
-
-				m_renderer->Draw(m_timer.get(), m_curFrameRes, m_renderItems);
-			}
-			else
-			{
-				Sleep(100);
-			}
-		}
-	}
-
-	return (int)msg.wParam;
-}
-
 void CMainLoop::CalculateFrameStats()
 {
 	static int _frameCnt = 0;
@@ -403,4 +348,60 @@ void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
 	pc.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
 
 	passCB->CopyData(0, pc);
+}
+
+int CMainLoop::Run()
+{
+	MSG msg = { 0 };
+	m_timer = std::make_unique<CGameTimer>();
+	m_timer->Reset();
+
+	while (msg.message != WM_QUIT)
+	{
+		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			m_timer->Tick();
+
+			if (!m_appPaused)
+			{
+				CalculateFrameStats();
+
+				OnKeyboardInput();
+
+				m_camera->Update(m_timer->DeltaTime());
+
+				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
+
+				ID3D12Fence* pFence = m_directx3D->GetFence();
+				m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
+				m_curFrameRes = m_frameResources[m_frameResIdx].get();
+				if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
+				{
+					HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+					ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
+					WaitForSingleObject(hEvent, INFINITE);
+					CloseHandle(hEvent);
+				}
+
+				m_model->Update(m_timer.get(), m_camera.get(),
+					m_curFrameRes, m_camFrustum, m_frustumCullingEnabled, m_renderItems);
+				m_material->UpdateMaterialBuffer(m_curFrameRes);
+
+				UpdateMainPassCB(m_timer.get());
+
+				m_renderer->Draw(m_timer.get(), m_curFrameRes, m_renderItems);
+			}
+			else
+			{
+				Sleep(100);
+			}
+		}
+	}
+
+	return (int)msg.wParam;
 }

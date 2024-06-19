@@ -15,6 +15,46 @@ FrameResource::FrameResource(ID3D12Device* device, UINT passCount, UINT maxInsta
 }
 
 FrameResource::~FrameResource()
-{
+{}
 
+/////////////////////////////////////////////////////
+
+bool CFrameResource::BuildFrameResource(ID3D12Device* device,
+	UINT passCount, UINT instanceCount, UINT matCount)
+{
+	for (auto i{ 0 }; i < FrameResourceCount; ++i)
+	{
+		auto frameRes = std::make_unique<FrameResource>(device, passCount,
+			instanceCount, matCount);
+		m_resources.emplace_back(std::move(frameRes));
+	}
+
+	return true;
+}
+
+void CFrameResource::Synchronize(ID3D12Fence* pFence)
+{
+	m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
+	m_curFrameRes = m_resources[m_frameResIdx].get();
+	if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
+	{
+		HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+		ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
+		WaitForSingleObject(hEvent, INFINITE);
+		CloseHandle(hEvent);
+	}
+}
+
+UploadBuffer* CFrameResource::GetUploadBuffer(eBufferType bufferType)
+{
+	if (m_curFrameRes == nullptr) return nullptr;
+
+	switch (bufferType)
+	{
+	case eBufferType::PassCB:			return m_curFrameRes->PassCB.get();
+	case eBufferType::Material:		return m_curFrameRes->MaterialBuffer.get();
+	case eBufferType::Instance:		return m_curFrameRes->InstanceBuffer.get();
+	}
+
+	return nullptr;
 }
