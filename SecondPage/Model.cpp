@@ -166,7 +166,7 @@ void CModel::BuildRenderItems(
 
 void CModel::Update(const CGameTimer* gt,
 	const CCamera* camera,
-	FrameResource* curFrameRes,
+	UploadBuffer* instanceBuffer,
 	DirectX::BoundingFrustum& camFrustum,
 	bool frustumCullingEnabled,
 	std::vector<std::unique_ptr<RenderItem>>& renderItems)
@@ -174,7 +174,6 @@ void CModel::Update(const CGameTimer* gt,
 	XMMATRIX view = camera->GetView();
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 
-	auto currInstanceBuffer = curFrameRes->InstanceBuffer.get();
 	for (auto& e : renderItems)
 	{
 		const auto& instanceData = e->Instances;
@@ -205,7 +204,7 @@ void CModel::Update(const CGameTimer* gt,
 				data.MaterialIndex = instanceData[i].MaterialIndex;
 
 				// Write the instance data to structured buffer for the visible objects.
-				currInstanceBuffer->CopyData(visibleInstanceCount++, data);
+				instanceBuffer->CopyData(visibleInstanceCount++, data);
 			}
 		}
 

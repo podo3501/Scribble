@@ -13,6 +13,7 @@ public:
 
 public:
 	CWindow(HINSTANCE hInstance);
+	~CWindow();
 
 	CWindow() = delete;
 	CWindow(const CWindow&) = delete;
@@ -32,6 +33,7 @@ private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& result);
 
 private:
+	std::wstring m_className{};
 	HINSTANCE m_appInst{ nullptr };
 	HWND m_wnd{ nullptr };
 	std::vector<WndProcListener> m_wndProcListeners{};

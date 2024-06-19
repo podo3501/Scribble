@@ -10,13 +10,14 @@ class CDirectx3D;
 class CShader;
 class CCamera;
 class CGameTimer;
+class UploadBuffer;
+class CFrameResources;
 struct ID3D12Device;
 struct ID3D12GraphicsCommandList;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
-struct FrameResource;
 struct RenderItem;
 
 class CRenderer
@@ -41,7 +42,7 @@ public:
 
 	bool Initialize();
 	void OnResize(int wndWidth, int wndHeight);
-	void Draw(CGameTimer* gt, FrameResource* pCurrFrameRes, 
+	void Draw(CGameTimer* gt, CFrameResources* pCurrFrameRes,
 		const std::vector<std::unique_ptr<RenderItem>>& renderItem);
 
 	inline ID3D12Device* GetDevice() const;
@@ -54,7 +55,7 @@ private:
 	void BuildPSOs();
 	void MakePSOPipelineState(GraphicsPSO psoType);
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void DrawRenderItems(FrameResource* pCurrFrameRes, 
+	void DrawRenderItems(UploadBuffer* instanceBuffer, 
 		const std::vector<std::unique_ptr<RenderItem>>& ritems);
 
 private:

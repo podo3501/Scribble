@@ -31,10 +31,10 @@ void CMaterial::Build()
 	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
 }
 
-bool CMaterial::UpdateMaterialBuffer(FrameResource* curFrameRes)
+bool CMaterial::UpdateMaterialBuffer(UploadBuffer* materialBuffer)
 {
 	auto result = false;
-	auto curMaterialBuf = curFrameRes->MaterialBuffer.get();
+	auto curMaterialBuf = materialBuffer;
 	for (auto& e : m_materials)
 	{
 		Material* m = e.second.get();

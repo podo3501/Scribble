@@ -13,6 +13,7 @@ class CCamera;
 class CMaterial;
 class CTexture;
 class CModel;
+class CFrameResources;
 class CKeyInputManager;
 class CGameTimer;
 struct RenderItem;
@@ -36,7 +37,6 @@ public:
 private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 
-	void BuildFrameResource();
 	void BuildGraphicMemory();
 	void Load(MeshGeometry* meshGeo);
 	void OnResize();
@@ -58,6 +58,7 @@ private:
 	std::shared_ptr<CRenderer> m_renderer{ nullptr };
 	std::unique_ptr<CCamera> m_camera{ nullptr };
 	std::unique_ptr<CMaterial> m_material{ nullptr };
+	std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	std::unique_ptr<CTexture> m_texture{ nullptr };
 	std::unique_ptr<CModel> m_model{ nullptr };
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
@@ -65,9 +66,9 @@ private:
 
 	std::vector<std::unique_ptr<RenderItem>> m_renderItems{};
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_geometries{};
-	std::vector<std::unique_ptr<FrameResource>> m_frameResources{};
-	UINT m_frameResIdx{ 0 };
-	FrameResource* m_curFrameRes{ nullptr };
+	//std::vector<std::unique_ptr<FrameResource>> m_frameResources{};
+	//UINT m_frameResIdx{ 0 };
+	//FrameResource* m_curFrameRes{ nullptr };
 
 	bool m_frustumCullingEnabled{ false };
 	bool m_appPaused{ false };

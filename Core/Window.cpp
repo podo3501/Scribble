@@ -50,21 +50,29 @@ bool CWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT
 	return false;
 }
 
-
 CWindow::CWindow(HINSTANCE hInstance)
-	: m_appInst(hInstance)
+	: m_className(L"MainWnd")
+	, m_appInst(hInstance)
 {
 	AddWndProcListener([window = this](HWND w, UINT m, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return window->MsgProc(w, m, wp, lp, lr); }); 
+}
+
+CWindow::~CWindow()
+{
+	DestroyWindow(m_wnd);
+	UnregisterClass(m_className.c_str(), m_appInst);
 }
 
 int CWindow::GetWidth() { return m_width; }
 int CWindow::GetHeight() { return m_height; }
 HWND CWindow::GetHandle() { return m_wnd; }
 
+static CWindow* gWindow = nullptr;
 bool CWindow::Initialize()
 {
-	static CWindow* gWindow = this;	//캡쳐가 있으면 WNDPROC으로 변환이 되지 않는다. 그래서 정적변수활용
+	gWindow = this;
+	//캡쳐가 있으면 WNDPROC으로 변환이 되지 않는다. 그래서 정적변수활용
 	auto windowProc = [](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)->LRESULT {
 		return gWindow->WndProc(hwnd, msg, wParam, lParam);
 		};
@@ -79,7 +87,7 @@ bool CWindow::Initialize()
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
 	wc.lpszMenuName = 0;
-	wc.lpszClassName = L"MainWnd";
+	wc.lpszClassName = m_className.c_str();
 
 	if (!RegisterClass(&wc))
 	{

@@ -124,14 +124,11 @@ void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	m_directx3D->SetPipelineStateDesc(inoutDesc);
 }
 
-void CRenderer::Draw(
-	CGameTimer* gt,
-	FrameResource* pCurrFrameRes,
-	const std::vector<std::unique_ptr<RenderItem>>& renderItem)
+void CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std::vector<std::unique_ptr<RenderItem>>& renderItem)
 {
-	auto cmdListAlloc = pCurrFrameRes->CmdListAlloc;
+	auto cmdListAlloc = frameResources->GetCurrCmdListAlloc();
 	ThrowIfFailed(cmdListAlloc->Reset());
-	ThrowIfFailed(m_cmdList->Reset(cmdListAlloc.Get(), m_psoList[toUType(GraphicsPSO::Opaque)].Get()));
+	ThrowIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[toUType(GraphicsPSO::Opaque)].Get()));
 
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
@@ -149,24 +146,24 @@ void CRenderer::Draw(
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
 	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	auto matBuf = pCurrFrameRes->MaterialBuffer->Resource();
-	m_cmdList->SetGraphicsRootShaderResourceView(1, matBuf->GetGPUVirtualAddress());
+	auto matBuf = frameResources->GetUploadBuffer(eBufferType::Material);
+	m_cmdList->SetGraphicsRootShaderResourceView(1, matBuf->Resource()->GetGPUVirtualAddress());
 
-	auto passCB = pCurrFrameRes->PassCB->Resource();
-	m_cmdList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+	auto passCB = frameResources->GetUploadBuffer(eBufferType::PassCB);
+	m_cmdList->SetGraphicsRootConstantBufferView(2, passCB->Resource()->GetGPUVirtualAddress());
 
 	m_cmdList->SetGraphicsRootDescriptorTable(3, m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-	DrawRenderItems(pCurrFrameRes, renderItem);
+	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem);
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
 	
 	m_directx3D->ExcuteCommandLists();
-	pCurrFrameRes->Fence = m_directx3D->ExcuteSwapChain();
+	frameResources->SetFence(m_directx3D->ExcuteSwapChain());
 }
 
-void CRenderer::DrawRenderItems(FrameResource* pCurrFrameRes, const std::vector<std::unique_ptr<RenderItem>>& ritems)
+void CRenderer::DrawRenderItems(UploadBuffer* instanceBuffer, const std::vector<std::unique_ptr<RenderItem>>& ritems)
 {
 	for (auto& ri : ritems)
 	{
@@ -174,8 +171,7 @@ void CRenderer::DrawRenderItems(FrameResource* pCurrFrameRes, const std::vector<
 		m_cmdList->IASetIndexBuffer(&RvToLv(ri->Geo->IndexBufferView()));
 		m_cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
-		auto instanceBuffer = pCurrFrameRes->InstanceBuffer->Resource();
-		m_cmdList->SetGraphicsRootShaderResourceView(0, instanceBuffer->GetGPUVirtualAddress());
+		m_cmdList->SetGraphicsRootShaderResourceView(0, instanceBuffer->Resource()->GetGPUVirtualAddress());
 
 		m_cmdList->DrawIndexedInstanced(ri->IndexCount, ri->InstanceCount,
 			ri->StartIndexLocation, ri->BaseVertexLocation, 0);

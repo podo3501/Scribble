@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <string>
 
+class UploadBuffer;
 struct Material;
 struct FrameResource;
 
@@ -18,7 +19,7 @@ public:
 	CMaterial& operator=(const CMaterial&) = delete;
 
 	void Build();
-	bool UpdateMaterialBuffer(FrameResource* curFrameRes);
+	bool UpdateMaterialBuffer(UploadBuffer* materialBuffer);
 
 	Material* GetMaterial(const std::string& matName);
 	size_t GetCount();

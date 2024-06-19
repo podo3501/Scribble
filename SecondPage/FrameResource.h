@@ -9,32 +9,6 @@ struct ID3D12Fence;
 struct ID3D12Device;
 struct ID3D12CommandAllocator;
 
-// Stores the resources needed for the CPU to build the command lists
-// for a frame.  
-struct FrameResource
-{
-public:
-    
-    FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
-    FrameResource(const FrameResource& rhs) = delete;
-    FrameResource& operator=(const FrameResource& rhs) = delete;
-    ~FrameResource();
-
-    // We cannot reset the allocator until the GPU is done processing the commands.
-    // So each frame needs their own allocator.
-    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc;
-
-    // We cannot update a cbuffer until the GPU is done processing the commands
-    // that reference it.  So each frame needs their own cbuffers.
-    std::unique_ptr<UploadBuffer> PassCB{ nullptr };
-    std::unique_ptr<UploadBuffer> MaterialBuffer{ nullptr };
-    std::unique_ptr<UploadBuffer> InstanceBuffer{ nullptr };
-
-    // Fence value to mark commands up to this fence point.  This lets us
-    // check if these frame resources are still in use by the GPU.
-    UINT64 Fence = 0;
-};
-
 enum class eBufferType : int
 {
 	NoType = 0,
@@ -44,23 +18,39 @@ enum class eBufferType : int
 	Count,
 };
 
-class CFrameResource
+class CFrameResources
 {
-	static const int FrameResourceCount = 3;
+	struct FrameResource
+	{
+		FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
+
+		std::unique_ptr<UploadBuffer> PassCB{ nullptr };
+		std::unique_ptr<UploadBuffer> MaterialBuffer{ nullptr };
+		std::unique_ptr<UploadBuffer> InstanceBuffer{ nullptr };
+
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc{ nullptr };
+	};
 
 public:
-	CFrameResource() = default;
+	static const int FrameResourceCount = 3;
 
-	CFrameResource(const CFrameResource&) = delete;
-	CFrameResource& operator=(const CFrameResource&) = delete;
+	CFrameResources() = default;
+	CFrameResources(const CFrameResources&) = delete;
+	CFrameResources& operator=(const CFrameResources&) = delete;
 
-	bool BuildFrameResource(ID3D12Device* device,
+	bool BuildFrameResources(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
 	void Synchronize(ID3D12Fence* pFence);
+
 	UploadBuffer* GetUploadBuffer(eBufferType bufferType);
+	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_curFrameRes->CmdListAlloc.Get(); }
+	inline void SetFence(UINT64 fenceIdx)	{	m_fenceIdx = fenceIdx;	}
+	inline UINT64 GetFence() { return m_fenceIdx; };
 
 private:
 	std::vector<std::unique_ptr<FrameResource>> m_resources{};
 	FrameResource* m_curFrameRes{ nullptr };
 	UINT m_frameResIdx{ 0 };
+
+	UINT64 m_fenceIdx{ 0 };
 };

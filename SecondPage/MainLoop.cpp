@@ -162,21 +162,14 @@ HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 	std::string geoName = geo->Name;
 	m_geometries[geoName] = std::move(geo);
 
-	BuildFrameResource();			//프레임당 쓰이는 데이터 공간을 확보
+	m_frameResources = std::make_unique<CFrameResources>();
+	m_frameResources->BuildFrameResources(m_renderer->GetDevice(), 
+		1, 125, static_cast<UINT>(m_material->GetCount()));
+	
 	BuildGraphicMemory();			//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 	AddKeyListener();
 
 	return S_OK;
-}
-
-void CMainLoop::BuildFrameResource()
-{
-	for (auto i{ 0 }; i < gFrameResourceCount; ++i)
-	{
-		auto frameRes = std::make_unique<FrameResource>(m_renderer->GetDevice(), 1,
-			125, static_cast<UINT>(m_material->GetCount()));
-		m_frameResources.emplace_back(std::move(frameRes));
-	}
 }
 
 void CMainLoop::BuildGraphicMemory()
@@ -319,7 +312,7 @@ using namespace HelpMatrix;
 
 void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
 {
-	auto& passCB = m_curFrameRes->PassCB;
+	auto passCB = m_frameResources->GetUploadBuffer(eBufferType::PassCB);
 	XMMATRIX view = m_camera->GetView();
 	XMMATRIX proj = m_camera->GetProj();
 
@@ -376,25 +369,16 @@ int CMainLoop::Run()
 				m_camera->Update(m_timer->DeltaTime());
 
 				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
+				m_frameResources->Synchronize(m_directx3D->GetFence());
 
-				ID3D12Fence* pFence = m_directx3D->GetFence();
-				m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
-				m_curFrameRes = m_frameResources[m_frameResIdx].get();
-				if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
-				{
-					HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-					ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
-					WaitForSingleObject(hEvent, INFINITE);
-					CloseHandle(hEvent);
-				}
-
-				m_model->Update(m_timer.get(), m_camera.get(),
-					m_curFrameRes, m_camFrustum, m_frustumCullingEnabled, m_renderItems);
-				m_material->UpdateMaterialBuffer(m_curFrameRes);
+				m_model->Update(m_timer.get(), m_camera.get(), 
+					m_frameResources->GetUploadBuffer(eBufferType::Instance),
+					m_camFrustum, m_frustumCullingEnabled, m_renderItems);
+				m_material->UpdateMaterialBuffer(m_frameResources->GetUploadBuffer(eBufferType::Material));
 
 				UpdateMainPassCB(m_timer.get());
 
-				m_renderer->Draw(m_timer.get(), m_curFrameRes, m_renderItems);
+				m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_renderItems);
 			}
 			else
 			{

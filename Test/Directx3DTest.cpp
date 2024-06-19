@@ -8,6 +8,8 @@
 #include "../Core/Directx3D.h"
 #include "../Core/Window.h"
 #include "../Core/d3dUtil.h"
+#include "../Core/UploadBuffer.h"
+#include "../Core/GameTimer.h"
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Texture.h"
 #include "../SecondPage/Renderer.h"
@@ -18,7 +20,6 @@
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/RendererData.h"
 #include "../SecondPage/KeyInputManager.h"
-#include "../Core/GameTimer.h"
 
 void Load(MeshGeometry* meshGeo, CRenderer* renderer)
 {
@@ -43,6 +44,10 @@ namespace SecondPage
 	{
 	public:
 		MainLoopTest()
+		{}
+
+	protected:
+		void SetUp() override
 		{
 			//초기화
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
@@ -51,33 +56,37 @@ namespace SecondPage
 			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
 			EXPECT_EQ(m_directx3D->Initialize(), true);
 
-			m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
+			m_renderer = std::make_unique<CRenderer>(m_directx3D.get());
 			EXPECT_EQ(m_renderer->Initialize(), true);
 
 			m_material = std::make_unique<CMaterial>();
 			m_material->Build();
 		}
 
-	protected:
-		void SetUp() override
-		{}
+		void TearDown() override
+		{
+			m_material.reset();
+			m_renderer.reset();
+			m_directx3D.reset();
+			m_window.reset();
+		}
 
 	protected:
 		const std::wstring m_resourcePath = L"../Resource/";
 
 		std::unique_ptr<CWindow> m_window{ nullptr };
 		std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
-		std::shared_ptr<CRenderer> m_renderer{ nullptr };
+		std::unique_ptr<CRenderer> m_renderer{ nullptr };
 		std::unique_ptr<CMaterial> m_material{ nullptr };
 	};
 
 	TEST_F(MainLoopTest, FrameResourceTest)
 	{
-		std::unique_ptr<CFrameResource> frameResource = std::make_unique<CFrameResource>();
-		EXPECT_EQ(frameResource->BuildFrameResource(
+		std::unique_ptr<CFrameResources> frameResources = std::make_unique<CFrameResources>();
+		EXPECT_EQ(frameResources->BuildFrameResources(
 			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true );
-		frameResource->Synchronize(m_directx3D->GetFence());
-		EXPECT_EQ(frameResource->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
+		frameResources->Synchronize(m_directx3D->GetFence());
+		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
 	}
 
 	TEST_F(MainLoopTest, Initialize)
@@ -93,14 +102,9 @@ namespace SecondPage
 		geometries[geoName] = std::move(geo);
 
 		//프레임당 쓰이는 데이터 공간을 확보
-		const int gNumFrameResources = 3;
-		std::vector<std::unique_ptr<FrameResource>> m_frameResources;
-		for (auto i{ 0 }; i < gNumFrameResources; ++i)
-		{
-			auto frameRes = std::make_unique<FrameResource>(m_renderer->GetDevice(), 1,
-				125, static_cast<UINT>(m_material->GetCount()));
-			m_frameResources.emplace_back(std::move(frameRes));
-		}
+		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
+		m_frameResources->BuildFrameResources(
+			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount()));
 
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 		m_directx3D->ResetCommandLists();
@@ -146,13 +150,6 @@ namespace SecondPage
 		EXPECT_EQ(pos.z, 1.0f);
 	}
 
-	TEST_F(MainLoopTest, RunTest)
-	{
-		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
-		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);
-		mainLoop->Run();
-	}
-
 	class MainLoopUpdateTest : public ::testing::Test
 	{
 	public:
@@ -177,7 +174,11 @@ namespace SecondPage
 			m_camera = std::make_unique<CCamera>();
 			m_camera->UpdateViewMatrix();
 
-			m_frameResource = std::make_unique<FrameResource>(m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount()));
+			m_frameResources = std::make_unique<CFrameResources>();
+			m_frameResources->BuildFrameResources(
+				m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount()));
+
+			m_frameResources->Synchronize(m_directx3D->GetFence());
 		}
 
 	protected:
@@ -191,7 +192,7 @@ namespace SecondPage
 		std::unique_ptr<CModel> m_model{ nullptr };
 		std::unique_ptr<CCamera> m_camera{ nullptr };
 		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_geometries{};
-		std::unique_ptr<FrameResource> m_frameResource{ nullptr };
+		std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	};
 	TEST_F(MainLoopUpdateTest, UpdateModel)
 	{
@@ -202,13 +203,22 @@ namespace SecondPage
 		m_model->BuildRenderItems(m_geometries.begin()->second.get(), m_material.get(), renderItems);
 		DirectX::BoundingFrustum camFrustum{};
 
-		m_model->Update(&timer, m_camera.get(), m_frameResource.get(), camFrustum, true, renderItems);
+		m_model->Update(&timer, m_camera.get(), m_frameResources->GetUploadBuffer(eBufferType::Instance),
+			camFrustum, true, renderItems);
 		InstanceData instanceData = renderItems.begin()->get()->Instances[2];
 		EXPECT_EQ(instanceData.MaterialIndex, 2);
 	}
 
 	TEST_F(MainLoopUpdateTest, UpdateMaterial)
 	{
-		EXPECT_EQ(m_material->UpdateMaterialBuffer(m_frameResource.get()), true);
+		EXPECT_EQ(m_material->UpdateMaterialBuffer(
+			m_frameResources->GetUploadBuffer(eBufferType::Material)), true);
+	}
+
+	TEST(MainLoop, RunTest)
+	{
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
+		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);
+		mainLoop->Run();
 	}
 } //SecondPage

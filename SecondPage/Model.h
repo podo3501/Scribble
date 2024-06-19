@@ -6,6 +6,7 @@
 class CMaterial;
 class CGameTimer;
 class CCamera;
+class UploadBuffer;
 struct FrameResource;
 struct MeshGeometry;
 struct RenderItem;
@@ -23,7 +24,7 @@ public:
 
 	void Update(const CGameTimer* gt,
 		const CCamera* camera,
-		FrameResource* curFrameRes,
+		UploadBuffer* instanceBuffer,
 		DirectX::BoundingFrustum& camFrustum,
 		bool frustumCullingEnabled,
 		std::vector<std::unique_ptr<RenderItem>>& renderItems);
