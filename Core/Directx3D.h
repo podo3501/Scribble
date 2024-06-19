@@ -44,11 +44,11 @@ public:
 	CDirectx3D& operator=(const CDirectx3D&) = delete;
 
 	bool Initialize();
-	void ResetCommandLists();
-	void ExcuteCommandLists();
-	UINT64 ExcuteSwapChain();
-	void FlushCommandQueue();
-	void OnResize();
+	bool ResetCommandLists();
+	bool ExcuteCommandLists();
+	bool ExcuteSwapChain(UINT64* outFenceIdx);
+	bool FlushCommandQueue();
+	bool OnResize();
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
@@ -66,17 +66,17 @@ private:
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
-	void CreateCommandObjects();
-	void CreateSwapChain();
-	void CreateRtvAndDsvDescriptorHeaps();
+	bool CreateCommandObjects();
+	bool CreateSwapChain();
+	bool CreateRtvAndDsvDescriptorHeaps();
 
-	void CreateDescriptorHeap(
+	bool CreateDescriptorHeap(
 		UINT numDescriptor, 
 		D3D12_DESCRIPTOR_HEAP_TYPE heapType, 
 		ID3D12DescriptorHeap** descriptorHeap);
 
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
-	void Set4xMsaaState(bool value);
+	bool Set4xMsaaState(bool value);
 
 private:
 	CWindow* m_window{ nullptr };

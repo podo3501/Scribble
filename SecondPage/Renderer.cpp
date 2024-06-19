@@ -31,9 +31,9 @@ bool CRenderer::Initialize()
 	return true;
 }
 
-void CRenderer::OnResize(int wndWidth, int wndHeight)
+bool CRenderer::OnResize(int wndWidth, int wndHeight)
 {
-	m_directx3D->OnResize();
+	ReturnIfFalse(m_directx3D->OnResize());
 	// Update the viewport transform to cover the client area.
 	m_screenViewport.TopLeftX = 0;
 	m_screenViewport.TopLeftY = 0;
@@ -43,6 +43,8 @@ void CRenderer::OnResize(int wndWidth, int wndHeight)
 	m_screenViewport.MaxDepth = 1.0f;
 
 	m_scissorRect = { 0, 0, wndWidth, wndHeight };
+
+	return true;
 }
 
 bool CRenderer::BuildRootSignature()
@@ -57,7 +59,7 @@ bool CRenderer::BuildRootSignature()
 	slotRootParameter[2].InitAsConstantBufferView(0);
 	slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	auto staticSamplers = d3dUtil::GetStaticSamplers();
+	auto staticSamplers = CoreUtil::GetStaticSamplers();
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(_countof(slotRootParameter), slotRootParameter,
 		(UINT)staticSamplers.size(), staticSamplers.data(),
@@ -134,11 +136,11 @@ bool CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	return true;
 }
 
-void CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std::vector<std::unique_ptr<RenderItem>>& renderItem)
+bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std::vector<std::unique_ptr<RenderItem>>& renderItem)
 {
 	auto cmdListAlloc = frameResources->GetCurrCmdListAlloc();
-	ThrowIfFailed(cmdListAlloc->Reset());
-	ThrowIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[toUType(GraphicsPSO::Opaque)].Get()));
+	ReturnIfFailed(cmdListAlloc->Reset());
+	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[toUType(GraphicsPSO::Opaque)].Get()));
 
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
@@ -169,8 +171,13 @@ void CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
 	
-	m_directx3D->ExcuteCommandLists();
-	frameResources->SetFence(m_directx3D->ExcuteSwapChain());
+	ReturnIfFalse(m_directx3D->ExcuteCommandLists());
+
+	UINT64 curFenceIdx{ 0 };
+	ReturnIfFalse(m_directx3D->ExcuteSwapChain(&curFenceIdx));
+	frameResources->SetFence(curFenceIdx);
+
+	return true;
 }
 
 void CRenderer::DrawRenderItems(UploadBuffer* instanceBuffer, const std::vector<std::unique_ptr<RenderItem>>& ritems)

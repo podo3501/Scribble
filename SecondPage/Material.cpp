@@ -31,10 +31,8 @@ void CMaterial::Build()
 	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
 }
 
-bool CMaterial::UpdateMaterialBuffer(UploadBuffer* materialBuffer)
+void CMaterial::UpdateMaterialBuffer(UploadBuffer* materialBuffer)
 {
-	auto result = false;
-	auto curMaterialBuf = materialBuffer;
 	for (auto& e : m_materials)
 	{
 		Material* m = e.second.get();
@@ -50,13 +48,10 @@ bool CMaterial::UpdateMaterialBuffer(UploadBuffer* materialBuffer)
 		XMStoreFloat4x4(&matData.MatTransform, XMMatrixTranspose(matTransform));
 		matData.DiffuseMapIndex = m->DiffuseSrvHeapIndex;
 
-		curMaterialBuf->CopyData(m->MatCBIndex, matData);
+		materialBuffer->CopyData(m->MatCBIndex, matData);
 
 		m->NumFramesDirty--;
-		result = true;
 	}
-
-	return result;
 }
 
 Material* CMaterial::GetMaterial(const std::string& matName)

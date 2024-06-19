@@ -88,7 +88,7 @@ inline std::wstring AnsiToWString(const std::string& str)
 #endif 		
     */
 
-class d3dUtil
+class CoreUtil
 {
 public:
 
@@ -114,18 +114,20 @@ public:
 
     static Microsoft::WRL::ComPtr<ID3DBlob> LoadBinary(const std::wstring& filename);
 
-    static Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
+    static bool CreateDefaultBuffer(
         ID3D12Device* device,
         ID3D12GraphicsCommandList* cmdList,
         const void* initData,
         UINT64 byteSize,
-        Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
+        Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer,
+        Microsoft::WRL::ComPtr<ID3D12Resource>* outDefaultBuffer);
 
-	static Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
+	static bool CompileShader(
 		const std::wstring& filename,
 		const D3D_SHADER_MACRO* defines,
 		const std::string& entrypoint,
-		const std::string& target);
+		const std::string& target,
+        Microsoft::WRL::ComPtr<ID3DBlob>* outBlob);
 
     static HRESULT LoadTextureFromFile(
         ID3D12Device* device,
@@ -137,11 +139,11 @@ public:
     static std::vector<D3D12_STATIC_SAMPLER_DESC> GetStaticSamplers();
 };
 
-class DxException
+class CoreException
 {
 public:
-    DxException() = default;
-    DxException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber);
+    CoreException() = default;
+    CoreException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber);
 
     std::wstring ToString()const;
 
@@ -292,7 +294,7 @@ struct Texture
 {                                                                     \
     HRESULT hr__ = (x);                                               \
     std::wstring wfn = AnsiToWString(__FILE__);                       \
-    if(FAILED(hr__)) { throw DxException(hr__, L#x, wfn, __LINE__); } \
+    if(FAILED(hr__)) { throw CoreException(hr__, L#x, wfn, __LINE__); } \
 }
 #endif
 

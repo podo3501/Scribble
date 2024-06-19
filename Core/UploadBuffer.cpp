@@ -14,7 +14,7 @@ UploadBuffer::UploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCo
     // UINT   SizeInBytes;   // multiple of 256
     // } D3D12_CONSTANT_BUFFER_VIEW_DESC;
     if (isConstantBuffer)
-        mElementByteSize = d3dUtil::CalcConstantBufferByteSize(static_cast<UINT>(typeSize));
+        mElementByteSize = CoreUtil::CalcConstantBufferByteSize(static_cast<UINT>(typeSize));
 
     CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(mElementByteSize * elementCount);

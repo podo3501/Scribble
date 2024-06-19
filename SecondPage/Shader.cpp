@@ -29,11 +29,8 @@ bool CShader::InsertShaderList(ShaderType shaderType, std::wstring&& filename)
 	if (shaderVersion.empty())
 		return false;
 	
-	ComPtr<ID3DBlob> blob = d3dUtil::CompileShader(std::move(filename), nullptr, "main", std::move(shaderVersion));
-	if (blob == nullptr)
-		return false;
-
-	m_shaderList[toUType(shaderType)] = blob;
+	ReturnIfFalse(CoreUtil::CompileShader(
+		std::move(filename), nullptr, "main", std::move(shaderVersion), &m_shaderList[toUType(shaderType)]));
 
 	return true;
 }

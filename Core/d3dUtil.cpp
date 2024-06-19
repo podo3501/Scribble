@@ -6,20 +6,12 @@
 
 using Microsoft::WRL::ComPtr;
 
-DxException::DxException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
-    ErrorCode(hr),
-    FunctionName(functionName),
-    Filename(filename),
-    LineNumber(lineNumber)
-{
-}
-
-bool d3dUtil::IsKeyDown(int vkeyCode)
+bool CoreUtil::IsKeyDown(int vkeyCode)
 {
     return (GetAsyncKeyState(vkeyCode) & 0x8000) != 0;
 }
 
-ComPtr<ID3DBlob> d3dUtil::LoadBinary(const std::wstring& filename)
+ComPtr<ID3DBlob> CoreUtil::LoadBinary(const std::wstring& filename)
 {
     std::ifstream fin(filename, std::ios::binary);
 
@@ -27,8 +19,9 @@ ComPtr<ID3DBlob> d3dUtil::LoadBinary(const std::wstring& filename)
     std::ifstream::pos_type size = (int)fin.tellg();
     fin.seekg(0, std::ios_base::beg);
 
-    ComPtr<ID3DBlob> blob;
-    ThrowIfFailed(D3DCreateBlob(static_cast<SIZE_T>(size), blob.GetAddressOf()));
+    ComPtr<ID3DBlob> blob{ nullptr };
+    HRESULT hResult = D3DCreateBlob(static_cast<SIZE_T>(size), blob.GetAddressOf());
+    if (FAILED(hResult)) return nullptr;
 
     fin.read((char*)blob->GetBufferPointer(), size);
     fin.close();
@@ -36,18 +29,19 @@ ComPtr<ID3DBlob> d3dUtil::LoadBinary(const std::wstring& filename)
     return blob;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
+bool CoreUtil::CreateDefaultBuffer(
     ID3D12Device* device,
     ID3D12GraphicsCommandList* cmdList,
     const void* initData,
     UINT64 byteSize,
-    Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer)
+    Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer,
+    Microsoft::WRL::ComPtr<ID3D12Resource>* outDefaultBuffer)
 {
-    ComPtr<ID3D12Resource> defaultBuffer;
+    ComPtr<ID3D12Resource> defaultBuffer{ nullptr };
 
     // 실제 기본 버퍼 자원을 생성한다.
     // 정적 기하구조를 그릴 때에는 최적의 성능을 위해 기본힙(D3D12_HEAP_TYPE_DEFAULT)에 넣는다.
-    ThrowIfFailed(device->CreateCommittedResource(
+    ReturnIfFailed(device->CreateCommittedResource(
         &RvToLv(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
         D3D12_HEAP_FLAG_NONE,
         &RvToLv(CD3DX12_RESOURCE_DESC(CD3DX12_RESOURCE_DESC::Buffer(byteSize))),
@@ -57,7 +51,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
 
     // cpu메모리(ram)의 자료를 기본 버퍼(vram)에 복사하려면
     // 임시 업로드 힙을 만들어야 한다. 기본버퍼는 cpu에서 접근이 가능하지 않기 때문이다. 
-    ThrowIfFailed(device->CreateCommittedResource(
+    ReturnIfFailed(device->CreateCommittedResource(
         &RvToLv(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD)),
 		D3D12_HEAP_FLAG_NONE,
         &RvToLv(CD3DX12_RESOURCE_DESC(CD3DX12_RESOURCE_DESC::Buffer(byteSize))),
@@ -91,15 +85,17 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
     // the command list has not been executed yet that performs the actual copy.
     // The caller can Release the uploadBuffer after it knows the copy has been executed.
 
+    (*outDefaultBuffer) = defaultBuffer;
 
-    return defaultBuffer;
+    return true;
 }
 
-ComPtr<ID3DBlob> d3dUtil::CompileShader(
+bool CoreUtil::CompileShader(
 	const std::wstring& filename,
 	const D3D_SHADER_MACRO* defines,
 	const std::string& entrypoint,
-	const std::string& target)
+	const std::string& target,
+    ComPtr<ID3DBlob>* outBlob)
 {
 	UINT compileFlags = 0;
 #if defined(DEBUG) || defined(_DEBUG)  
@@ -116,12 +112,13 @@ ComPtr<ID3DBlob> d3dUtil::CompileShader(
 	if(errors != nullptr)
 		OutputDebugStringA((char*)errors->GetBufferPointer());
 
-	ThrowIfFailed(hr);
+	ReturnIfFailed(hr);
+    (*outBlob) = byteCode;
 
-	return byteCode;
+    return true;
 }
 
-HRESULT d3dUtil::LoadTextureFromFile(
+HRESULT CoreUtil::LoadTextureFromFile(
     ID3D12Device* device,
     ID3D12GraphicsCommandList* cmdList,
     std::wstring&& filename,
@@ -166,16 +163,7 @@ HRESULT d3dUtil::LoadTextureFromFile(
     return S_OK;
 }
 
-std::wstring DxException::ToString()const
-{
-    // Get the string description of the error code.
-    _com_error err(ErrorCode);
-    std::wstring msg = err.ErrorMessage();
-
-    return FunctionName + L" failed in " + Filename + L"; line " + std::to_wstring(LineNumber) + L"; error: " + msg;
-}
-
-std::vector<D3D12_STATIC_SAMPLER_DESC> d3dUtil::GetStaticSamplers()
+std::vector<D3D12_STATIC_SAMPLER_DESC> CoreUtil::GetStaticSamplers()
 {
     std::vector<D3D12_STATIC_SAMPLER_DESC> samplers;
 
@@ -199,6 +187,22 @@ std::vector<D3D12_STATIC_SAMPLER_DESC> d3dUtil::GetStaticSamplers()
     MakeSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0.0f, 8);
 
     return samplers;
+}
+
+CoreException::CoreException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
+    ErrorCode(hr),
+    FunctionName(functionName),
+    Filename(filename),
+    LineNumber(lineNumber)
+{}
+
+std::wstring CoreException::ToString()const
+{
+    // Get the string description of the error code.
+    _com_error err(ErrorCode);
+    std::wstring msg = err.ErrorMessage();
+
+    return FunctionName + L" failed in " + Filename + L"; line " + std::to_wstring(LineNumber) + L"; error: " + msg;
 }
 
 

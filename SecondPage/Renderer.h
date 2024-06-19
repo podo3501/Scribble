@@ -41,8 +41,8 @@ public:
 	CRenderer& operator=(const CRenderer&) = delete;
 
 	bool Initialize();
-	void OnResize(int wndWidth, int wndHeight);
-	void Draw(CGameTimer* gt, CFrameResources* pCurrFrameRes,
+	bool OnResize(int wndWidth, int wndHeight);
+	bool Draw(CGameTimer* gt, CFrameResources* pCurrFrameRes,
 		const std::vector<std::unique_ptr<RenderItem>>& renderItem);
 
 	inline ID3D12Device* GetDevice() const;

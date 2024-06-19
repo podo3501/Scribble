@@ -19,7 +19,7 @@ public:
 	CMaterial& operator=(const CMaterial&) = delete;
 
 	void Build();
-	bool UpdateMaterialBuffer(UploadBuffer* materialBuffer);
+	void UpdateMaterialBuffer(UploadBuffer* materialBuffer);
 
 	Material* GetMaterial(const std::string& matName);
 	size_t GetCount();

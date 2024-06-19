@@ -32,14 +32,14 @@ public:
 	CMainLoop& operator=(const CMainLoop&) = delete;
 
 	bool Initialize(HINSTANCE hInstance);
-	int Run();
+	bool Run();
 
 private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 
-	void BuildGraphicMemory();
-	void Load(MeshGeometry* meshGeo);
-	void OnResize();
+	bool BuildGraphicMemory();
+	bool Load(MeshGeometry* meshGeo);
+	bool OnResize();
 
 	void AddKeyListener();
 	void PressedKey(std::vector<int> keyList);

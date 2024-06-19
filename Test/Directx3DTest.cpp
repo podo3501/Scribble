@@ -21,21 +21,23 @@
 #include "../SecondPage/RendererData.h"
 #include "../SecondPage/KeyInputManager.h"
 
-void Load(MeshGeometry* meshGeo, CRenderer* renderer)
+bool Load(MeshGeometry* meshGeo, CRenderer* renderer)
 {
-	meshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		renderer->GetDevice(), renderer->GetCommandList(), 
 		meshGeo->VertexBufferCPU->GetBufferPointer(), 
 		meshGeo->VertexBufferByteSize,
-		meshGeo->VertexBufferUploader);
+		meshGeo->VertexBufferUploader, 
+		&meshGeo->VertexBufferGPU));
 	
-	meshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		renderer->GetDevice(), renderer->GetCommandList(), 
 		meshGeo->IndexBufferCPU->GetBufferPointer(),
 		meshGeo->IndexBufferByteSize,
-		meshGeo->IndexBufferUploader);
+		meshGeo->IndexBufferUploader,
+		&meshGeo->IndexBufferGPU));
 
-	return;
+	return true;
 }
 
 namespace SecondPage 
@@ -95,25 +97,25 @@ namespace SecondPage
 		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_resourcePath + L"Textures/");
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
 
-		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> geometries;
+		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> geometries{};
 		auto geo = std::make_unique<MeshGeometry>();
-		model->Read(geo.get());
+		EXPECT_EQ(model->Read(geo.get()), true);
 		std::string geoName = geo->Name;
 		geometries[geoName] = std::move(geo);
 
 		//프레임당 쓰이는 데이터 공간을 확보
 		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
-		m_frameResources->BuildFrameResources(
-			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount()));
+		EXPECT_EQ(m_frameResources->BuildFrameResources(
+			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true);
 
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-		m_directx3D->ResetCommandLists();
+		EXPECT_EQ(m_directx3D->ResetCommandLists(), true);
 
-		texture->Load(m_renderer.get());
-		Load(geometries[geoName].get(), m_renderer.get());
+		EXPECT_EQ(texture->Load(m_renderer.get()), true);
+		EXPECT_EQ(Load(geometries[geoName].get(), m_renderer.get()), true);
 
-		m_directx3D->ExcuteCommandLists();
-		m_directx3D->FlushCommandQueue();
+		EXPECT_EQ(m_directx3D->ExcuteCommandLists(), true);
+		EXPECT_EQ(m_directx3D->FlushCommandQueue(), true);
 
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
 		camera->SetPosition(0.0f, 2.0f, -15.0f);
@@ -156,10 +158,10 @@ namespace SecondPage
 		MainLoopUpdateTest()
 		{
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-			m_window->Initialize();
+			EXPECT_EQ(m_window->Initialize(), true);
 
 			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-			m_directx3D->Initialize();
+			EXPECT_EQ(m_directx3D->Initialize(), true);
 
 			m_material = std::make_unique<CMaterial>();
 			m_material->Build();
@@ -167,7 +169,7 @@ namespace SecondPage
 			m_model = std::make_unique<CModel>();
 
 			auto geo = std::make_unique<MeshGeometry>();
-			m_model->Read(geo.get());
+			EXPECT_EQ(m_model->Read(geo.get()), true);
 			std::string geoName = geo->Name;
 			m_geometries[geoName] = std::move(geo);
 
@@ -175,10 +177,10 @@ namespace SecondPage
 			m_camera->UpdateViewMatrix();
 
 			m_frameResources = std::make_unique<CFrameResources>();
-			m_frameResources->BuildFrameResources(
-				m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount()));
+			EXPECT_EQ(m_frameResources->BuildFrameResources(
+				m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true);
 
-			m_frameResources->Synchronize(m_directx3D->GetFence());
+			EXPECT_EQ(m_frameResources->Synchronize(m_directx3D->GetFence()), true);
 		}
 
 	protected:
@@ -211,14 +213,13 @@ namespace SecondPage
 
 	TEST_F(MainLoopUpdateTest, UpdateMaterial)
 	{
-		EXPECT_EQ(m_material->UpdateMaterialBuffer(
-			m_frameResources->GetUploadBuffer(eBufferType::Material)), true);
+		m_material->UpdateMaterialBuffer(m_frameResources->GetUploadBuffer(eBufferType::Material));
 	}
 
 	TEST(MainLoop, RunTest)
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), true);
-		mainLoop->Run();
+		EXPECT_EQ(mainLoop->Run(), true);
 	}
 } //SecondPage

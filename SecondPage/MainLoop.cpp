@@ -9,7 +9,6 @@
 #include "../Core/GameTimer.h"
 #include "./Shader.h"
 #include "./Renderer.h"
-#include "./RendererDefine.h"
 #include "./Material.h"
 #include "./Model.h"
 #include "./FrameResource.h"
@@ -147,7 +146,7 @@ bool CMainLoop::Initialize(HINSTANCE hInstance)
 	m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
 	ReturnIfFalse(m_renderer->Initialize());
 
-	OnResize();
+	ReturnIfFalse(OnResize());
 
 	//데이터를 시스템 메모리에 올리기
 	m_material = std::make_unique<CMaterial>();
@@ -157,61 +156,69 @@ bool CMainLoop::Initialize(HINSTANCE hInstance)
 	m_model = std::make_unique<CModel>();
 
 	auto geo = std::make_unique<MeshGeometry>();
-	m_model->Read(geo.get());
+	ReturnIfFalse(m_model->Read(geo.get()));
 	m_model->BuildRenderItems(geo.get(), m_material.get(), m_renderItems);
 	std::string geoName = geo->Name;
 	m_geometries[geoName] = std::move(geo);
 
 	m_frameResources = std::make_unique<CFrameResources>();
-	m_frameResources->BuildFrameResources(m_renderer->GetDevice(), 
-		1, 125, static_cast<UINT>(m_material->GetCount()));
+	ReturnIfFalse(m_frameResources->BuildFrameResources(m_renderer->GetDevice(),
+		1, 125, static_cast<UINT>(m_material->GetCount())));
 	
-	BuildGraphicMemory();			//시스템 메모리에서 그래픽 메모리에 데이터 올리기
+	ReturnIfFalse(BuildGraphicMemory());			//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 	AddKeyListener();
 
 	return true;
 }
 
-void CMainLoop::BuildGraphicMemory()
+bool CMainLoop::BuildGraphicMemory()
 {
 	//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-	m_directx3D->ResetCommandLists();
+	ReturnIfFalse(m_directx3D->ResetCommandLists());
 
 	m_texture->Load(m_renderer.get());
-	for_each(m_geometries.begin(), m_geometries.end(), [mainLoop = this](auto& geometry) {
-		auto& meshGeo = geometry.second;
-		mainLoop->Load(meshGeo.get()); });
+	for (auto iter = m_geometries.begin(); iter != m_geometries.end(); ++iter)
+	{
+		auto& meshGeo = iter->second;
+		ReturnIfFalse(Load(meshGeo.get()));
+	}
 
-	m_directx3D->ExcuteCommandLists();
-	m_directx3D->FlushCommandQueue();
+	ReturnIfFalse(m_directx3D->ExcuteCommandLists());
+	ReturnIfFalse(m_directx3D->FlushCommandQueue());
+
+	return true;
 }
 
-void CMainLoop::Load(MeshGeometry* meshGeo)
+bool CMainLoop::Load(MeshGeometry* meshGeo)
 {
-	meshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		m_renderer->GetDevice(), m_renderer->GetCommandList(),
 		meshGeo->VertexBufferCPU->GetBufferPointer(),
 		meshGeo->VertexBufferByteSize,
-		meshGeo->VertexBufferUploader);
+		meshGeo->VertexBufferUploader, 
+		&meshGeo->VertexBufferGPU));
 
-	meshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		m_renderer->GetDevice(), m_renderer->GetCommandList(),
 		meshGeo->IndexBufferCPU->GetBufferPointer(),
 		meshGeo->IndexBufferByteSize,
-		meshGeo->IndexBufferUploader);
+		meshGeo->IndexBufferUploader,
+		&meshGeo->IndexBufferGPU));
 
-	return;
+	return true;
 }
 
-void CMainLoop::OnResize()
+bool CMainLoop::OnResize()
 {
 	int width = m_window->GetWidth();
 	int height = m_window->GetHeight();
-	m_renderer->OnResize(width, height);
+	ReturnIfFalse(m_renderer->OnResize(width, height));
 	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
 
 	BoundingFrustum::CreateFromMatrix(m_camFrustum, m_camera->GetProj());
+
+	return true;
 }
 
 void CMainLoop::AddKeyListener()
@@ -343,7 +350,7 @@ void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
 	passCB->CopyData(0, pc);
 }
 
-int CMainLoop::Run()
+bool CMainLoop::Run()
 {
 	MSG msg = { 0 };
 	m_timer = std::make_unique<CGameTimer>();
@@ -369,7 +376,7 @@ int CMainLoop::Run()
 				m_camera->Update(m_timer->DeltaTime());
 
 				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
-				m_frameResources->Synchronize(m_directx3D->GetFence());
+				ReturnIfFalse(m_frameResources->Synchronize(m_directx3D->GetFence()));
 
 				m_model->Update(m_timer.get(), m_camera.get(), 
 					m_frameResources->GetUploadBuffer(eBufferType::Instance),
@@ -378,7 +385,7 @@ int CMainLoop::Run()
 
 				UpdateMainPassCB(m_timer.get());
 
-				m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_renderItems);
+				ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_renderItems));
 			}
 			else
 			{
@@ -387,5 +394,5 @@ int CMainLoop::Run()
 		}
 	}
 
-	return (int)msg.wParam;
+	return true;
 }

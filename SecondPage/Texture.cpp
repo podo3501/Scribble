@@ -5,7 +5,7 @@
 
 using namespace DirectX;
 
-void CTexture::Load(CRenderer* renderer)
+bool CTexture::Load(CRenderer* renderer)
 {
 	std::vector<std::wstring> filenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
@@ -13,15 +13,19 @@ void CTexture::Load(CRenderer* renderer)
 	ID3D12Device* device = renderer->GetDevice();
 	ID3D12GraphicsCommandList* cmdList = renderer->GetCommandList();
 
-	for_each(filenames.begin(), filenames.end(), [&](auto& curFilename) {
+	for (auto beg = filenames.begin(); beg != filenames.end(); ++beg)
+	{
+		auto& curFilename = (*beg);
 		auto tex = std::make_unique<Texture>();
 		tex->Filename = m_filePath + curFilename;
-		ThrowIfFailed(CreateDDSTextureFromFile12(device, cmdList,
+		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
 			tex->Filename.c_str(), tex->Resource, tex->UploadHeap));
 		m_textureList.emplace_back(std::move(tex));
-		});
+	}
 
 	CreateShaderResourceView(device, renderer->GetSrvDescriptorHeap());
+
+	return true;
 }
 
 void CTexture::CreateShaderResourceView(ID3D12Device* device, ID3D12DescriptorHeap* srvDescHeap)

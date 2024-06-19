@@ -17,7 +17,7 @@ public:
 		: m_filePath(std::forward<T>(filePath))
 	{}
 
-	void Load(CRenderer* renderer);
+	bool Load(CRenderer* renderer);
 
 	CTexture() = delete;
 	CTexture(const CTexture&) = delete;
