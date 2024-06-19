@@ -7,6 +7,7 @@
 #include <dxgiformat.h>
 #include <d3d12.h>
 #include <functional>
+#include "../Core/d3dx12.h"
 
 #if defined(DEBUG) || defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
@@ -108,3 +109,11 @@ private:
 inline ID3D12Device* CDirectx3D::GetDevice() const { return m_device.Get(); }
 inline ID3D12GraphicsCommandList* CDirectx3D::GetCommandList() const {	return m_commandList.Get(); }
 inline ID3D12Fence* CDirectx3D::GetFence() const { return m_fence.Get(); }
+inline ID3D12Resource* CDirectx3D::CurrentBackBuffer() const { return m_swapChainBuffer[m_currBackBuffer].Get(); }
+inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::CurrentBackBufferView() const
+{
+	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
+		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
+		m_currBackBuffer,
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+}

@@ -384,19 +384,6 @@ void CDirectx3D::Set4xMsaaState(bool value)
 	OnResize();
 }
 
-inline ID3D12Resource* CDirectx3D::CurrentBackBuffer() const
-{
-	return m_swapChainBuffer[m_currBackBuffer].Get();
-}
-
-inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::CurrentBackBufferView() const
-{
-	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		m_currBackBuffer,
-		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
-}
-
 inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
 {
 	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();

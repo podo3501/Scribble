@@ -131,7 +131,7 @@ namespace SecondPage
 		EXPECT_EQ(pos.z, 1.0f);
 	}
 
-	TEST_F(MainLoopTest, Excute)
+	TEST_F(MainLoopTest, RunTest)
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);

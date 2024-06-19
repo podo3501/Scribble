@@ -129,19 +129,25 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 
 HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 {
+	m_camera = std::make_unique<CCamera>();
+	m_camera->SetPosition(0.0f, 2.0f, -15.0f);
+	m_camera->SetSpeed(eMove::Forward, 10.0f);
+	m_camera->SetSpeed(eMove::Back, 10.0f);
+	m_camera->SetSpeed(eMove::Right, 10.0f);
+	m_camera->SetSpeed(eMove::Left, 10.0f);
+
 	m_window = std::make_unique<CWindow>(hInstance);
 	ReturnIfFailed(m_window->Initialize());
 	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
 
 	m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-	ReturnIfFailed(m_directx3D->Initialize());;
+	ReturnIfFailed(m_directx3D->Initialize());
 
 	m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
 	ReturnIfFalse(m_renderer->Initialize());
 
-	m_camera = std::make_unique<CCamera>();
-	m_camera->SetPosition(0.0f, 2.0f, -15.0f);
+	OnResize();
 
 	//데이터를 시스템 메모리에 올리기
 	m_material = std::make_unique<CMaterial>();
@@ -206,9 +212,10 @@ void CMainLoop::Load(MeshGeometry* meshGeo)
 
 void CMainLoop::OnResize()
 {
-	auto aspectRatio =
-		static_cast<float>(m_window->GetWidth()) /
-		static_cast<float>(m_window->GetHeight());
+	int width = m_window->GetWidth();
+	int height = m_window->GetHeight();
+	m_renderer->OnResize(width, height);
+	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
 
 	BoundingFrustum::CreateFromMatrix(m_camFrustum, m_camera->GetProj());
@@ -265,6 +272,7 @@ void CMainLoop::OnMouseMove(WPARAM btnState, int x, int y)
 int CMainLoop::Run()
 {
 	MSG msg = { 0 };
+	m_timer = std::make_unique<CGameTimer>();
 	m_timer->Reset();
 
 	while (msg.message != WM_QUIT)
@@ -353,11 +361,16 @@ void CMainLoop::OnKeyboardInput()
 		return pressedKeyList; });
 }
 
-void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
-void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
-XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
-XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
-XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
+namespace HelpMatrix
+{
+	void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
+	void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
+	XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
+	XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
+	XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
+};
+
+using namespace HelpMatrix;
 
 void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
 {
