@@ -301,16 +301,16 @@ struct Texture
 {                                                                     \
     HRESULT hr__ = (x);                                               \
     if(FAILED(hr__))                                            \
-        return hr__;                                                \
+        return false;                                                \
 }
 #endif
 
 #ifndef ReturnIfFalse
-#define ReturnIfFalse(x)                                              \
-{                                                                     \
-    bool result = (x);                                               \
-    if(!result)                                            \
-        return E_FAIL;                                                \
+#define ReturnIfFalse(x)                       \
+{                                                             \
+    bool result = (x);                               \
+    if(!result)                                           \
+        return result;                                 \
 }
 #endif
 

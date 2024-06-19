@@ -85,7 +85,7 @@ namespace SecondPage
 		std::unique_ptr<CFrameResources> frameResources = std::make_unique<CFrameResources>();
 		EXPECT_EQ(frameResources->BuildFrameResources(
 			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true );
-		frameResources->Synchronize(m_directx3D->GetFence());
+		EXPECT_EQ(frameResources->Synchronize(m_directx3D->GetFence()), true);
 		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
 	}
 
@@ -218,7 +218,7 @@ namespace SecondPage
 	TEST(MainLoop, RunTest)
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
-		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), S_OK);
+		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), true);
 		mainLoop->Run();
 	}
 } //SecondPage

@@ -24,8 +24,8 @@ CRenderer::CRenderer(CDirectx3D* directx3D)
 
 bool CRenderer::Initialize()
 {
-	BuildRootSignature();
-	BuildDescriptorHeaps();
+	ReturnIfFalse(BuildRootSignature());
+	ReturnIfFalse(BuildDescriptorHeaps());
 	BuildPSOs();
 
 	return true;
@@ -45,7 +45,7 @@ void CRenderer::OnResize(int wndWidth, int wndHeight)
 	m_scissorRect = { 0, 0, wndWidth, wndHeight };
 }
 
-void CRenderer::BuildRootSignature()
+bool CRenderer::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE texTable;
 	
@@ -72,32 +72,38 @@ void CRenderer::BuildRootSignature()
 	{
 		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 	}
-	ThrowIfFailed(hr);
+	ReturnIfFailed(hr);
 
-	ThrowIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
+	ReturnIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
 		IID_PPV_ARGS(&m_rootSignature)));
+
+	return true;
 }
 
-void CRenderer::BuildDescriptorHeaps()
+bool CRenderer::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
 	heapDesc.NodeMask = 0;
 	heapDesc.NumDescriptors = DescriptorHeapSize;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvDescHeap)));
+	ReturnIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvDescHeap)));
+
+	return true;
 }
 
-void CRenderer::BuildPSOs()
+bool CRenderer::BuildPSOs()
 {
 	for (auto gPso : GraphicsPSO_ALL)
-		MakePSOPipelineState(gPso);
+		ReturnIfFalse(MakePSOPipelineState(gPso));
+
+	return true;
 }
 
-void CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
+bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	MakeOpaqueDesc(&psoDesc);
+	ReturnIfFalse(MakeOpaqueDesc(&psoDesc));
 
 	switch (psoType)
 	{
@@ -105,11 +111,13 @@ void CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	default: assert(!"wrong type");
 	}
 	
-	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, 
+	ReturnIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, 
 		IID_PPV_ARGS(&m_psoList[toUType(psoType)])));
+
+	return true;
 }
 
-void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+bool CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
 	inoutDesc->NodeMask = 0;
 	inoutDesc->SampleMask = UINT_MAX;
@@ -120,8 +128,10 @@ void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	inoutDesc->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	inoutDesc->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-	m_shader->SetPipelineStateDesc(inoutDesc);
+	ReturnIfFalse(m_shader->SetPipelineStateDesc(inoutDesc));
 	m_directx3D->SetPipelineStateDesc(inoutDesc);
+
+	return true;
 }
 
 void CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std::vector<std::unique_ptr<RenderItem>>& renderItem)

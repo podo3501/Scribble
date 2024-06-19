@@ -96,10 +96,10 @@ bool CModel::Read(MeshGeometry* meshGeo)
 	meshGeo->VertexBufferByteSize = vbByteSize;
 	meshGeo->VertexByteStride = sizeof(Vertex);
 
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &meshGeo->VertexBufferCPU));
+	ReturnIfFailed(D3DCreateBlob(vbByteSize, &meshGeo->VertexBufferCPU));
 	CopyMemory(meshGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &meshGeo->IndexBufferCPU));
+	ReturnIfFailed(D3DCreateBlob(ibByteSize, &meshGeo->IndexBufferCPU));
 	CopyMemory(meshGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
 	meshGeo->IndexFormat = DXGI_FORMAT_R32_UINT;

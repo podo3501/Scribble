@@ -3,15 +3,18 @@
 #include "../Core/d3dUtil.h"
 #include "../Core/UploadBuffer.h"
 
-CFrameResources::FrameResource::FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount)
+bool CFrameResources::FrameResource::CreateUpdateBuffer(
+	ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount)
 {
-	ThrowIfFailed(device->CreateCommandAllocator(
+	ReturnIfFailed(device->CreateCommandAllocator(
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
 		IID_PPV_ARGS(CmdListAlloc.GetAddressOf())));
 
-    PassCB = std::make_unique<UploadBuffer>(device, sizeof(PassConstants), passCount, true);
-    MaterialBuffer = std::make_unique<UploadBuffer>(device, sizeof(MaterialData), materialCount, false);
-    InstanceBuffer = std::make_unique<UploadBuffer>(device, sizeof(InstanceData), maxInstanceCount, false);
+	PassCB = std::make_unique<UploadBuffer>(device, sizeof(PassConstants), passCount, true);
+	MaterialBuffer = std::make_unique<UploadBuffer>(device, sizeof(MaterialData), materialCount, false);
+	InstanceBuffer = std::make_unique<UploadBuffer>(device, sizeof(InstanceData), maxInstanceCount, false);
+
+	return true;
 }
 
 bool CFrameResources::BuildFrameResources(ID3D12Device* device,
@@ -19,25 +22,27 @@ bool CFrameResources::BuildFrameResources(ID3D12Device* device,
 {
 	for (auto i{ 0 }; i < FrameResourceCount; ++i)
 	{
-		auto frameRes = std::make_unique<FrameResource>(device, passCount,
-			instanceCount, matCount);
+		auto frameRes = std::make_unique<FrameResource>();
+		ReturnIfFalse(frameRes->CreateUpdateBuffer(device, passCount, instanceCount, matCount));
 		m_resources.emplace_back(std::move(frameRes));
 	}
 
 	return true;
 }
 
-void CFrameResources::Synchronize(ID3D12Fence* pFence)
+bool CFrameResources::Synchronize(ID3D12Fence* pFence)
 {
 	m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
 	m_curFrameRes = m_resources[m_frameResIdx].get();
 	if (m_fenceIdx != 0 && pFence->GetCompletedValue() < m_fenceIdx)
 	{
 		HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-		ThrowIfFailed(pFence->SetEventOnCompletion(m_fenceIdx, hEvent));
+		ReturnIfFailed(pFence->SetEventOnCompletion(m_fenceIdx, hEvent));
 		WaitForSingleObject(hEvent, INFINITE);
 		CloseHandle(hEvent);
 	}
+
+	return true;
 }
 
 UploadBuffer* CFrameResources::GetUploadBuffer(eBufferType bufferType)

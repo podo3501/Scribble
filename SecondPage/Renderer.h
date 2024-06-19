@@ -50,11 +50,11 @@ public:
 	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 
 private:
-	void BuildRootSignature();
-	void BuildDescriptorHeaps();
-	void BuildPSOs();
-	void MakePSOPipelineState(GraphicsPSO psoType);
-	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	bool BuildRootSignature();
+	bool BuildDescriptorHeaps();
+	bool BuildPSOs();
+	bool MakePSOPipelineState(GraphicsPSO psoType);
+	bool MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void DrawRenderItems(UploadBuffer* instanceBuffer, 
 		const std::vector<std::unique_ptr<RenderItem>>& ritems);
 

@@ -22,7 +22,7 @@ class CFrameResources
 {
 	struct FrameResource
 	{
-		FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
+		bool CreateUpdateBuffer(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
 
 		std::unique_ptr<UploadBuffer> PassCB{ nullptr };
 		std::unique_ptr<UploadBuffer> MaterialBuffer{ nullptr };
@@ -40,7 +40,7 @@ public:
 
 	bool BuildFrameResources(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
-	void Synchronize(ID3D12Fence* pFence);
+	bool Synchronize(ID3D12Fence* pFence);
 
 	UploadBuffer* GetUploadBuffer(eBufferType bufferType);
 	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_curFrameRes->CmdListAlloc.Get(); }

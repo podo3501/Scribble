@@ -127,7 +127,7 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 	return false;
 }
 
-HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
+bool CMainLoop::Initialize(HINSTANCE hInstance)
 {
 	m_camera = std::make_unique<CCamera>();
 	m_camera->SetPosition(0.0f, 2.0f, -15.0f);
@@ -137,12 +137,12 @@ HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 	m_camera->SetSpeed(eMove::Left, 10.0f);
 
 	m_window = std::make_unique<CWindow>(hInstance);
-	ReturnIfFailed(m_window->Initialize());
+	ReturnIfFalse(m_window->Initialize());
 	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
 
 	m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-	ReturnIfFailed(m_directx3D->Initialize());
+	ReturnIfFalse(m_directx3D->Initialize());
 
 	m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
 	ReturnIfFalse(m_renderer->Initialize());
@@ -169,7 +169,7 @@ HRESULT CMainLoop::Initialize(HINSTANCE hInstance)
 	BuildGraphicMemory();			//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 	AddKeyListener();
 
-	return S_OK;
+	return true;
 }
 
 void CMainLoop::BuildGraphicMemory()

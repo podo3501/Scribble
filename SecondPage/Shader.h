@@ -4,6 +4,7 @@
 #include <wrl.h>
 #include <d3dcommon.h>
 #include <array>
+#include <string>
 
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct D3D12_INPUT_ELEMENT_DESC;
@@ -19,10 +20,14 @@ class CShader
 
 public:
 	CShader();
-	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	bool SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 	CShader(const CShader&) = delete;
 	CShader& operator=(const CShader&) = delete;
+
+private:
+	std::string GetShaderVersion(ShaderType shaderType);
+	bool InsertShaderList(ShaderType shaderType, std::wstring&& filename);
 
 private:
 	std::array<Microsoft::WRL::ComPtr<ID3DBlob>, static_cast<size_t>(ShaderType::Count)> m_shaderList{};

@@ -3,6 +3,8 @@
 #include "../Core/d3dUtil.h"
 #include <d3d12.h>
 
+using Microsoft::WRL::ComPtr;
+
 inline D3D12_SHADER_BYTECODE GetShaderBytecode(ID3DBlob* shader)
 {
 	return { shader->GetBufferPointer(), shader->GetBufferSize() };
@@ -11,10 +13,35 @@ inline D3D12_SHADER_BYTECODE GetShaderBytecode(ID3DBlob* shader)
 CShader::CShader()
 {}
 
-void CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+std::string CShader::GetShaderVersion(ShaderType shaderType)
 {
-	m_shaderList[toUType(ShaderType::VS)] = d3dUtil::CompileShader(L"../Resource/Shaders/VertexShader.hlsl", nullptr, "main", "vs_5_1");
-	m_shaderList[toUType(ShaderType::PS)] = d3dUtil::CompileShader(L"../Resource/Shaders/PixelShader.hlsl", nullptr, "main", "ps_5_1");
+	switch (shaderType)
+	{
+	case ShaderType::VS:	return "vs_5_1";	break;
+	case ShaderType::PS: return "ps_5_1";	break;
+	}
+	return "";
+}
+
+bool CShader::InsertShaderList(ShaderType shaderType, std::wstring&& filename)
+{
+	std::string shaderVersion = GetShaderVersion(shaderType);
+	if (shaderVersion.empty())
+		return false;
+	
+	ComPtr<ID3DBlob> blob = d3dUtil::CompileShader(std::move(filename), nullptr, "main", std::move(shaderVersion));
+	if (blob == nullptr)
+		return false;
+
+	m_shaderList[toUType(shaderType)] = blob;
+
+	return true;
+}
+
+bool CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	ReturnIfFalse(InsertShaderList(ShaderType::VS, L"../Resource/Shaders/VertexShader.hlsl"));
+	ReturnIfFalse(InsertShaderList(ShaderType::PS, L"../Resource/Shaders/PixelShader.hlsl"));
 
 	m_inputLayout =
 	{
@@ -26,4 +53,6 @@ void CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc
 	inoutDesc->VS = GetShaderBytecode(m_shaderList[toUType(ShaderType::VS)].Get());
 	inoutDesc->PS = GetShaderBytecode(m_shaderList[toUType(ShaderType::PS)].Get());
 	inoutDesc->InputLayout = { m_inputLayout.data(), static_cast<UINT>(m_inputLayout.size()) };
+
+	return true;
 }
