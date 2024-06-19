@@ -245,11 +245,6 @@ void CDirectx3D::CreateRtvAndDsvDescriptorHeaps()
 	CreateDescriptorHeap(1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_dsvHeap.GetAddressOf());
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
-{
-	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-}
-
 void CDirectx3D::OnResize()
 {
 	assert(m_device);
@@ -322,16 +317,6 @@ void CDirectx3D::OnResize()
 	ExcuteCommandLists();
 	
 	FlushCommandQueue();
-
-	// Update the viewport transform to cover the client area.
-	m_screenViewport.TopLeftX = 0;
-	m_screenViewport.TopLeftY = 0;
-	m_screenViewport.Width = static_cast<float>(m_window->GetWidth());
-	m_screenViewport.Height = static_cast<float>(m_window->GetHeight());
-	m_screenViewport.MinDepth = 0.0f;
-	m_screenViewport.MaxDepth = 1.0f;
-
-	m_scissorRect = { 0, 0, m_window->GetWidth(), m_window->GetHeight() };
 }
 
 void CDirectx3D::ResetCommandLists()
@@ -344,6 +329,17 @@ void CDirectx3D::ExcuteCommandLists()
 	ThrowIfFailed(m_commandList->Close());
 	ID3D12CommandList* cmdsLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+}
+
+UINT64 CDirectx3D::ExcuteSwapChain()
+{
+	ThrowIfFailed(m_swapChain->Present(0, 0));
+	m_currBackBuffer = (m_currBackBuffer + 1) % SwapChainBufferCount;
+
+	UINT64 curFenceIdx = ++m_currentFence;
+	m_commandQueue->Signal(m_fence.Get(), curFenceIdx);
+
+	return curFenceIdx;
 }
 
 void CDirectx3D::FlushCommandQueue()
@@ -386,5 +382,23 @@ void CDirectx3D::Set4xMsaaState(bool value)
 	m_4xMsaaState = value;
 	CreateSwapChain();
 	OnResize();
+}
+
+inline ID3D12Resource* CDirectx3D::CurrentBackBuffer() const
+{
+	return m_swapChainBuffer[m_currBackBuffer].Get();
+}
+
+inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::CurrentBackBufferView() const
+{
+	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
+		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
+		m_currBackBuffer,
+		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+}
+
+inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
+{
+	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 

@@ -45,6 +45,7 @@ public:
 	bool Initialize();
 	void ResetCommandLists();
 	void ExcuteCommandLists();
+	UINT64 ExcuteSwapChain();
 	void FlushCommandQueue();
 	void OnResize();
 
@@ -52,6 +53,11 @@ public:
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
+	inline ID3D12Fence* GetFence() const;
+
+	inline ID3D12Resource* CurrentBackBuffer() const;
+	inline D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
+	inline D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
 private:
 	bool InitDirect3D();
@@ -67,8 +73,6 @@ private:
 		UINT numDescriptor, 
 		D3D12_DESCRIPTOR_HEAP_TYPE heapType, 
 		ID3D12DescriptorHeap** descriptorHeap);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 	void Set4xMsaaState(bool value);
@@ -99,17 +103,8 @@ private:
 
 	bool m_4xMsaaState{ false };
 	UINT m_4xMsaaQuality{ 0 };
-
-	D3D12_VIEWPORT m_screenViewport{};
-	D3D12_RECT m_scissorRect{};
 };
 
-inline ID3D12Device* CDirectx3D::GetDevice() const
-{
-	return m_device.Get();
-}
-
-inline ID3D12GraphicsCommandList* CDirectx3D::GetCommandList() const
-{
-	return m_commandList.Get();
-}
+inline ID3D12Device* CDirectx3D::GetDevice() const { return m_device.Get(); }
+inline ID3D12GraphicsCommandList* CDirectx3D::GetCommandList() const {	return m_commandList.Get(); }
+inline ID3D12Fence* CDirectx3D::GetFence() const { return m_fence.Get(); }

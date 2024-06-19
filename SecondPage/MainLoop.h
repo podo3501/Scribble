@@ -49,6 +49,7 @@ private:
 
 	void CalculateFrameStats();
 	void OnKeyboardInput();
+	void UpdateMainPassCB(const CGameTimer* gt);
 
 private:
 	std::wstring m_resourcePath{};
@@ -65,6 +66,8 @@ private:
 	std::vector<std::unique_ptr<RenderItem>> m_renderItems{};
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_geometries{};
 	std::vector<std::unique_ptr<FrameResource>> m_frameResources{};
+	UINT m_frameResIdx{ 0 };
+	FrameResource* m_curFrameRes{ nullptr };
 
 	bool m_frustumCullingEnabled{ false };
 	bool m_appPaused{ false };

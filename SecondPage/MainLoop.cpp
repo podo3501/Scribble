@@ -2,8 +2,11 @@
 #include <WinUser.h>
 #include <windowsx.h>
 #include "../Core/d3dUtil.h"
+#include "../Core/Utility.h"
 #include "../Core/Window.h"
 #include "../Core/Directx3D.h"
+#include "../Core/UploadBuffer.h"
+#include "../Core/GameTimer.h"
 #include "./Shader.h"
 #include "./Renderer.h"
 #include "./RendererDefine.h"
@@ -13,7 +16,6 @@
 #include "./Texture.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
-#include "../Core/GameTimer.h"
 
 using namespace DirectX;
 
@@ -285,23 +287,24 @@ int CMainLoop::Run()
 				m_camera->Update(m_timer->DeltaTime());
 
 				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
-				//ID3D12Fence* pFence = m_renderer->GetFence();
-				//m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
-				//m_curFrameRes = m_frameResources[m_frameResIdx].get();
-				//if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
-				//{
-				//	HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-				//	ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
-				//	WaitForSingleObject(hEvent, INFINITE);
-				//	CloseHandle(hEvent);
-				//}
+				ID3D12Fence* pFence = m_directx3D->GetFence();
+				m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
+				m_curFrameRes = m_frameResources[m_frameResIdx].get();
+				if (m_curFrameRes->Fence != 0 && pFence->GetCompletedValue() < m_curFrameRes->Fence)
+				{
+					HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+					ThrowIfFailed(pFence->SetEventOnCompletion(m_curFrameRes->Fence, hEvent));
+					WaitForSingleObject(hEvent, INFINITE);
+					CloseHandle(hEvent);
+				}
 
-				//m_model->Update(m_timer, m_camera, m_curFrameRes, m_camFrustum, m_frustumCullingEnabled);
-				//m_model->UpdateMaterialBuffer(m_curFrameRes);
+				m_model->Update(m_timer.get(), m_camera.get(), 
+					m_curFrameRes, m_camFrustum, m_frustumCullingEnabled, m_renderItems);
+				m_material->UpdateMaterialBuffer(m_curFrameRes);
 
-				//UpdateMainPassCB();
+				UpdateMainPassCB(m_timer.get());
 
-				//m_renderer->Draw(m_timer, m_curFrameRes, m_model->GetRenderItems());
+				m_renderer->Draw(m_timer.get(), m_curFrameRes, m_renderItems);
 			}
 			else
 			{
@@ -348,4 +351,43 @@ void CMainLoop::OnKeyboardInput()
 					pressedKeyList.emplace_back(vKey);
 			});
 		return pressedKeyList; });
+}
+
+void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
+void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
+XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
+XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
+XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
+
+void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
+{
+	auto& passCB = m_curFrameRes->PassCB;
+	XMMATRIX view = m_camera->GetView();
+	XMMATRIX proj = m_camera->GetProj();
+
+	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+
+	PassConstants pc;
+	StoreMatrix4x4(pc.View, view);
+	StoreMatrix4x4(pc.InvView, Inverse(view));
+	StoreMatrix4x4(pc.Proj, proj);
+	StoreMatrix4x4(pc.InvProj, Inverse(proj));
+	StoreMatrix4x4(pc.ViewProj, viewProj);
+	StoreMatrix4x4(pc.InvViewProj, Inverse(viewProj));
+	pc.EyePosW = m_camera->GetPosition3f();
+	pc.RenderTargetSize = { (float)m_window->GetWidth(), (float)m_window->GetHeight()};
+	pc.InvRenderTargetSize = { 1.0f / (float)m_window->GetWidth(), 1.0f / (float)m_window->GetHeight() };
+	pc.NearZ = 1.0f;
+	pc.FarZ = 1000.0f;
+	pc.TotalTime = gt->TotalTime();
+	pc.DeltaTime = gt->DeltaTime();
+	pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+	pc.Lights[0].Strength = { 0.8f, 0.8f, 0.8f };
+	pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+	pc.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
+	pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
+	pc.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+
+	passCB->CopyData(0, pc);
 }

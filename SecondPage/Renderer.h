@@ -1,17 +1,23 @@
 #pragma once
 
-#include<memory>
+#include <memory>
 #include <wrl.h>
-#include<array>
+#include <array>
+#include <vector>
+#include <d3d12.h>
 
 class CDirectx3D;
 class CShader;
+class CCamera;
+class CGameTimer;
 struct ID3D12Device;
 struct ID3D12GraphicsCommandList;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
+struct FrameResource;
+struct RenderItem;
 
 class CRenderer
 {
@@ -28,15 +34,19 @@ class CRenderer
 
 public:
 	CRenderer(CDirectx3D* directx3D);
-	bool Initialize();
-
-	inline ID3D12Device* GetDevice() const;
-	inline ID3D12GraphicsCommandList* GetCommandList() const;
-	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 
 	CRenderer() = delete;
 	CRenderer(const CRenderer&) = delete;
 	CRenderer& operator=(const CRenderer&) = delete;
+
+	bool Initialize();
+	void OnResize(int wndWidth, int wndHeight);
+	void Draw(CGameTimer* gt, FrameResource* pCurrFrameRes, 
+		const std::vector<std::unique_ptr<RenderItem>>& renderItem);
+
+	inline ID3D12Device* GetDevice() const;
+	inline ID3D12GraphicsCommandList* GetCommandList() const;
+	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 
 private:
 	void BuildRootSignature();
@@ -44,6 +54,8 @@ private:
 	void BuildPSOs();
 	void MakePSOPipelineState(GraphicsPSO psoType);
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void DrawRenderItems(FrameResource* pCurrFrameRes, 
+		const std::vector<std::unique_ptr<RenderItem>>& ritems);
 
 private:
 	CDirectx3D* m_directx3D{ nullptr };
@@ -56,6 +68,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap{ nullptr };
 
 	std::array<Microsoft::WRL::ComPtr<ID3D12PipelineState>, static_cast<size_t>(GraphicsPSO::Count)> m_psoList{};
+
+	D3D12_VIEWPORT m_screenViewport{};
+	D3D12_RECT m_scissorRect{};
 };
 
 inline ID3D12Device* CRenderer::GetDevice() const											{	return m_device;		}
