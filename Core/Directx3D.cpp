@@ -29,10 +29,8 @@ CDirectx3D::CDirectx3D(CWindow* pWindow)
 
 bool CDirectx3D::Initialize()
 {
-	if (!InitDirect3D())
-		return false;
-
-	OnResize();
+	ReturnIfFalse(InitDirect3D());
+	ReturnIfFalse(OnResize());
 
 	return true;
 }
@@ -196,7 +194,7 @@ bool CDirectx3D::CreateCommandObjects()
 	// Start off in a closed state.  This is because the first time we refer 
 	// to the command list we will Reset it, and it needs to be closed before
 	// calling Reset.
-	m_commandList->Close();
+	ReturnIfFailed(m_commandList->Close());
 
 	return true;
 }

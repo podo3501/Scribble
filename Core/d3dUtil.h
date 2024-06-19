@@ -301,8 +301,7 @@ struct Texture
 #ifndef ReturnIfFailed
 #define ReturnIfFailed(x)                                              \
 {                                                                     \
-    HRESULT hr__ = (x);                                               \
-    if(FAILED(hr__))                                            \
+    if(FAILED(x))                                            \
         return false;                                                \
 }
 #endif
@@ -310,9 +309,7 @@ struct Texture
 #ifndef ReturnIfFalse
 #define ReturnIfFalse(x)                       \
 {                                                             \
-    bool result = (x);                               \
-    if(!result)                                           \
-        return result;                                 \
+    if(!x) return false;                          \
 }
 #endif
 

@@ -26,7 +26,7 @@ bool CRenderer::Initialize()
 {
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
-	BuildPSOs();
+	ReturnIfFalse(BuildPSOs());
 
 	return true;
 }
