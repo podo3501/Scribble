@@ -7,6 +7,7 @@
 #include "../Core/Directx3D.h"
 #include "../Core/UploadBuffer.h"
 #include "../Core/GameTimer.h"
+#include "./RendererData.h"
 #include "./Shader.h"
 #include "./Renderer.h"
 #include "./Material.h"
@@ -15,6 +16,7 @@
 #include "./Texture.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
+#include "./Geometry.h"
 
 using namespace DirectX;
 
@@ -135,6 +137,8 @@ bool CMainLoop::Initialize(HINSTANCE hInstance)
 	m_camera->SetSpeed(eMove::Right, 10.0f);
 	m_camera->SetSpeed(eMove::Left, 10.0f);
 
+	m_timer = std::make_unique<CGameTimer>();
+
 	m_window = std::make_unique<CWindow>(hInstance);
 	ReturnIfFalse(m_window->Initialize());
 	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
@@ -146,6 +150,8 @@ bool CMainLoop::Initialize(HINSTANCE hInstance)
 	m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
 	ReturnIfFalse(m_renderer->Initialize());
 
+	m_geometry = std::make_unique<CGeometry>();
+
 	ReturnIfFalse(OnResize());
 
 	//데이터를 시스템 메모리에 올리기
@@ -155,11 +161,8 @@ bool CMainLoop::Initialize(HINSTANCE hInstance)
 	m_texture = std::make_unique<CTexture>(m_resourcePath + L"Textures/");
 	m_model = std::make_unique<CModel>();
 
-	auto geo = std::make_unique<MeshGeometry>();
-	ReturnIfFalse(m_model->Read(geo.get()));
-	m_model->BuildRenderItems(geo.get(), m_material.get(), m_renderItems);
-	std::string geoName = geo->Name;
-	m_geometries[geoName] = std::move(geo);
+	ReturnIfFalse(m_model->Read(m_geometry.get()));
+	BuildRenderItems();
 
 	m_frameResources = std::make_unique<CFrameResources>();
 	ReturnIfFalse(m_frameResources->BuildFrameResources(m_renderer->GetDevice(),
@@ -173,39 +176,142 @@ bool CMainLoop::Initialize(HINSTANCE hInstance)
 
 bool CMainLoop::BuildGraphicMemory()
 {
-	//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-	ReturnIfFalse(m_directx3D->ResetCommandLists());
-
-	m_texture->Load(m_renderer.get());
-	for (auto iter = m_geometries.begin(); iter != m_geometries.end(); ++iter)
-	{
-		auto& meshGeo = iter->second;
-		ReturnIfFalse(Load(meshGeo.get()));
-	}
-
-	ReturnIfFalse(m_directx3D->ExcuteCommandLists());
-	ReturnIfFalse(m_directx3D->FlushCommandQueue());
+	ReturnIfFalse(m_geometry->LoadGraphicMemory(m_directx3D.get()));
+	ReturnIfFalse(m_texture->LoadGraphicMemory(m_directx3D.get(), m_renderer.get()));
 
 	return true;
 }
 
-bool CMainLoop::Load(MeshGeometry* meshGeo)
+void CMainLoop::BuildRenderItems()
 {
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		m_renderer->GetDevice(), m_renderer->GetCommandList(),
-		meshGeo->VertexBufferCPU->GetBufferPointer(),
-		meshGeo->VertexBufferByteSize,
-		meshGeo->VertexBufferUploader, 
-		&meshGeo->VertexBufferGPU));
+	auto geo = m_geometry->GetMesh(m_model->GetName());
 
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		m_renderer->GetDevice(), m_renderer->GetCommandList(),
-		meshGeo->IndexBufferCPU->GetBufferPointer(),
-		meshGeo->IndexBufferByteSize,
-		meshGeo->IndexBufferUploader,
-		&meshGeo->IndexBufferGPU));
+	auto rItem = std::make_unique<RenderItem>();
+	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& smName, std::string&& matName,
+		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
+			auto& sm = geo->DrawArgs[smName];
+			rItem->Geo = geo;
+			rItem->Mat = m_material->GetMaterial(matName);
+			rItem->ObjCBIndex = objIdx++;
+			rItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			XMStoreFloat4x4(&rItem->World, world);
+			XMStoreFloat4x4(&rItem->TexTransform, texTransform);
+			rItem->StartIndexLocation = sm.StartIndexLocation;
+			rItem->BaseVertexLocation = sm.BaseVertexLocation;
+			rItem->IndexCount = sm.IndexCount;
+			rItem->BoundingBoxBounds = sm.BBox;
+			rItem->BoundingSphere = sm.BSphere; };
+	MakeRenderItem(m_model->GetSubmeshName(), "tile0", XMMatrixIdentity(), XMMatrixIdentity());
+	
+	const int n = 5;
+	const int matCount = static_cast<int>(m_material->GetCount());
+	rItem->Instances.resize(n * n * n);
 
-	return true;
+	float width = 200.0f;
+	float height = 200.0f;
+	float depth = 200.0f;
+
+	float x = -0.5f * width;
+	float y = -0.5f * height;
+	float z = -0.5f * depth;
+	float dx = width / (n - 1);
+	float dy = height / (n - 1);
+	float dz = depth / (n - 1);
+	for (int k = 0; k < n; ++k)
+	{
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				int index = k * n * n + i * n + j;
+				rItem->Instances[index].World = XMFLOAT4X4(
+					1.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 1.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f,
+					x + j * dx, y + i * dy, z + k * dz, 1.0f);
+
+				XMStoreFloat4x4(&rItem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
+				rItem->Instances[index].MaterialIndex = index % matCount;
+			}
+		}
+	}
+
+	m_renderItems.emplace_back(std::move(rItem));
+}
+
+void CMainLoop::UpdateRenderItems()
+{
+	XMMATRIX view = m_camera->GetView();
+	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
+	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
+
+	for (auto& e : m_renderItems)
+	{
+		const auto& instanceData = e->Instances;
+
+		int visibleInstanceCount = 0;
+
+		for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
+		{
+			XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
+			XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
+
+			XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
+
+			// View space to the object's local space.
+			XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+
+			// Transform the camera frustum from view space to the object's local space.
+			BoundingFrustum localSpaceFrustum;
+			m_camFrustum.Transform(localSpaceFrustum, viewToLocal);
+
+			// Perform the box/frustum intersection test in local space.
+			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (m_frustumCullingEnabled == false))
+			{
+				InstanceData data;
+				XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+				XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
+				data.MaterialIndex = instanceData[i].MaterialIndex;
+
+				// Write the instance data to structured buffer for the visible objects.
+				instanceBuffer->CopyData(visibleInstanceCount++, data);
+			}
+		}
+
+		e->InstanceCount = visibleInstanceCount;
+		
+		std::wostringstream outs;
+		outs.precision(6);
+		outs << L"Instancing and Culling Demo" <<
+			L"    " << e->InstanceCount <<
+			L" objects visible out of " << e->Instances.size();
+		m_windowCaption = outs.str();
+	}
+}
+
+void CMainLoop::UpdateMaterialBuffer()
+{
+	auto materialBuffer = m_frameResources->GetUploadBuffer(eBufferType::Material);
+	const auto& materials = m_material->GetTotalMaterial();
+	for (auto& e : materials)
+	{
+		Material* m = e.second.get();
+		if (m->NumFramesDirty <= 0)
+			continue;
+
+		XMMATRIX matTransform = XMLoadFloat4x4(&m->MatTransform);
+
+		MaterialData matData;
+		matData.DiffuseAlbedo = m->DiffuseAlbedo;
+		matData.FresnelR0 = m->FresnelR0;
+		matData.Roughness = m->Roughness;
+		XMStoreFloat4x4(&matData.MatTransform, XMMatrixTranspose(matTransform));
+		matData.DiffuseMapIndex = m->DiffuseSrvHeapIndex;
+
+		materialBuffer->CopyData(m->MatCBIndex, matData);
+
+		m->NumFramesDirty--;
+	}
 }
 
 bool CMainLoop::OnResize()
@@ -281,10 +387,10 @@ void CMainLoop::CalculateFrameStats()
 		float fps = (float)_frameCnt; // fps = frameCnt / 1
 		float mspf = 1000.0f / fps;
 
-		std::wstring caption = L"d3d App";
 		std::wstring fpsStr = std::to_wstring(fps);
 		std::wstring mspfStr = std::to_wstring(mspf);
-		m_window->SetText(caption + L"    fps: " + fpsStr + L"   mspf: " + mspfStr);
+		m_windowCaption += L"    fps: " + fpsStr + L"   mspf: " + mspfStr;
+		m_window->SetText(m_windowCaption);
 
 		_frameCnt = 0;
 		_timeElapsed += 1.0f;
@@ -306,25 +412,20 @@ void CMainLoop::OnKeyboardInput()
 		return pressedKeyList; });
 }
 
-namespace HelpMatrix
-{
-	void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
-	void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
-	XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
-	XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
-	XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
-};
+void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
+void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
+XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
+XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
+XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
 
-using namespace HelpMatrix;
-
-void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
+void CMainLoop::UpdateMainPassCB()
 {
 	auto passCB = m_frameResources->GetUploadBuffer(eBufferType::PassCB);
 	XMMATRIX view = m_camera->GetView();
 	XMMATRIX proj = m_camera->GetProj();
 
 	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-
+	
 	PassConstants pc;
 	StoreMatrix4x4(pc.View, view);
 	StoreMatrix4x4(pc.InvView, Inverse(view));
@@ -337,8 +438,8 @@ void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
 	pc.InvRenderTargetSize = { 1.0f / (float)m_window->GetWidth(), 1.0f / (float)m_window->GetHeight() };
 	pc.NearZ = 1.0f;
 	pc.FarZ = 1000.0f;
-	pc.TotalTime = gt->TotalTime();
-	pc.DeltaTime = gt->DeltaTime();
+	pc.TotalTime = m_timer->TotalTime();
+	pc.DeltaTime = m_timer->DeltaTime();
 	pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
 	pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
 	pc.Lights[0].Strength = { 0.8f, 0.8f, 0.8f };
@@ -352,10 +453,8 @@ void CMainLoop::UpdateMainPassCB(const CGameTimer* gt)
 
 bool CMainLoop::Run()
 {
-	MSG msg = { 0 };
-	m_timer = std::make_unique<CGameTimer>();
 	m_timer->Reset();
-
+	MSG msg = { 0 };
 	while (msg.message != WM_QUIT)
 	{
 		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -378,12 +477,9 @@ bool CMainLoop::Run()
 				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
 				ReturnIfFalse(m_frameResources->Synchronize(m_directx3D->GetFence()));
 
-				m_model->Update(m_timer.get(), m_camera.get(), 
-					m_frameResources->GetUploadBuffer(eBufferType::Instance),
-					m_camFrustum, m_frustumCullingEnabled, m_renderItems);
-				m_material->UpdateMaterialBuffer(m_frameResources->GetUploadBuffer(eBufferType::Material));
-
-				UpdateMainPassCB(m_timer.get());
+				UpdateRenderItems();
+				UpdateMaterialBuffer();
+				UpdateMainPassCB();
 
 				ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_renderItems));
 			}

@@ -1,32 +1,10 @@
 #include "Texture.h"
 #include "../Core/DDSTextureLoader.h"
 #include "../Core/d3dUtil.h"
+#include "../Core/Directx3D.h"
 #include "../SecondPage/Renderer.h"
 
 using namespace DirectX;
-
-bool CTexture::Load(CRenderer* renderer)
-{
-	std::vector<std::wstring> filenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
-		L"ice.dds", L"grass.dds", L"white1x1.dds" };
-	
-	ID3D12Device* device = renderer->GetDevice();
-	ID3D12GraphicsCommandList* cmdList = renderer->GetCommandList();
-
-	for (auto beg = filenames.begin(); beg != filenames.end(); ++beg)
-	{
-		auto& curFilename = (*beg);
-		auto tex = std::make_unique<Texture>();
-		tex->Filename = m_filePath + curFilename;
-		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
-			tex->Filename.c_str(), tex->Resource, tex->UploadHeap));
-		m_textureList.emplace_back(std::move(tex));
-	}
-
-	CreateShaderResourceView(device, renderer->GetSrvDescriptorHeap());
-
-	return true;
-}
 
 void CTexture::CreateShaderResourceView(ID3D12Device* device, ID3D12DescriptorHeap* srvDescHeap)
 {
@@ -45,4 +23,33 @@ void CTexture::CreateShaderResourceView(ID3D12Device* device, ID3D12DescriptorHe
 		hCpuDesc.Offset(index++, cbvSrvUavDescSize);
 		device->CreateShaderResourceView(curTex->Resource.Get(), &srvDesc, hCpuDesc);
 		});
+}
+
+bool CTexture::LoadGraphicMemory(CDirectx3D* directx3D, CRenderer* renderer)
+{
+	ReturnIfFalse(directx3D->LoadData([texture = this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+		ReturnIfFalse(texture->Upload(device, cmdList));
+		return true; }));
+
+	CreateShaderResourceView(directx3D->GetDevice(), renderer->GetSrvDescriptorHeap());
+
+	return true;
+}
+
+bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
+{
+	std::vector<std::wstring> filenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
+		L"ice.dds", L"grass.dds", L"white1x1.dds" };
+
+	auto result = std::all_of(filenames.begin(), filenames.end(), [texture = this, device, cmdList](auto& curFilename) {
+		auto tex = std::make_unique<Texture>();
+		tex->Filename = texture->m_filePath + curFilename;
+		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
+			tex->Filename.c_str(), tex->Resource, tex->UploadHeap));
+		texture->m_textureList.emplace_back(std::move(tex));
+		return true;	});
+
+	if (!result) return result;
+
+	return true;
 }

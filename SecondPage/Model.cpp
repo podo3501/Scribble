@@ -1,22 +1,18 @@
 #include "Model.h"
 #include <DirectXMath.h>
 #include "../Core/d3dUtil.h"
-#include "../Core/Utility.h"
-#include "../Core/GameTimer.h"
-#include "../Core/UploadBuffer.h"
 #include "./FrameResource.h"
-#include "./RendererData.h"
-#include "./Material.h"
-#include "./Camera.h"
-
+#include "./Geometry.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
 CModel::CModel()
+	: m_name("skullGeo")
+	, m_submeshName("skull")
 {}
 
-bool CModel::Read(MeshGeometry* meshGeo)
+bool CModel::Read(CGeometry* geometry)
 {
 	std::ifstream fin("../Resource/Models/skull.txt");
 	if (fin.bad())
@@ -84,13 +80,14 @@ bool CModel::Read(MeshGeometry* meshGeo)
 	UINT vbByteSize = static_cast<UINT>(vertices.size()) * sizeof(Vertex);
 	UINT ibByteSize = static_cast<UINT>(indices.size()) * sizeof(std::int32_t);
 
-	meshGeo->Name = "skullGeo";
+	auto meshGeo = std::make_unique<Geometry>();
+	meshGeo->Name = m_name;
 
-	auto& submesh = meshGeo->DrawArgs["skull"];
+	auto& submesh = meshGeo->DrawArgs[m_submeshName];
 	submesh.IndexCount = static_cast<UINT>(indices.size());
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
-	submesh.BBounds = boundingBoxBounds;
+	submesh.BBox = boundingBoxBounds;
 	submesh.BSphere = boundingSphere;
 
 	meshGeo->VertexBufferByteSize = vbByteSize;
@@ -105,116 +102,7 @@ bool CModel::Read(MeshGeometry* meshGeo)
 	meshGeo->IndexFormat = DXGI_FORMAT_R32_UINT;
 	meshGeo->IndexBufferByteSize = ibByteSize;
 
+	ReturnIfFalse(geometry->SetMesh(std::move(meshGeo)));
+
 	return true;
-}
-
-void CModel::BuildRenderItems(
-	MeshGeometry* pGeo, CMaterial* pMaterial, std::vector<std::unique_ptr<RenderItem>>& renderItems)
-{
-	auto rItem = std::make_unique<RenderItem>();
-	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& smName, std::string&& matName,
-		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
-			auto& sm = pGeo->DrawArgs[smName];
-			rItem->Geo = pGeo;
-			rItem->Mat = pMaterial->GetMaterial(matName);
-			rItem->ObjCBIndex = objIdx++;
-			rItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-			XMStoreFloat4x4(&rItem->World, world);
-			XMStoreFloat4x4(&rItem->TexTransform, texTransform);
-			rItem->StartIndexLocation = sm.StartIndexLocation;
-			rItem->BaseVertexLocation = sm.BaseVertexLocation;
-			rItem->IndexCount = sm.IndexCount;
-			rItem->BoundingBoxBounds = sm.BBounds;
-			rItem->BoundingSphere = sm.BSphere; };
-	MakeRenderItem("skull", "tile0", XMMatrixIdentity(), XMMatrixIdentity());
-
-	const int n = 5;
-	rItem->Instances.resize(n * n * n);
-
-	float width = 200.0f;
-	float height = 200.0f;
-	float depth = 200.0f;
-
-	float x = -0.5f * width;
-	float y = -0.5f * height;
-	float z = -0.5f * depth;
-	float dx = width / (n - 1);
-	float dy = height / (n - 1);
-	float dz = depth / (n - 1);
-	for (int k = 0; k < n; ++k)
-	{
-		for (int i = 0; i < n; ++i)
-		{
-			for (int j = 0; j < n; ++j)
-			{
-				int index = k * n * n + i * n + j;
-				rItem->Instances[index].World = XMFLOAT4X4(
-					1.0f, 0.0f, 0.0f, 0.0f,
-					0.0f, 1.0f, 0.0f, 0.0f,
-					0.0f, 0.0f, 1.0f, 0.0f,
-					x + j * dx, y + i * dy, z + k * dz, 1.0f);
-
-				XMStoreFloat4x4(&rItem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
-				rItem->Instances[index].MaterialIndex = index % pMaterial->GetCount();
-			}
-		}
-	}
-
-	renderItems.emplace_back(std::move(rItem));
-}
-
-
-void CModel::Update(const CGameTimer* gt,
-	const CCamera* camera,
-	UploadBuffer* instanceBuffer,
-	DirectX::BoundingFrustum& camFrustum,
-	bool frustumCullingEnabled,
-	std::vector<std::unique_ptr<RenderItem>>& renderItems)
-{
-	XMMATRIX view = camera->GetView();
-	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
-
-	for (auto& e : renderItems)
-	{
-		const auto& instanceData = e->Instances;
-
-		int visibleInstanceCount = 0;
-
-		for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
-		{
-			XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
-			XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
-
-			XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
-
-			// View space to the object's local space.
-			XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
-
-			// Transform the camera frustum from view space to the object's local space.
-			BoundingFrustum localSpaceFrustum;
-			camFrustum.Transform(localSpaceFrustum, viewToLocal);
-
-			// Perform the box/frustum intersection test in local space.
-			//if ((localSpaceFrustum.Contains(e->BoundingBoxBounds) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
-			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (frustumCullingEnabled == false))
-			{
-				InstanceData data;
-				XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
-				XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
-				data.MaterialIndex = instanceData[i].MaterialIndex;
-
-				// Write the instance data to structured buffer for the visible objects.
-				instanceBuffer->CopyData(visibleInstanceCount++, data);
-			}
-		}
-
-		e->InstanceCount = visibleInstanceCount;
-
-		//std::wostringstream outs;
-		//outs.precision(6);
-		//outs << L"Instancing and Culling Demo" <<
-		//	L"    " << e->InstanceCount <<
-		//	L" objects visible out of " << e->Instances.size();
-		//mMainWndCaption = outs.str();
-	}
 }

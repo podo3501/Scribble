@@ -3,7 +3,7 @@
 #include "../Core/d3dUtil.h"
 #include "../Core/UploadBuffer.h"
 
-bool CFrameResources::FrameResource::CreateUpdateBuffer(
+bool CFrameResources::Resource::CreateUpdateBuffer(
 	ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount)
 {
 	ReturnIfFailed(device->CreateCommandAllocator(
@@ -22,7 +22,7 @@ bool CFrameResources::BuildFrameResources(ID3D12Device* device,
 {
 	for (auto i{ 0 }; i < FrameResourceCount; ++i)
 	{
-		auto frameRes = std::make_unique<FrameResource>();
+		auto frameRes = std::make_unique<Resource>();
 		ReturnIfFalse(frameRes->CreateUpdateBuffer(device, passCount, instanceCount, matCount));
 		m_resources.emplace_back(std::move(frameRes));
 	}
@@ -33,7 +33,6 @@ bool CFrameResources::BuildFrameResources(ID3D12Device* device,
 bool CFrameResources::Synchronize(ID3D12Fence* pFence)
 {
 	m_frameResIdx = (m_frameResIdx + 1) % gNumFrameResources;
-	m_curFrameRes = m_resources[m_frameResIdx].get();
 	if (m_fenceIdx != 0 && pFence->GetCompletedValue() < m_fenceIdx)
 	{
 		HANDLE hEvent = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
@@ -47,13 +46,14 @@ bool CFrameResources::Synchronize(ID3D12Fence* pFence)
 
 UploadBuffer* CFrameResources::GetUploadBuffer(eBufferType bufferType)
 {
-	if (m_curFrameRes == nullptr) return nullptr;
+	Resource* resource = m_resources[m_frameResIdx].get();
+	if (resource == nullptr) return nullptr;
 
 	switch (bufferType)
 	{
-	case eBufferType::PassCB:			return m_curFrameRes->PassCB.get();
-	case eBufferType::Material:		return m_curFrameRes->MaterialBuffer.get();
-	case eBufferType::Instance:		return m_curFrameRes->InstanceBuffer.get();
+	case eBufferType::PassCB:			return resource->PassCB.get();
+	case eBufferType::Material:		return resource->MaterialBuffer.get();
+	case eBufferType::Instance:		return resource->InstanceBuffer.get();
 	}
 
 	return nullptr;

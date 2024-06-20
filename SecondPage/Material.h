@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <string>
 
-class UploadBuffer;
 struct Material;
 struct FrameResource;
 
@@ -19,10 +18,10 @@ public:
 	CMaterial& operator=(const CMaterial&) = delete;
 
 	void Build();
-	void UpdateMaterialBuffer(UploadBuffer* materialBuffer);
 
 	Material* GetMaterial(const std::string& matName);
 	size_t GetCount();
+	inline const auto& GetTotalMaterial() { return m_materials; };
 
 private:
 	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials{};

@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FrameResource.cpp" />
+    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="KeyInputManager.cpp" />
     <ClCompile Include="MainLoop.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="FrameResourceData.h" />
+    <ClInclude Include="Geometry.h" />
     <ClInclude Include="KeyInputManager.h" />
     <ClInclude Include="MainLoop.h" />
     <ClInclude Include="Material.h" />

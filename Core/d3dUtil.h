@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <vector>
 #include <array>
+#include <map>
 #include <unordered_map>
 #include <cstdint>
 #include <fstream>
@@ -165,41 +166,37 @@ struct SubmeshGeometry
 
     // Bounding box of the geometry defined by this submesh. 
     // This is used in later chapters of the book.
-    DirectX::BoundingBox BBounds{};
+    DirectX::BoundingBox BBox{};
     DirectX::BoundingSphere BSphere{};
 };
 
-struct MeshGeometry
+struct Geometry
 {
-	// Give it a name so we can look it up by name.
-	std::string Name;
+    // Give it a name so we can look it up by name.
+    std::string Name{};
+    
+    // System memory copies.  Use Blobs because the vertex/index format can be generic.
+    // It is up to the client to cast appropriately.  
+    Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
+    Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU = nullptr;
 
-	// System memory copies.  Use Blobs because the vertex/index format can be generic.
-	// It is up to the client to cast appropriately.  
-	Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
-    Microsoft::WRL::ComPtr<ID3DBlob> ColorBufferCPU = nullptr;
-	Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU  = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
-    //Microsoft::WRL::ComPtr<ID3D12Resource> ColorBufferGPU = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferUploader = nullptr;
-    //Microsoft::WRL::ComPtr<ID3D12Resource> ColorBufferUploader = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferUploader = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
 
     // Data about the buffers.
-	UINT VertexByteStride = 0;
-	UINT VertexBufferByteSize = 0;
-    //UINT ColorByteStride = 0;
-    //UINT ColorBufferByteSize = 0;
-	DXGI_FORMAT IndexFormat = DXGI_FORMAT_R16_UINT;
-	UINT IndexBufferByteSize = 0;
+    UINT VertexByteStride = 0;
+    UINT VertexBufferByteSize = 0;
+    DXGI_FORMAT IndexFormat = DXGI_FORMAT_R16_UINT;
+    UINT IndexBufferByteSize = 0;
 
-	// A MeshGeometry may store multiple geometries in one vertex/index buffer.
-	// Use this container to define the Submesh geometries so we can draw
-	// the Submeshes individually.
-	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
+    // A MeshGeometry may store multiple geometries in one vertex/index buffer.
+   // Use this container to define the Submesh geometries so we can draw
+   // the Submeshes individually.
+    std::unordered_map<std::string, SubmeshGeometry> DrawArgs{};
+    std::map<std::string, SubmeshGeometry> DrawTest{};
     
 	D3D12_VERTEX_BUFFER_VIEW VertexBufferView()const
 	{
@@ -210,16 +207,6 @@ struct MeshGeometry
 
 		return vbv;
 	}
-    
-    /*D3D12_VERTEX_BUFFER_VIEW ColorBufferView()const
-    {
-        D3D12_VERTEX_BUFFER_VIEW cbv;
-        cbv.BufferLocation = ColorBufferGPU->GetGPUVirtualAddress();
-        cbv.StrideInBytes = ColorByteStride;
-        cbv.SizeInBytes = ColorBufferByteSize;
-
-        return cbv;
-    }*/
 
 	D3D12_INDEX_BUFFER_VIEW IndexBufferView()const
 	{

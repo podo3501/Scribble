@@ -429,11 +429,17 @@ void InstancingAndCullingApp::AnimateMaterials(const GameTimer& gt)
 {
 }
 
+namespace HelpMatrix
+{
 void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
 void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
 XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
 XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
 XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
+};
+
+using namespace HelpMatrix;
+
 //
 void InstancingAndCullingApp::UpdateInstanceData(const GameTimer& gt)
 {

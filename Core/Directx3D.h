@@ -38,6 +38,7 @@ class CDirectx3D
 {
 public:
 	CDirectx3D(CWindow* pWindow);
+	~CDirectx3D();
 
 	CDirectx3D() = delete;
 	CDirectx3D(const CDirectx3D&) = delete;
@@ -49,6 +50,7 @@ public:
 	bool ExcuteSwapChain(UINT64* outFenceIdx);
 	bool FlushCommandQueue();
 	bool OnResize();
+	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 

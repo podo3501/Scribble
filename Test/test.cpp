@@ -12,7 +12,7 @@ TEST(MainTest, Initialize)
 	auto result = theApp.Initialize(nullptr);
 	EXPECT_EQ(result, true);
 
-	//theApp.Run();
+	theApp.Run();
 }
 
 void lambdaTest(int a, int b, std::function<void(int, int)> arg)
@@ -71,7 +71,7 @@ TEST(RendererTest, Excute)
 
 TEST(UserInterfaceTest, model)
 {
-	//HINSTANCE hInstance = GetModuleHandle(nullptr);
-	//MainLoop mainLoop(hInstance);
-	//mainLoop.Run();
+	HINSTANCE hInstance = GetModuleHandle(nullptr);
+	MainLoop mainLoop(hInstance);
+	mainLoop.Run();
 }

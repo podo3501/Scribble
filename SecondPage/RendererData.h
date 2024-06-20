@@ -7,7 +7,7 @@
 #include <d3d12.h>
 
 struct Material;
-struct MeshGeometry;
+struct Geometry;
 struct InstanceData;
 
 struct RenderItem
@@ -21,7 +21,7 @@ struct RenderItem
 	UINT ObjCBIndex = -1;
 
 	Material* Mat = nullptr;
-	MeshGeometry* Geo = nullptr;
+	Geometry* Geo = nullptr;
 
 	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 

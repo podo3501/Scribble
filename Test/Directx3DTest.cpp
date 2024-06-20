@@ -20,8 +20,9 @@
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/RendererData.h"
 #include "../SecondPage/KeyInputManager.h"
+#include "../SecondPage/Geometry.h"
 
-bool Load(MeshGeometry* meshGeo, CRenderer* renderer)
+bool Load(Geometry* meshGeo, CRenderer* renderer)
 {
 	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		renderer->GetDevice(), renderer->GetCommandList(), 
@@ -38,6 +39,24 @@ bool Load(MeshGeometry* meshGeo, CRenderer* renderer)
 		&meshGeo->IndexBufferGPU));
 
 	return true;
+}
+
+namespace STDTest
+{
+	TEST(std, all_of)
+	{
+		std::vector<int> a = { 1, 2, 3, 4, 5 };
+		std::vector<int> b{};
+		bool result = std::all_of(a.begin(), a.end(), [&b](auto& iter) {
+			if (iter == 3)
+				return false;
+			b.emplace_back(iter);
+			return true;
+			});
+
+		EXPECT_EQ(static_cast<int>(b.size()), 2);
+		EXPECT_EQ(result, false);
+	}
 }
 
 namespace SecondPage 
@@ -95,13 +114,10 @@ namespace SecondPage
 	{
 		//데이터를 시스템 메모리에 올리기
 		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_resourcePath + L"Textures/");
+		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
 
-		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> geometries{};
-		auto geo = std::make_unique<MeshGeometry>();
-		EXPECT_EQ(model->Read(geo.get()), true);
-		std::string geoName = geo->Name;
-		geometries[geoName] = std::move(geo);
+		EXPECT_EQ(model->Read(geometry.get()), true);
 
 		//프레임당 쓰이는 데이터 공간을 확보
 		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
@@ -109,13 +125,8 @@ namespace SecondPage
 			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true);
 
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-		EXPECT_EQ(m_directx3D->ResetCommandLists(), true);
-
-		EXPECT_EQ(texture->Load(m_renderer.get()), true);
-		EXPECT_EQ(Load(geometries[geoName].get(), m_renderer.get()), true);
-
-		EXPECT_EQ(m_directx3D->ExcuteCommandLists(), true);
-		EXPECT_EQ(m_directx3D->FlushCommandQueue(), true);
+		EXPECT_EQ(geometry->LoadGraphicMemory(m_directx3D.get()), true);
+		EXPECT_EQ(texture->LoadGraphicMemory(m_directx3D.get(), m_renderer.get()), true);
 
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
 		camera->SetPosition(0.0f, 2.0f, -15.0f);
@@ -156,6 +167,10 @@ namespace SecondPage
 	{
 	public:
 		MainLoopUpdateTest()
+		{}
+
+	protected:
+		void SetUp() override
 		{
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(), true);
@@ -166,12 +181,11 @@ namespace SecondPage
 			m_material = std::make_unique<CMaterial>();
 			m_material->Build();
 
+			m_geometry = std::make_unique<CGeometry>();
+
 			m_model = std::make_unique<CModel>();
 
-			auto geo = std::make_unique<MeshGeometry>();
-			EXPECT_EQ(m_model->Read(geo.get()), true);
-			std::string geoName = geo->Name;
-			m_geometries[geoName] = std::move(geo);
+			EXPECT_EQ(m_model->Read(m_geometry.get()), true);
 
 			m_camera = std::make_unique<CCamera>();
 			m_camera->UpdateViewMatrix();
@@ -183,37 +197,31 @@ namespace SecondPage
 			EXPECT_EQ(m_frameResources->Synchronize(m_directx3D->GetFence()), true);
 		}
 
-	protected:
-		void SetUp() override
-		{}
+		void TearDown() override
+		{
+			m_frameResources.reset();
+			m_camera.reset();
+			m_model.reset();
+			m_material.reset();
+			m_directx3D.reset();
+			m_window.reset();
+		}
 
 	protected:
 		std::unique_ptr<CWindow> m_window{ nullptr };
 		std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
 		std::unique_ptr<CMaterial> m_material{ nullptr };
+		std::unique_ptr<CGeometry> m_geometry{ nullptr };
 		std::unique_ptr<CModel> m_model{ nullptr };
 		std::unique_ptr<CCamera> m_camera{ nullptr };
-		std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_geometries{};
+		std::unordered_map<std::string, std::unique_ptr<Geometry>> m_geometries{};
 		std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	};
-	TEST_F(MainLoopUpdateTest, UpdateModel)
+
+	TEST(MainLoop, Initialize)
 	{
-		CGameTimer timer;
-		timer.Reset();
-
-		std::vector<std::unique_ptr<RenderItem>> renderItems{};
-		m_model->BuildRenderItems(m_geometries.begin()->second.get(), m_material.get(), renderItems);
-		DirectX::BoundingFrustum camFrustum{};
-
-		m_model->Update(&timer, m_camera.get(), m_frameResources->GetUploadBuffer(eBufferType::Instance),
-			camFrustum, true, renderItems);
-		InstanceData instanceData = renderItems.begin()->get()->Instances[2];
-		EXPECT_EQ(instanceData.MaterialIndex, 2);
-	}
-
-	TEST_F(MainLoopUpdateTest, UpdateMaterial)
-	{
-		m_material->UpdateMaterialBuffer(m_frameResources->GetUploadBuffer(eBufferType::Material));
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
+		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), true);
 	}
 
 	TEST(MainLoop, RunTest)
@@ -222,4 +230,8 @@ namespace SecondPage
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), true);
 		EXPECT_EQ(mainLoop->Run(), true);
 	}
+
+	//resorce 스트링 셋하는 부분 정리
+	//for를 std::알고리즘 으로 바꾸기
+	//d3dutil.h 에 스트럭쳐 맞는 곳으로 옮기기
 } //SecondPage

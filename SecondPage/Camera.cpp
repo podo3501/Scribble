@@ -14,23 +14,25 @@ CCamera::~CCamera()
 {
 }
 
+eMove TransformToeMove(int nKey)
+{
+	eMove move{ eMove::Init };
+	switch (nKey)
+	{
+	case 'W':		move = eMove::Forward;	break;
+	case 'S':		move = eMove::Back;			break;
+	case 'D':		move = eMove::Right;		break;
+	case 'A':		move = eMove::Left;			break;
+	}
+	return move;
+}
+
 void CCamera::PressedKey(std::vector<int> keyList)
 {
-	for (auto nKey : keyList)
-	{
-		eMove currMove{ eMove::Init };
-		switch (nKey)
-		{
-			case 'W':		currMove = eMove::Forward;	break;
-			case 'S':		currMove = eMove::Back;			break;
-			case 'D':		currMove = eMove::Right;			break;
-			case 'A':		currMove = eMove::Left;			break;
-		}
-
-		if (currMove == eMove::Init) continue;
-
-		m_moveDirection.emplace_back(currMove);
-	}
+	std::for_each(keyList.begin(), keyList.end(), [camera = this](auto nKey) {
+		eMove curMove = TransformToeMove(nKey);
+		if (curMove == eMove::Init) return;
+		camera->m_moveDirection.emplace_back(curMove); });
 }
 
 XMVECTOR CCamera::GetPosition()const

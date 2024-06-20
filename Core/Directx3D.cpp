@@ -27,6 +27,12 @@ CDirectx3D::CDirectx3D(CWindow* pWindow)
 		return directx3D->MsgProc(wnd, msg, wp, lp, lr); });
 }
 
+CDirectx3D::~CDirectx3D()
+{
+	if (m_device != nullptr)
+		FlushCommandQueue();
+}
+
 bool CDirectx3D::Initialize()
 {
 	ReturnIfFalse(InitDirect3D());
@@ -397,6 +403,18 @@ bool CDirectx3D::Set4xMsaaState(bool value)
 	m_4xMsaaState = value;
 	ReturnIfFalse(CreateSwapChain());
 	ReturnIfFalse(OnResize());
+
+	return true;
+}
+
+bool CDirectx3D::LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
+{
+	ReturnIfFalse(ResetCommandLists());
+
+	ReturnIfFalse(loadGraphicMemory(m_device.Get(), m_commandList.Get()));
+
+	ReturnIfFalse(ExcuteCommandLists());
+	ReturnIfFalse(FlushCommandQueue());
 
 	return true;
 }

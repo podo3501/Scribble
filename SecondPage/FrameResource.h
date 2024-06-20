@@ -20,7 +20,7 @@ enum class eBufferType : int
 
 class CFrameResources
 {
-	struct FrameResource
+	struct Resource
 	{
 		bool CreateUpdateBuffer(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
 
@@ -43,14 +43,11 @@ public:
 	bool Synchronize(ID3D12Fence* pFence);
 
 	UploadBuffer* GetUploadBuffer(eBufferType bufferType);
-	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_curFrameRes->CmdListAlloc.Get(); }
-	inline void SetFence(UINT64 fenceIdx)	{	m_fenceIdx = fenceIdx;	}
-	inline UINT64 GetFence() { return m_fenceIdx; };
+	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_resources[m_frameResIdx]->CmdListAlloc.Get();	}
+	inline void SetFence(UINT64 fenceIdx)	{ m_fenceIdx = fenceIdx; }
 
 private:
-	std::vector<std::unique_ptr<FrameResource>> m_resources{};
-	FrameResource* m_curFrameRes{ nullptr };
+	std::vector<std::unique_ptr<Resource>> m_resources{};
 	UINT m_frameResIdx{ 0 };
-
 	UINT64 m_fenceIdx{ 0 };
 };

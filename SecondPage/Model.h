@@ -1,15 +1,11 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <string>
 #include <DirectXCollision.h>
 
-class CMaterial;
-class CGameTimer;
-class CCamera;
-class UploadBuffer;
-struct FrameResource;
-struct MeshGeometry;
-struct RenderItem;
+class CGeometry;
+struct Geometry;
 
 class CModel
 {
@@ -19,15 +15,12 @@ public:
 	CModel(const CModel&) = delete;
 	CModel& operator=(const CModel&) = delete;
 
-	bool Read(MeshGeometry* meshGeo);
-	void BuildRenderItems(MeshGeometry* pGeo, CMaterial* pMaterial, std::vector<std::unique_ptr<RenderItem>>& renderItems);
+	bool Read(CGeometry* geometry);
 
-	void Update(const CGameTimer* gt,
-		const CCamera* camera,
-		UploadBuffer* instanceBuffer,
-		DirectX::BoundingFrustum& camFrustum,
-		bool frustumCullingEnabled,
-		std::vector<std::unique_ptr<RenderItem>>& renderItems);
+	inline std::string GetName() { return m_name; };
+	inline std::string GetSubmeshName() { return m_submeshName; };
 
 private:
+	std::string m_name{};
+	std::string m_submeshName{};
 };

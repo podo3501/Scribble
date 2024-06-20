@@ -61,6 +61,7 @@ struct MaterialData
     UINT MaterialPad2;
 };
 
+//geometry ฐüทร struct
 struct Vertex
 {
     DirectX::XMFLOAT3 Pos;

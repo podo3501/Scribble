@@ -35,6 +35,9 @@ D3DApp::~D3DApp()
 {
 	if(md3dDevice != nullptr)
 		FlushCommandQueue();
+	DestroyWindow(mhMainWnd);
+	UnregisterClass(L"MainWnd", mhAppInst);
+	mApp = nullptr;
 }
 
 ID3D12Device* D3DApp::GetDevice()

@@ -4,8 +4,10 @@
 #include<vector>
 #include<memory>
 
+class CDirectx3D;
 class CRenderer;
 struct ID3D12Device;
+struct ID3D12GraphicsCommandList;
 struct ID3D12DescriptorHeap;
 struct Texture;
 
@@ -17,13 +19,14 @@ public:
 		: m_filePath(std::forward<T>(filePath))
 	{}
 
-	bool Load(CRenderer* renderer);
+	bool LoadGraphicMemory(CDirectx3D* directx3D, CRenderer* renderer);
 
 	CTexture() = delete;
 	CTexture(const CTexture&) = delete;
 	CTexture& operator=(const CTexture&) = delete;
 
 private:
+	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
 	void CreateShaderResourceView(ID3D12Device* device, ID3D12DescriptorHeap* srvDescHeap);
 
 private:

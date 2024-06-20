@@ -16,8 +16,9 @@ class CModel;
 class CFrameResources;
 class CKeyInputManager;
 class CGameTimer;
+class CGeometry;
 struct RenderItem;
-struct MeshGeometry;
+struct Geometry;
 struct FrameResource;
 
 class CMainLoop
@@ -38,7 +39,12 @@ private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 
 	bool BuildGraphicMemory();
-	bool Load(MeshGeometry* meshGeo);
+	void BuildRenderItems();
+
+	void UpdateRenderItems();
+	void UpdateMaterialBuffer();
+	void UpdateMainPassCB();
+
 	bool OnResize();
 
 	void AddKeyListener();
@@ -49,7 +55,6 @@ private:
 
 	void CalculateFrameStats();
 	void OnKeyboardInput();
-	void UpdateMainPassCB(const CGameTimer* gt);
 
 private:
 	std::wstring m_resourcePath{};
@@ -63,11 +68,11 @@ private:
 	std::unique_ptr<CModel> m_model{ nullptr };
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
+	std::unique_ptr<CGeometry> m_geometry{ nullptr };
 
 	std::vector<std::unique_ptr<RenderItem>> m_renderItems{};
-	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_geometries{};
 
-	bool m_frustumCullingEnabled{ false };
+	bool m_frustumCullingEnabled{ true };
 	bool m_appPaused{ false };
 	bool m_minimized{ false };
 	bool m_maximized{ false };
@@ -75,6 +80,7 @@ private:
 
 	POINT m_lastMousePos{};
 	DirectX::BoundingFrustum m_camFrustum{};
+	std::wstring m_windowCaption{};
 };
 
 template<typename T>
