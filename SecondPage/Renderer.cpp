@@ -185,12 +185,12 @@ void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector
 	{
 		m_cmdList->IASetVertexBuffers(0, 1, &RvToLv(ri->geo->VertexBufferView()));
 		m_cmdList->IASetIndexBuffer(&RvToLv(ri->geo->IndexBufferView()));
-		m_cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
+		m_cmdList->IASetPrimitiveTopology(ri->primitiveType);
 
 		m_cmdList->SetGraphicsRootShaderResourceView(0, instanceBuffer->Resource()->GetGPUVirtualAddress());
 
-		m_cmdList->DrawIndexedInstanced(ri->IndexCount, ri->InstanceCount,
-			ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+		m_cmdList->DrawIndexedInstanced(ri->indexCount, ri->instanceCount,
+			ri->startIndexLocation, ri->baseVertexLocation, 0);
 	}
 }
 

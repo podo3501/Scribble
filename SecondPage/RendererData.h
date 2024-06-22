@@ -18,19 +18,19 @@ struct RenderItem
 	DirectX::XMFLOAT4X4 texTransform{};
 
 	int NumFramesDirty{ gFrameResourceCount };
-	UINT ObjCBIndex = -1;
+	UINT objCBIndex = -1;
 
 	Material* mat{ nullptr };
 	Geometry* geo{ nullptr };
 
-	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
+	D3D12_PRIMITIVE_TOPOLOGY primitiveType{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
 
-	DirectX::BoundingBox BoundingBoxBounds{};
-	DirectX::BoundingSphere BoundingSphere{};
-	std::vector<std::unique_ptr<InstanceBuffer>> Instances{};
+	DirectX::BoundingBox boundingBox{};
+	DirectX::BoundingSphere boundingSphere{};
+	std::vector<std::unique_ptr<InstanceBuffer>> instances{};
 
-	UINT IndexCount{ 0 };
-	UINT StartIndexLocation{ 0 };
-	int BaseVertexLocation{ 0 };
-	UINT InstanceCount{ 0 };
+	UINT indexCount{ 0 };
+	UINT startIndexLocation{ 0 };
+	int baseVertexLocation{ 0 };
+	UINT instanceCount{ 0 };
 };

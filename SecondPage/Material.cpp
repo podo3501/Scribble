@@ -11,12 +11,12 @@ void CMaterial::Build()
 	auto MakeMaterial = [&](std::string&& name, int matCBIdx, int diffuseSrvHeapIdx,
 		XMFLOAT4 diffuseAlbedo, XMFLOAT3 fresnelR0, float rough) {
 			auto curMat = std::make_unique<Material>();
-			curMat->Name = name;
-			curMat->MatCBIndex = matCBIdx;
-			curMat->DiffuseSrvHeapIndex = diffuseSrvHeapIdx;
-			curMat->DiffuseAlbedo = diffuseAlbedo;
-			curMat->FresnelR0 = fresnelR0;
-			curMat->Roughness = rough;
+			curMat->name = name;
+			curMat->matCBIndex = matCBIdx;
+			curMat->diffuseSrvHeapIndex = diffuseSrvHeapIdx;
+			curMat->diffuseAlbedo = diffuseAlbedo;
+			curMat->fresnelR0 = fresnelR0;
+			curMat->roughness = rough;
 			m_materials[name] = std::move(curMat);
 		};
 

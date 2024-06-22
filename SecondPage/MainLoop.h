@@ -83,7 +83,7 @@ private:
 		DirectX::XMMATRIX texTransform{};
 		UINT materialIndex{ 0 };
 	};
-	std::vector<std::unique_ptr<InstanceData>> Instances{};
+	std::vector<std::unique_ptr<InstanceData>> m_instances{};
 
 	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };

@@ -33,11 +33,11 @@ private:
 private:
 	struct Data
 	{
-		std::string Name{};// Unique material name for lookup.
-		std::wstring Filename{};
+		std::string name{};// Unique material name for lookup.
+		std::wstring filename{};
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> Resource{ nullptr };
-		Microsoft::WRL::ComPtr<ID3D12Resource> UploadHeap{ nullptr };
+		Microsoft::WRL::ComPtr<ID3D12Resource> resource{ nullptr };
+		Microsoft::WRL::ComPtr<ID3D12Resource> uploadHeap{ nullptr };
 	};
 
 private:

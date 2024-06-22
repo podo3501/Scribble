@@ -33,10 +33,10 @@ bool CModel::Read()
 	for (auto i{ 0u }; i < vCount; ++i)
 	{
 		Vertex curVertex;
-		fin >> curVertex.Pos.x >> curVertex.Pos.y >> curVertex.Pos.z;
-		fin >> curVertex.Normal.x >> curVertex.Normal.y >> curVertex.Normal.z;
+		fin >> curVertex.pos.x >> curVertex.pos.y >> curVertex.pos.z;
+		fin >> curVertex.normal.x >> curVertex.normal.y >> curVertex.normal.z;
 
-		XMVECTOR P = XMLoadFloat3(&curVertex.Pos);
+		XMVECTOR P = XMLoadFloat3(&curVertex.pos);
 
 		XMFLOAT3 spherePos;
 		XMStoreFloat3(&spherePos, XMVector3Normalize(P));
@@ -50,7 +50,7 @@ bool CModel::Read()
 		float u = theta / (2.0f * XM_PI);
 		float v = phi / XM_PI;
 
-		curVertex.TexC = { u, v };
+		curVertex.texC = { u, v };
 
 		vMin = XMVectorMin(vMin, P);
 		vMax = XMVectorMax(vMax, P);
@@ -84,26 +84,26 @@ bool CModel::Convert(CGeometry* geometry)
 	UINT ibByteSize = static_cast<UINT>(m_indices.size()) * sizeof(std::int32_t);
 
 	auto meshGeo = std::make_unique<Geometry>();
-	meshGeo->Name = m_name;
+	meshGeo->name = m_name;
 
-	auto& submesh = meshGeo->DrawArgs[m_submeshName];
-	submesh.IndexCount = static_cast<UINT>(m_indices.size());
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;
-	submesh.BBox = m_boundingBox;
-	submesh.BSphere = m_boundingSphere;
+	auto& submesh = meshGeo->drawArgs[m_submeshName];
+	submesh.indexCount = static_cast<UINT>(m_indices.size());
+	submesh.startIndexLocation = 0;
+	submesh.baseVertexLocation = 0;
+	submesh.boundingBox = m_boundingBox;
+	submesh.boundingSphere = m_boundingSphere;
 
-	meshGeo->VertexBufferByteSize = vbByteSize;
-	meshGeo->VertexByteStride = sizeof(Vertex);
+	meshGeo->vertexBufferByteSize = vbByteSize;
+	meshGeo->vertexByteStride = sizeof(Vertex);
 
-	ReturnIfFailed(D3DCreateBlob(vbByteSize, &meshGeo->VertexBufferCPU));
-	CopyMemory(meshGeo->VertexBufferCPU->GetBufferPointer(), m_vertices.data(), vbByteSize);
+	ReturnIfFailed(D3DCreateBlob(vbByteSize, &meshGeo->vertexBufferCPU));
+	CopyMemory(meshGeo->vertexBufferCPU->GetBufferPointer(), m_vertices.data(), vbByteSize);
 
-	ReturnIfFailed(D3DCreateBlob(ibByteSize, &meshGeo->IndexBufferCPU));
-	CopyMemory(meshGeo->IndexBufferCPU->GetBufferPointer(), m_indices.data(), ibByteSize);
+	ReturnIfFailed(D3DCreateBlob(ibByteSize, &meshGeo->indexBufferCPU));
+	CopyMemory(meshGeo->indexBufferCPU->GetBufferPointer(), m_indices.data(), ibByteSize);
 
-	meshGeo->IndexFormat = DXGI_FORMAT_R32_UINT;
-	meshGeo->IndexBufferByteSize = ibByteSize;
+	meshGeo->indexFormat = DXGI_FORMAT_R32_UINT;
+	meshGeo->indexBufferByteSize = ibByteSize;
 
 	ReturnIfFalse(geometry->SetMesh(std::move(meshGeo)));
 

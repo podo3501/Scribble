@@ -211,18 +211,18 @@ void CMainLoop::BuildRenderItems()
 	auto rItem = std::make_unique<RenderItem>();
 	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& smName, std::string&& matName,
 		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
-			auto& sm = geo->DrawArgs[smName];
+			auto& sm = geo->drawArgs[smName];
 			rItem->geo = geo;
 			rItem->mat = m_material->GetMaterial(matName);
-			rItem->ObjCBIndex = objIdx++;
-			rItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			rItem->objCBIndex = objIdx++;
+			rItem->primitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 			XMStoreFloat4x4(&rItem->world, world);
 			XMStoreFloat4x4(&rItem->texTransform, texTransform);
-			rItem->StartIndexLocation = sm.StartIndexLocation;
-			rItem->BaseVertexLocation = sm.BaseVertexLocation;
-			rItem->IndexCount = sm.IndexCount;
-			rItem->BoundingBoxBounds = sm.BBox;
-			rItem->BoundingSphere = sm.BSphere; };
+			rItem->startIndexLocation = sm.startIndexLocation;
+			rItem->baseVertexLocation = sm.baseVertexLocation;
+			rItem->indexCount = sm.indexCount;
+			rItem->boundingBox = sm.boundingBox;
+			rItem->boundingSphere = sm.boundingSphere; };
 	MakeRenderItem(m_model->GetSubmeshName(), "tile0", XMMatrixIdentity(), XMMatrixIdentity());
 	
 	const int n = 5;
@@ -248,15 +248,15 @@ void CMainLoop::BuildRenderItems()
 				auto instance = std::make_unique<InstanceBuffer>();
 
 				int index = k * n * n + i * n + j;				
-				instance->World = XMFLOAT4X4(
+				instance->world = XMFLOAT4X4(
 					1.0f, 0.0f, 0.0f, x + j * dx,
 					0.0f, 1.0f, 0.0f, y + i * dy,
 					0.0f, 0.0f, 1.0f, z + k * dz,
 					0.0f, 0.0f, 0.0f, 1.0f);
 				
-				XMStoreFloat4x4(&instance->TexTransform, XMMatrixTranspose(XMMatrixScaling(2.0f, 2.0f, 1.0f)));
-				instance->MaterialIndex = index % matCount;
-				rItem->Instances.emplace_back(std::move(instance));
+				XMStoreFloat4x4(&instance->texTransform, XMMatrixTranspose(XMMatrixScaling(2.0f, 2.0f, 1.0f)));
+				instance->materialIndex = index % matCount;
+				rItem->instances.emplace_back(std::move(instance));
 			}
 		}
 	}
@@ -298,7 +298,7 @@ void CMainLoop::UpdateRenderItems()
 
 	for (auto& e : m_renderItems)
 	{
-		const auto& instanceData = e->Instances;
+		const auto& instanceData = e->instances;
 		instanceSize = instanceData.size();
 
 		//copy_if로 바꾸어보자
@@ -329,7 +329,7 @@ void CMainLoop::UpdateRenderItems()
 
 		}
 
-		e->InstanceCount = visibleInstanceCount;
+		e->instanceCount = visibleInstanceCount;
 	}
 
 	m_windowCaption = SetWindowCaption(visibleInstanceCount, instanceSize);
@@ -386,21 +386,21 @@ void CMainLoop::UpdateMaterialBuffer()
 	for (auto& e : materials)
 	{
 		Material* m = e.second.get();
-		if (m->NumFramesDirty <= 0)
+		if (m->numFramesDirty <= 0)
 			continue;
 
-		XMMATRIX matTransform = XMLoadFloat4x4(&m->MatTransform);
+		XMMATRIX matTransform = XMLoadFloat4x4(&m->matTransform);
 
 		MaterialBuffer matData;
-		matData.DiffuseAlbedo = m->DiffuseAlbedo;
-		matData.FresnelR0 = m->FresnelR0;
-		matData.Roughness = m->Roughness;
-		XMStoreFloat4x4(&matData.MatTransform, XMMatrixTranspose(matTransform));
-		matData.DiffuseMapIndex = m->DiffuseSrvHeapIndex;
+		matData.diffuseAlbedo = m->diffuseAlbedo;
+		matData.fresnelR0 = m->fresnelR0;
+		matData.roughness = m->roughness;
+		XMStoreFloat4x4(&matData.matTransform, XMMatrixTranspose(matTransform));
+		matData.diffuseMapIndex = m->diffuseSrvHeapIndex;
 
-		materialBuffer->CopyData(m->MatCBIndex, matData);
+		materialBuffer->CopyData(m->matCBIndex, matData);
 
-		m->NumFramesDirty--;
+		m->numFramesDirty--;
 	}
 }
 
@@ -419,26 +419,26 @@ void CMainLoop::UpdateMainPassCB()
 	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 	
 	PassConstants pc;
-	StoreMatrix4x4(pc.View, view);
-	StoreMatrix4x4(pc.InvView, Inverse(view));
-	StoreMatrix4x4(pc.Proj, proj);
-	StoreMatrix4x4(pc.InvProj, Inverse(proj));
-	StoreMatrix4x4(pc.ViewProj, viewProj);
-	StoreMatrix4x4(pc.InvViewProj, Inverse(viewProj));
-	pc.EyePosW = m_camera->GetPosition3f();
-	pc.RenderTargetSize = { (float)m_window->GetWidth(), (float)m_window->GetHeight()};
-	pc.InvRenderTargetSize = { 1.0f / (float)m_window->GetWidth(), 1.0f / (float)m_window->GetHeight() };
-	pc.NearZ = 1.0f;
-	pc.FarZ = 1000.0f;
-	pc.TotalTime = m_timer->TotalTime();
-	pc.DeltaTime = m_timer->DeltaTime();
-	pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-	pc.Lights[0].Strength = { 0.8f, 0.8f, 0.8f };
-	pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
-	pc.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
-	pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
-	pc.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+	StoreMatrix4x4(pc.view, view);
+	StoreMatrix4x4(pc.invView, Inverse(view));
+	StoreMatrix4x4(pc.proj, proj);
+	StoreMatrix4x4(pc.invProj, Inverse(proj));
+	StoreMatrix4x4(pc.viewProj, viewProj);
+	StoreMatrix4x4(pc.invViewProj, Inverse(viewProj));
+	pc.eyePosW = m_camera->GetPosition3f();
+	pc.renderTargetSize = { (float)m_window->GetWidth(), (float)m_window->GetHeight()};
+	pc.invRenderTargetSize = { 1.0f / (float)m_window->GetWidth(), 1.0f / (float)m_window->GetHeight() };
+	pc.nearZ = 1.0f;
+	pc.farZ = 1000.0f;
+	pc.totalTime = m_timer->TotalTime();
+	pc.deltaTime = m_timer->DeltaTime();
+	pc.ambientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	pc.lights[0].direction = { 0.57735f, -0.57735f, 0.57735f };
+	pc.lights[0].strength = { 0.8f, 0.8f, 0.8f };
+	pc.lights[1].direction = { -0.57735f, -0.57735f, 0.57735f };
+	pc.lights[1].strength = { 0.4f, 0.4f, 0.4f };
+	pc.lights[2].direction = { 0.0f, -0.707f, -0.707f };
+	pc.lights[2].strength = { 0.2f, 0.2f, 0.2f };
 
 	passCB->CopyData(0, pc);
 }
