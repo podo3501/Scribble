@@ -94,7 +94,7 @@ namespace MainLoop
 	TEST_F(MainLoopTest, Initialize)
 	{
 		//데이터를 시스템 메모리에 올리기
-		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_resourcePath);
+		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_renderer.get(), m_resourcePath);
 		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
 		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
 
@@ -108,7 +108,7 @@ namespace MainLoop
 		EXPECT_EQ(model->Convert(geometry.get()), true);
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 		EXPECT_EQ(geometry->LoadGraphicMemory(m_directx3D.get()), true);
-		EXPECT_EQ(texture->LoadGraphicMemory(m_directx3D.get(), m_renderer.get()), true);
+		EXPECT_EQ(texture->LoadGraphicMemory(), true);
 
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
 		camera->SetPosition(0.0f, 2.0f, -15.0f);

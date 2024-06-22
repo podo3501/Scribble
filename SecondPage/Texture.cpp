@@ -6,50 +6,68 @@
 
 using namespace DirectX;
 
-void CTexture::CreateShaderResourceView(ID3D12Device* device, ID3D12DescriptorHeap* srvDescHeap)
+enum class eType : int
 {
-	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	Common = 0,
+	Cube,
+};
 
-	for_each(m_textureList.begin(), m_textureList.end(), [&, index{ 0 }](auto& curTex) mutable {
-		auto& curTexRes = curTex->resource;
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-		srvDesc.Format = curTexRes->GetDesc().Format;
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Texture2D.MipLevels = curTexRes->GetDesc().MipLevels;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-		hCpuDesc.Offset(index++, cbvSrvUavDescSize);
-		device->CreateShaderResourceView(curTex->resource.Get(), &srvDesc, hCpuDesc);
-		});
-}
-
-bool CTexture::LoadGraphicMemory(CDirectx3D* directx3D, CRenderer* renderer)
+bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eType type, std::vector<std::wstring>& filenames)
 {
-	ReturnIfFalse(directx3D->LoadData([texture = this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-		ReturnIfFalse(texture->Upload(device, cmdList));
-		return true; }));
+	auto result = std::all_of(filenames.begin(), filenames.end(),
+		[texture = this, device, cmdList, type](auto& curFilename) {
+			auto texMemory = std::make_unique<TextureMemory>();
+			texMemory->filename = texture->m_resPath + texture->m_filePath + curFilename;
+			ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
+				texMemory->filename.c_str(), texMemory->resource, texMemory->uploadHeap));
+			texture->m_texMemories[type].emplace_back(std::move(texMemory));
+			return true; });
 
-	CreateShaderResourceView(directx3D->GetDevice(), renderer->GetSrvDescriptorHeap());
+	if (!result) return result;
 
 	return true;
 }
 
-bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
+void CTexture::CreateShaderResourceView(eType type)
 {
-	std::vector<std::wstring> filenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
+	auto device = m_renderer->GetDevice();
+	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	auto srvDescHeap = m_renderer->GetSrvDescriptorHeap();
+	for_each(m_texMemories[type].begin(), m_texMemories[type].end(),
+		[srvDescHeap, cbvSrvUavDescSize, device, index{ 0 }](auto& curTex) mutable {
+			auto& curTexRes = curTex->resource;
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+			srvDesc.Format = curTexRes->GetDesc().Format;
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			srvDesc.Texture2D.MipLevels = curTexRes->GetDesc().MipLevels;
+			srvDesc.Texture2D.MostDetailedMip = 0;
+			srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
+			hCpuDesc.Offset(index++, cbvSrvUavDescSize);
+			device->CreateShaderResourceView(curTex->resource.Get(), &srvDesc, hCpuDesc);
+		});
+}
+
+bool CTexture::LoadGraphicMemory()
+{
+	std::vector<std::wstring> commonFilenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
+	std::vector<std::wstring> cubeFilenames = {};
+	//큐브 텍스춰를 로딩할 차례
+	ReturnIfFalse(LoadTexture(eType::Common, commonFilenames));
+	
+	return true;
+}
 
-	auto result = std::all_of(filenames.begin(), filenames.end(), [texture = this, device, cmdList](auto& curFilename) {
-		auto data = std::make_unique<Data>();
-		data->filename = texture->m_resPath + texture->m_filePath + curFilename;
-		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
-			data->filename.c_str(), data->resource, data->uploadHeap));
-		texture->m_textureList.emplace_back(std::move(data));
-		return true;	});
+bool CTexture::LoadTexture(eType type, std::vector<std::wstring>& filenames)
+{
+	ReturnIfFalse(m_renderer->GetDirectx3D()->LoadData(
+		[texture = this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+			ReturnIfFalse(texture->Upload(device, cmdList, type, filenames));
+			return true; }));
 
-	if (!result) return result;
+	CreateShaderResourceView(type);
 
 	return true;
 }

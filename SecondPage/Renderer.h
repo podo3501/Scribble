@@ -50,6 +50,7 @@ public:
 	bool Draw(CGameTimer* gt, CFrameResources* pCurrFrameRes,
 		const std::vector<std::unique_ptr<RenderItem>>& renderItem);
 
+	inline CDirectx3D* GetDirectx3D() const;
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
 	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
@@ -81,6 +82,7 @@ private:
 	D3D12_RECT m_scissorRect{};
 };
 
+inline CDirectx3D* CRenderer::GetDirectx3D() const											{ return m_directx3D; }
 inline ID3D12Device* CRenderer::GetDevice() const											{	return m_device;		}
 inline ID3D12GraphicsCommandList* CRenderer::GetCommandList() const		{	return m_cmdList;	}
 inline ID3D12DescriptorHeap* CRenderer::GetSrvDescriptorHeap() const		{	return m_srvDescHeap.Get();		}

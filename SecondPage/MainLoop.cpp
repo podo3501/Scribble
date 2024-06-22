@@ -197,9 +197,9 @@ bool CMainLoop::BuildCpuMemory()
 
 bool CMainLoop::BuildGraphicMemory()
 {
-	m_texture = std::make_unique<CTexture>(m_resourcePath);
+	m_texture = std::make_unique<CTexture>(m_renderer.get(), m_resourcePath);
 	ReturnIfFalse(m_geometry->LoadGraphicMemory(m_directx3D.get()));
-	ReturnIfFalse(m_texture->LoadGraphicMemory(m_directx3D.get(), m_renderer.get()));
+	ReturnIfFalse(m_texture->LoadGraphicMemory());
 
 	return true;
 }
