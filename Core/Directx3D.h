@@ -49,6 +49,7 @@ public:
 	bool ExcuteCommandLists();
 	bool ExcuteSwapChain(UINT64* outFenceIdx);
 	bool FlushCommandQueue();
+	bool WaitUntilGpuFinished(UINT64 fenceCount);
 	bool OnResize();
 	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
 

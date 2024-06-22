@@ -32,14 +32,19 @@ public:
 	CMainLoop(const CMainLoop&) = delete;
 	CMainLoop& operator=(const CMainLoop&) = delete;
 
-	bool Initialize(HINSTANCE hInstance);
+	bool Initialize(HINSTANCE hInstance, bool bShowWindow = true);
 	bool Run();
 
 private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 
+	bool InitializeClass();
+
+	bool BuildCpuMemory();
 	bool BuildGraphicMemory();
 	void BuildRenderItems();
+
+	bool MakeFrameResource();
 
 	void UpdateRenderItems();
 	void UpdateMaterialBuffer();
@@ -72,14 +77,15 @@ private:
 
 	std::vector<std::unique_ptr<RenderItem>> m_renderItems{};
 
+	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };
+
 	bool m_appPaused{ false };
 	bool m_minimized{ false };
 	bool m_maximized{ false };
 	bool m_resizing{ false };
 
 	POINT m_lastMousePos{};
-	DirectX::BoundingFrustum m_camFrustum{};
 	std::wstring m_windowCaption{};
 };
 

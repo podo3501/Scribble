@@ -5,15 +5,15 @@
 struct ID3D12Device;
 struct ID3D12Resource;
 
-class UploadBuffer
+class CUploadBuffer
 {
 public:
-    UploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCount, bool isConstantBuffer);
+    CUploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCount, bool isConstantBuffer);
 
-    UploadBuffer(const UploadBuffer& rhs) = delete;
-    UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
+    CUploadBuffer(const CUploadBuffer& rhs) = delete;
+    CUploadBuffer& operator=(const CUploadBuffer& rhs) = delete;
 
-    ~UploadBuffer();
+    ~CUploadBuffer();
     ID3D12Resource* Resource()const;
 
     template<typename T>

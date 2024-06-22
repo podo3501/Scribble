@@ -42,11 +42,11 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
 
 	auto result = std::all_of(filenames.begin(), filenames.end(), [texture = this, device, cmdList](auto& curFilename) {
-		auto tex = std::make_unique<Texture>();
-		tex->Filename = texture->m_filePath + curFilename;
+		auto data = std::make_unique<Data>();
+		data->Filename = texture->m_resPath + texture->m_filePath + curFilename;
 		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
-			tex->Filename.c_str(), tex->Resource, tex->UploadHeap));
-		texture->m_textureList.emplace_back(std::move(tex));
+			data->Filename.c_str(), data->Resource, data->UploadHeap));
+		texture->m_textureList.emplace_back(std::move(data));
 		return true;	});
 
 	if (!result) return result;

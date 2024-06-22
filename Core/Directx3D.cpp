@@ -370,16 +370,18 @@ bool CDirectx3D::FlushCommandQueue()
 	// are on the GPU timeline, the new fence point won't be set until the GPU finishes
 	// processing all the commands prior to this Signal().
 	ReturnIfFailed(m_commandQueue->Signal(m_fence.Get(), m_currentFence));
+	ReturnIfFalse(WaitUntilGpuFinished(m_currentFence));
 
-	// Wait until the GPU has completed commands up to this fence point.
-	if (m_fence->GetCompletedValue() < m_currentFence)
+	return true;
+}
+
+bool CDirectx3D::WaitUntilGpuFinished(UINT64 fenceCount)
+{
+	if (m_fence->GetCompletedValue() < fenceCount)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 
-		// Fire event when GPU hits current fence.  
 		ReturnIfFailed(m_fence->SetEventOnCompletion(m_currentFence, eventHandle));
-
-		// Wait until the GPU hits current fence event is fired.
 		WaitForSingleObject(eventHandle, INFINITE);
 		CloseHandle(eventHandle);
 	}

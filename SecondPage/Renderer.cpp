@@ -9,21 +9,20 @@
 #include "./FrameResource.h"
 #include "./RendererData.h"
 #include "./Shader.h"
+#include "./Geometry.h"
 
 using Microsoft::WRL::ComPtr;
 
 //7인 이유는 텍스춰를 7장을 다 올린다음 동적으로 선택하기 위함이다.  Texture2D gDiffuseMap[7] : register(t0)
 constexpr UINT DescriptorHeapSize{ 7 };
 
-CRenderer::CRenderer(CDirectx3D* directx3D)
-	: m_directx3D(directx3D)
-	, m_shader(std::make_unique<CShader>())
-	, m_device(directx3D->GetDevice())
-	, m_cmdList(directx3D->GetCommandList())
-{}
-
-bool CRenderer::Initialize()
+bool CRenderer::Initialize(CDirectx3D* directx3D)
 {
+	m_directx3D = directx3D;
+	m_device = directx3D->GetDevice();
+	m_cmdList = directx3D->GetCommandList();
+	m_shader = std::make_unique<CShader>(m_resPath);
+
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
 	ReturnIfFalse(BuildPSOs());
@@ -180,7 +179,7 @@ bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std
 	return true;
 }
 
-void CRenderer::DrawRenderItems(UploadBuffer* instanceBuffer, const std::vector<std::unique_ptr<RenderItem>>& ritems)
+void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector<std::unique_ptr<RenderItem>>& ritems)
 {
 	for (auto& ri : ritems)
 	{

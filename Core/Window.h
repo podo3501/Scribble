@@ -19,7 +19,7 @@ public:
 	CWindow(const CWindow&) = delete;
 	CWindow& operator=(const CWindow&) = delete;
 
-	bool Initialize();
+	bool Initialize(bool bShow);
 	inline void AddWndProcListener(WndProcListener listener);
 
 	int GetWidth();

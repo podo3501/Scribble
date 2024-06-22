@@ -69,7 +69,7 @@ int CWindow::GetHeight() { return m_height; }
 HWND CWindow::GetHandle() { return m_wnd; }
 
 static CWindow* gWindow = nullptr;
-bool CWindow::Initialize()
+bool CWindow::Initialize(bool bShow)
 {
 	gWindow = this;
 	//캡쳐가 있으면 WNDPROC으로 변환이 되지 않는다. 그래서 정적변수활용
@@ -109,7 +109,7 @@ bool CWindow::Initialize()
 		return false;
 	}
 
-	ShowWindow(m_wnd, SW_SHOW);
+	ShowWindow(m_wnd, bShow ? SW_SHOW : SW_HIDE);
 	UpdateWindow(m_wnd);
 
 	return true;

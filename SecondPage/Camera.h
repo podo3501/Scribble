@@ -6,7 +6,6 @@
 
 enum class eMove
 {
-	Init = 0,
 	Forward = 1,
 	Back,
 	Right,
@@ -74,6 +73,7 @@ public:
 	void Pitch(float angle);
 	void RotateY(float angle);
 
+	void SetSpeed(float speed);
 	void SetSpeed(eMove move, float moveSpeed);
 	void Move(eMove move, bool forward, float deltaTime);
 	void Move(eMove move, float speed);

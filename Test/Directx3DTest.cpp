@@ -22,25 +22,6 @@
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/Geometry.h"
 
-bool Load(Geometry* meshGeo, CRenderer* renderer)
-{
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		renderer->GetDevice(), renderer->GetCommandList(), 
-		meshGeo->VertexBufferCPU->GetBufferPointer(), 
-		meshGeo->VertexBufferByteSize,
-		meshGeo->VertexBufferUploader, 
-		&meshGeo->VertexBufferGPU));
-	
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		renderer->GetDevice(), renderer->GetCommandList(), 
-		meshGeo->IndexBufferCPU->GetBufferPointer(),
-		meshGeo->IndexBufferByteSize,
-		meshGeo->IndexBufferUploader,
-		&meshGeo->IndexBufferGPU));
-
-	return true;
-}
-
 namespace STDTest
 {
 	TEST(std, all_of)
@@ -59,7 +40,7 @@ namespace STDTest
 	}
 }
 
-namespace SecondPage 
+namespace MainLoop 
 {
 	class MainLoopTest : public ::testing::Test
 	{
@@ -72,13 +53,13 @@ namespace SecondPage
 		{
 			//초기화
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-			EXPECT_EQ(m_window->Initialize(), true);
+			EXPECT_EQ(m_window->Initialize(false), true);
 
 			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
 			EXPECT_EQ(m_directx3D->Initialize(), true);
 
-			m_renderer = std::make_unique<CRenderer>(m_directx3D.get());
-			EXPECT_EQ(m_renderer->Initialize(), true);
+			m_renderer = std::make_unique<CRenderer>(m_resourcePath);
+			EXPECT_EQ(m_renderer->Initialize(m_directx3D.get()), true);
 
 			m_material = std::make_unique<CMaterial>();
 			m_material->Build();
@@ -106,24 +87,25 @@ namespace SecondPage
 		std::unique_ptr<CFrameResources> frameResources = std::make_unique<CFrameResources>();
 		EXPECT_EQ(frameResources->BuildFrameResources(
 			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true );
-		EXPECT_EQ(frameResources->Synchronize(m_directx3D->GetFence()), true);
+		EXPECT_EQ(frameResources->Synchronize(m_directx3D.get()), true);
 		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
 	}
 
 	TEST_F(MainLoopTest, Initialize)
 	{
 		//데이터를 시스템 메모리에 올리기
-		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_resourcePath + L"Textures/");
+		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_resourcePath);
 		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
-		std::unique_ptr<CModel> model = std::make_unique<CModel>();
+		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
 
-		EXPECT_EQ(model->Read(geometry.get()), true);
+		EXPECT_EQ(model->Read(), true);
 
 		//프레임당 쓰이는 데이터 공간을 확보
 		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
 		EXPECT_EQ(m_frameResources->BuildFrameResources(
 			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true);
 
+		EXPECT_EQ(model->Convert(geometry.get()), true);
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 		EXPECT_EQ(geometry->LoadGraphicMemory(m_directx3D.get()), true);
 		EXPECT_EQ(texture->LoadGraphicMemory(m_directx3D.get(), m_renderer.get()), true);
@@ -163,75 +145,20 @@ namespace SecondPage
 		EXPECT_EQ(pos.z, 1.0f);
 	}
 
-	class MainLoopUpdateTest : public ::testing::Test
-	{
-	public:
-		MainLoopUpdateTest()
-		{}
-
-	protected:
-		void SetUp() override
-		{
-			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-			EXPECT_EQ(m_window->Initialize(), true);
-
-			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-			EXPECT_EQ(m_directx3D->Initialize(), true);
-
-			m_material = std::make_unique<CMaterial>();
-			m_material->Build();
-
-			m_geometry = std::make_unique<CGeometry>();
-
-			m_model = std::make_unique<CModel>();
-
-			EXPECT_EQ(m_model->Read(m_geometry.get()), true);
-
-			m_camera = std::make_unique<CCamera>();
-			m_camera->UpdateViewMatrix();
-
-			m_frameResources = std::make_unique<CFrameResources>();
-			EXPECT_EQ(m_frameResources->BuildFrameResources(
-				m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true);
-
-			EXPECT_EQ(m_frameResources->Synchronize(m_directx3D->GetFence()), true);
-		}
-
-		void TearDown() override
-		{
-			m_frameResources.reset();
-			m_camera.reset();
-			m_model.reset();
-			m_material.reset();
-			m_directx3D.reset();
-			m_window.reset();
-		}
-
-	protected:
-		std::unique_ptr<CWindow> m_window{ nullptr };
-		std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
-		std::unique_ptr<CMaterial> m_material{ nullptr };
-		std::unique_ptr<CGeometry> m_geometry{ nullptr };
-		std::unique_ptr<CModel> m_model{ nullptr };
-		std::unique_ptr<CCamera> m_camera{ nullptr };
-		std::unordered_map<std::string, std::unique_ptr<Geometry>> m_geometries{};
-		std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
-	};
-
 	TEST(MainLoop, Initialize)
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
-		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), true);
+		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr), false), true);
 	}
+	//for를 std::알고리즘 으로 바꾸기
+} //SecondPage
 
+namespace A_SecondPage
+{
 	TEST(MainLoop, RunTest)
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), true);
 		EXPECT_EQ(mainLoop->Run(), true);
 	}
-
-	//resorce 스트링 셋하는 부분 정리
-	//for를 std::알고리즘 으로 바꾸기
-	//d3dutil.h 에 스트럭쳐 맞는 곳으로 옮기기
-} //SecondPage
+}

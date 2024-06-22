@@ -1,7 +1,7 @@
 #include "./UploadBuffer.h"
 #include "./d3dUtil.h"
 
-UploadBuffer::UploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCount, bool isConstantBuffer) :
+CUploadBuffer::CUploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCount, bool isConstantBuffer) :
     mIsConstantBuffer(isConstantBuffer)
 {
     mElementByteSize = static_cast<UINT>(typeSize);
@@ -32,7 +32,7 @@ UploadBuffer::UploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCo
     // the resource while it is in use by the GPU (so we must use synchronization techniques).
 }
 
-UploadBuffer::~UploadBuffer()
+CUploadBuffer::~CUploadBuffer()
 {
     if (mUploadBuffer != nullptr)
         mUploadBuffer->Unmap(0, nullptr);
@@ -40,7 +40,7 @@ UploadBuffer::~UploadBuffer()
     mMappedData = nullptr;
 }
 
-ID3D12Resource* UploadBuffer::Resource() const
+ID3D12Resource* CUploadBuffer::Resource() const
 {
     return mUploadBuffer.Get();
 }

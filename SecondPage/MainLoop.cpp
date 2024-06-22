@@ -128,54 +128,76 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 	return false;
 }
 
-bool CMainLoop::Initialize(HINSTANCE hInstance)
+bool CMainLoop::InitializeClass()
 {
 	m_camera = std::make_unique<CCamera>();
 	m_camera->SetPosition(0.0f, 2.0f, -15.0f);
-	m_camera->SetSpeed(eMove::Forward, 10.0f);
-	m_camera->SetSpeed(eMove::Back, 10.0f);
-	m_camera->SetSpeed(eMove::Right, 10.0f);
-	m_camera->SetSpeed(eMove::Left, 10.0f);
+	m_camera->SetSpeed(10.0f);
 
 	m_timer = std::make_unique<CGameTimer>();
-
-	m_window = std::make_unique<CWindow>(hInstance);
-	ReturnIfFalse(m_window->Initialize());
-	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
-		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
 
 	m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
 	ReturnIfFalse(m_directx3D->Initialize());
 
-	m_renderer = std::make_shared<CRenderer>(m_directx3D.get());
-	ReturnIfFalse(m_renderer->Initialize());
+	m_renderer = std::make_shared<CRenderer>(m_resourcePath);
+	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));
 
 	m_geometry = std::make_unique<CGeometry>();
+
+	return true;
+}
+
+bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
+{
+	m_window = std::make_unique<CWindow>(hInstance);
+	ReturnIfFalse(m_window->Initialize(bShowWindow));
+	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
+
+	//초기화
+	ReturnIfFalse(InitializeClass());
 
 	ReturnIfFalse(OnResize());
 
 	//데이터를 시스템 메모리에 올리기
-	m_material = std::make_unique<CMaterial>();
-	m_material->Build();
-
-	m_texture = std::make_unique<CTexture>(m_resourcePath + L"Textures/");
-	m_model = std::make_unique<CModel>();
-
-	ReturnIfFalse(m_model->Read(m_geometry.get()));
+	ReturnIfFalse(BuildCpuMemory());
+	
+	//그래픽 메모리에 올릴 준비단계
+	ReturnIfFalse(m_model->Convert(m_geometry.get()));
 	BuildRenderItems();
 
+	//시스템 메모리에서 그래픽 메모리에 데이터 올리기
+	ReturnIfFalse(BuildGraphicMemory());
+
+	ReturnIfFalse(MakeFrameResource());
+
+	AddKeyListener();
+
+	return true;
+}
+
+bool CMainLoop::MakeFrameResource()
+{
 	m_frameResources = std::make_unique<CFrameResources>();
 	ReturnIfFalse(m_frameResources->BuildFrameResources(m_renderer->GetDevice(),
 		1, 125, static_cast<UINT>(m_material->GetCount())));
-	
-	ReturnIfFalse(BuildGraphicMemory());			//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-	AddKeyListener();
+
+	return true;
+}
+
+bool CMainLoop::BuildCpuMemory()
+{
+	m_material = std::make_unique<CMaterial>();
+	m_material->Build();
+	m_model = std::make_unique<CModel>(m_resourcePath);
+	ReturnIfFalse(m_model->Read());
 
 	return true;
 }
 
 bool CMainLoop::BuildGraphicMemory()
 {
+	m_texture = std::make_unique<CTexture>(m_resourcePath);
 	ReturnIfFalse(m_geometry->LoadGraphicMemory(m_directx3D.get()));
 	ReturnIfFalse(m_texture->LoadGraphicMemory(m_directx3D.get(), m_renderer.get()));
 
@@ -475,7 +497,7 @@ bool CMainLoop::Run()
 				m_camera->Update(m_timer->DeltaTime());
 
 				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
-				ReturnIfFalse(m_frameResources->Synchronize(m_directx3D->GetFence()));
+				ReturnIfFalse(m_frameResources->Synchronize(m_directx3D.get()));
 
 				UpdateRenderItems();
 				UpdateMaterialBuffer();

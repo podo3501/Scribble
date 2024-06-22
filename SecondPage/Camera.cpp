@@ -1,5 +1,6 @@
 ﻿#include "Camera.h"
 #include "../Core/d3dUtil.h"
+#include "../Core/Utility.h"
 
 using namespace DirectX;
 
@@ -14,24 +15,25 @@ CCamera::~CCamera()
 {
 }
 
-eMove TransformToeMove(int nKey)
+bool TransformToeMove(int nKey, eMove* outMove)
 {
-	eMove move{ eMove::Init };
 	switch (nKey)
 	{
-	case 'W':		move = eMove::Forward;	break;
-	case 'S':		move = eMove::Back;			break;
-	case 'D':		move = eMove::Right;		break;
-	case 'A':		move = eMove::Left;			break;
+	case 'W':		(*outMove) = eMove::Forward;		break;
+	case 'S':		(*outMove) = eMove::Back;			break;
+	case 'D':		(*outMove) = eMove::Right;			break;
+	case 'A':		(*outMove) = eMove::Left;				break;
+	default:		return false;
 	}
-	return move;
+	return true;
 }
 
 void CCamera::PressedKey(std::vector<int> keyList)
 {
 	std::for_each(keyList.begin(), keyList.end(), [camera = this](auto nKey) {
-		eMove curMove = TransformToeMove(nKey);
-		if (curMove == eMove::Init) return;
+		eMove curMove{};
+		auto result = TransformToeMove(nKey, &curMove);
+		if (!result) return;
 		camera->m_moveDirection.emplace_back(curMove); });
 }
 
@@ -254,6 +256,14 @@ void CCamera::RotateY(float angle)
 }
 
 //방향에 따라 이동하는 것은 나중에 객체에서도 쓰일 예정이지만 일단 여기에 놔 두고 나중에 떼내자
+void CCamera::SetSpeed(float speed)
+{
+	for (auto move{ 0 }; move <= static_cast<int>(eMove::RotateY); ++move)
+	{
+		SetSpeed(static_cast<eMove>(move), speed);
+	}
+}
+
 void CCamera::SetSpeed(eMove move, float moveSpeed)
 {
 	m_moveSpeed.insert(std::make_pair(move, moveSpeed));

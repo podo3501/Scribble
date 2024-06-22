@@ -10,9 +10,6 @@ inline D3D12_SHADER_BYTECODE GetShaderBytecode(ID3DBlob* shader)
 	return { shader->GetBufferPointer(), shader->GetBufferSize() };
 }
 
-CShader::CShader()
-{}
-
 std::string CShader::GetShaderVersion(ShaderType shaderType)
 {
 	switch (shaderType)
@@ -37,8 +34,9 @@ bool CShader::InsertShaderList(ShaderType shaderType, std::wstring&& filename)
 
 bool CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
-	ReturnIfFalse(InsertShaderList(ShaderType::VS, L"../Resource/Shaders/VertexShader.hlsl"));
-	ReturnIfFalse(InsertShaderList(ShaderType::PS, L"../Resource/Shaders/PixelShader.hlsl"));
+	std::wstring filePath = m_resPath + m_filePath;
+	ReturnIfFalse(InsertShaderList(ShaderType::VS, filePath + L"VertexShader.hlsl"));
+	ReturnIfFalse(InsertShaderList(ShaderType::PS, filePath + L"PixelShader.hlsl"));
 
 	m_inputLayout =
 	{

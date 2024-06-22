@@ -1,22 +1,23 @@
 #pragma once
 
-#include<string>
-#include<vector>
-#include<memory>
+#include <string>
+#include <vector>
+#include <wrl.h>
+#include <memory>
 
 class CDirectx3D;
 class CRenderer;
 struct ID3D12Device;
+struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
 struct ID3D12DescriptorHeap;
-struct Texture;
 
 class CTexture
 {
 public:
 	template<typename T>
-	CTexture(T&& filePath)
-		: m_filePath(std::forward<T>(filePath))
+	CTexture(T&& resPath)
+		: m_resPath(std::forward<T>(resPath))
 	{}
 
 	bool LoadGraphicMemory(CDirectx3D* directx3D, CRenderer* renderer);
@@ -30,8 +31,19 @@ private:
 	void CreateShaderResourceView(ID3D12Device* device, ID3D12DescriptorHeap* srvDescHeap);
 
 private:
-	std::wstring m_filePath{};
+	struct Data
+	{
+		std::string Name{};// Unique material name for lookup.
+		std::wstring Filename{};
 
-	std::vector<std::unique_ptr<Texture>> m_textureList{};
+		Microsoft::WRL::ComPtr<ID3D12Resource> Resource{ nullptr };
+		Microsoft::WRL::ComPtr<ID3D12Resource> UploadHeap{ nullptr };
+	};
+
+private:
+	std::wstring m_resPath{};
+	const std::wstring m_filePath{ L"Textures/" };
+
+	std::vector<std::unique_ptr<Data>> m_textureList{};
 };
 

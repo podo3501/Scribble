@@ -1,16 +1,18 @@
 #pragma once
 
-#include <memory>
+#include <d3d12.h>
 #include <wrl.h>
+#include <functional>
+#include <memory>
 #include <array>
 #include <vector>
-#include <d3d12.h>
+#include <string>
 
 class CDirectx3D;
 class CShader;
 class CCamera;
 class CGameTimer;
-class UploadBuffer;
+class CUploadBuffer;
 class CFrameResources;
 struct ID3D12Device;
 struct ID3D12GraphicsCommandList;
@@ -34,13 +36,16 @@ class CRenderer
 	};
 
 public:
-	CRenderer(CDirectx3D* directx3D);
+	template<typename T>
+	CRenderer(T&& resPath)
+		: m_resPath(std::forward<T>(resPath))
+	{}
 
 	CRenderer() = delete;
 	CRenderer(const CRenderer&) = delete;
 	CRenderer& operator=(const CRenderer&) = delete;
 
-	bool Initialize();
+	bool Initialize(CDirectx3D* directx3D);
 	bool OnResize(int wndWidth, int wndHeight);
 	bool Draw(CGameTimer* gt, CFrameResources* pCurrFrameRes,
 		const std::vector<std::unique_ptr<RenderItem>>& renderItem);
@@ -55,10 +60,12 @@ private:
 	bool BuildPSOs();
 	bool MakePSOPipelineState(GraphicsPSO psoType);
 	bool MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void DrawRenderItems(UploadBuffer* instanceBuffer, 
+	void DrawRenderItems(CUploadBuffer* instanceBuffer,
 		const std::vector<std::unique_ptr<RenderItem>>& ritems);
 
 private:
+	std::wstring m_resPath{};
+
 	CDirectx3D* m_directx3D{ nullptr };
 	std::unique_ptr<CShader> m_shader{ nullptr };
 
