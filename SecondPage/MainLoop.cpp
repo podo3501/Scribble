@@ -212,12 +212,12 @@ void CMainLoop::BuildRenderItems()
 	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& smName, std::string&& matName,
 		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
 			auto& sm = geo->DrawArgs[smName];
-			rItem->Geo = geo;
-			rItem->Mat = m_material->GetMaterial(matName);
+			rItem->geo = geo;
+			rItem->mat = m_material->GetMaterial(matName);
 			rItem->ObjCBIndex = objIdx++;
 			rItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-			XMStoreFloat4x4(&rItem->World, world);
-			XMStoreFloat4x4(&rItem->TexTransform, texTransform);
+			XMStoreFloat4x4(&rItem->world, world);
+			XMStoreFloat4x4(&rItem->texTransform, texTransform);
 			rItem->StartIndexLocation = sm.StartIndexLocation;
 			rItem->BaseVertexLocation = sm.BaseVertexLocation;
 			rItem->IndexCount = sm.IndexCount;
@@ -227,7 +227,7 @@ void CMainLoop::BuildRenderItems()
 	
 	const int n = 5;
 	const int matCount = static_cast<int>(m_material->GetCount());
-	rItem->Instances.resize(n * n * n);
+	//rItem->Instances.resize(n * n * n);
 
 	float width = 200.0f;
 	float height = 200.0f;
@@ -245,20 +245,46 @@ void CMainLoop::BuildRenderItems()
 		{
 			for (int j = 0; j < n; ++j)
 			{
-				int index = k * n * n + i * n + j;
-				rItem->Instances[index].World = XMFLOAT4X4(
-					1.0f, 0.0f, 0.0f, 0.0f,
-					0.0f, 1.0f, 0.0f, 0.0f,
-					0.0f, 0.0f, 1.0f, 0.0f,
-					x + j * dx, y + i * dy, z + k * dz, 1.0f);
+				auto instance = std::make_unique<InstanceBuffer>();
 
-				XMStoreFloat4x4(&rItem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
-				rItem->Instances[index].MaterialIndex = index % matCount;
+				int index = k * n * n + i * n + j;				
+				instance->World = XMFLOAT4X4(
+					1.0f, 0.0f, 0.0f, x + j * dx,
+					0.0f, 1.0f, 0.0f, y + i * dy,
+					0.0f, 0.0f, 1.0f, z + k * dz,
+					0.0f, 0.0f, 0.0f, 1.0f);
+				
+				XMStoreFloat4x4(&instance->TexTransform, XMMatrixTranspose(XMMatrixScaling(2.0f, 2.0f, 1.0f)));
+				instance->MaterialIndex = index % matCount;
+				rItem->Instances.emplace_back(std::move(instance));
 			}
 		}
 	}
 
 	m_renderItems.emplace_back(std::move(rItem));
+}
+
+BoundingFrustum MakeLocalSpaceFrustum(
+	const BoundingFrustum& camFrustum, const XMMATRIX& invView, const XMMATRIX& world)
+{
+	BoundingFrustum frustum{};
+	XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
+	// View space to the object's local space.
+	XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+	// Transform the camera frustum from view space to the object's local space.
+	camFrustum.Transform(frustum, viewToLocal);
+
+	return frustum;
+}
+
+std::wstring SetWindowCaption(int visibleCount, std::size_t totalCount)
+{
+	std::wostringstream outs;
+	outs.precision(6);
+	outs << L"Instancing and Culling Demo" <<
+		L"    " << visibleCount <<
+		L" objects visible out of " << totalCount;
+	return outs.str();
 }
 
 void CMainLoop::UpdateRenderItems()
@@ -267,49 +293,91 @@ void CMainLoop::UpdateRenderItems()
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
 
+	int visibleInstanceCount{ 0 };
+	std::size_t instanceSize{ 0 };
+
 	for (auto& e : m_renderItems)
 	{
 		const auto& instanceData = e->Instances;
+		instanceSize = instanceData.size();
 
-		int visibleInstanceCount = 0;
-
-		for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
+		//copy_if로 바꾸어보자
+		//std::copy_if(instanceData.begin(), instanceData.end(), )
+		for (auto& curInstance : instanceData)
 		{
-			XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
-			XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
+			instanceBuffer->CopyData(visibleInstanceCount++, *curInstance.get());
+			
+			//XMMATRIX world = XMLoadFloat4x4(&curInstance->World);
+			//XMMATRIX texTransform = XMLoadFloat4x4(&curInstance->TexTransform);
+			//BoundingFrustum localSpaceFrustum = MakeLocalSpaceFrustum(m_camFrustum, invView, world);
 
-			XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
+			//// Perform the box/frustum intersection test in local space.
+			//const bool isInside = (localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT);
 
-			// View space to the object's local space.
-			XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+			//if (isInside == false && m_frustumCullingEnabled)
+			//	continue;
 
-			// Transform the camera frustum from view space to the object's local space.
-			BoundingFrustum localSpaceFrustum;
-			m_camFrustum.Transform(localSpaceFrustum, viewToLocal);
+			////변환안한 데이터와 변환한 데이터가 같은 struct에 있으면 헷갈린다.
+			////InstanceBuffer data;
+			//auto data = std::make_unique<InstanceBuffer>();
+			//XMStoreFloat4x4(&data->World, /*XMMatrixTranspose*/(world));
+			//XMStoreFloat4x4(&data->TexTransform, XMMatrixTranspose(texTransform));
+			//data->MaterialIndex = curInstance->MaterialIndex;
 
-			// Perform the box/frustum intersection test in local space.
-			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (m_frustumCullingEnabled == false))
-			{
-				InstanceData data;
-				XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
-				XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
-				data.MaterialIndex = instanceData[i].MaterialIndex;
+			// //Write the instance data to structured buffer for the visible objects.
+			//instanceBuffer->CopyData(visibleInstanceCount++, *data.get());
 
-				// Write the instance data to structured buffer for the visible objects.
-				instanceBuffer->CopyData(visibleInstanceCount++, data);
-			}
 		}
 
 		e->InstanceCount = visibleInstanceCount;
-		
-		std::wostringstream outs;
-		outs.precision(6);
-		outs << L"Instancing and Culling Demo" <<
-			L"    " << e->InstanceCount <<
-			L" objects visible out of " << e->Instances.size();
-		m_windowCaption = outs.str();
 	}
+
+	m_windowCaption = SetWindowCaption(visibleInstanceCount, instanceSize);
 }
+
+//void CMainLoop::UpdateRenderItems()
+//{
+//	XMMATRIX view = m_camera->GetView();
+//	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
+//	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
+//
+//	int visibleInstanceCount{ 0 };
+//	std::size_t instanceSize{ 0 };
+//
+//	for (auto& e : m_renderItems)
+//	{
+//		const auto& instanceData = e->Instances;
+//		instanceSize = instanceData.size();
+//
+//		//copy_if로 바꾸어보자
+//		//std::copy_if(instanceData.begin(), instanceData.end(), )
+//		for( auto& curInstance : instanceData)
+//		{
+//			XMMATRIX world = XMLoadFloat4x4(&curInstance->World);
+//			XMMATRIX texTransform = XMLoadFloat4x4(&curInstance->TexTransform);
+//			BoundingFrustum localSpaceFrustum = MakeLocalSpaceFrustum(m_camFrustum, invView, world);
+//
+//			// Perform the box/frustum intersection test in local space.
+//			const bool isInside = (localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT);
+//
+//			if (isInside == false && m_frustumCullingEnabled)
+//				continue;
+//
+//			//변환안한 데이터와 변환한 데이터가 같은 struct에 있으면 헷갈린다.
+//			InstanceBuffer data;
+//			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+//			XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
+//			data.MaterialIndex = curInstance->MaterialIndex;
+//
+//			// Write the instance data to structured buffer for the visible objects.
+//			instanceBuffer->CopyData(visibleInstanceCount++, data);
+//		}
+//
+//		e->InstanceCount = visibleInstanceCount;
+//	}
+//
+//	m_windowCaption = SetWindowCaption(visibleInstanceCount, instanceSize);
+//}
 
 void CMainLoop::UpdateMaterialBuffer()
 {
@@ -323,7 +391,7 @@ void CMainLoop::UpdateMaterialBuffer()
 
 		XMMATRIX matTransform = XMLoadFloat4x4(&m->MatTransform);
 
-		MaterialData matData;
+		MaterialBuffer matData;
 		matData.DiffuseAlbedo = m->DiffuseAlbedo;
 		matData.FresnelR0 = m->FresnelR0;
 		matData.Roughness = m->Roughness;
@@ -335,6 +403,46 @@ void CMainLoop::UpdateMaterialBuffer()
 		m->NumFramesDirty--;
 	}
 }
+
+void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
+void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
+XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
+XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
+XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
+
+void CMainLoop::UpdateMainPassCB()
+{
+	auto passCB = m_frameResources->GetUploadBuffer(eBufferType::PassCB);
+	XMMATRIX view = m_camera->GetView();
+	XMMATRIX proj = m_camera->GetProj();
+
+	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+	
+	PassConstants pc;
+	StoreMatrix4x4(pc.View, view);
+	StoreMatrix4x4(pc.InvView, Inverse(view));
+	StoreMatrix4x4(pc.Proj, proj);
+	StoreMatrix4x4(pc.InvProj, Inverse(proj));
+	StoreMatrix4x4(pc.ViewProj, viewProj);
+	StoreMatrix4x4(pc.InvViewProj, Inverse(viewProj));
+	pc.EyePosW = m_camera->GetPosition3f();
+	pc.RenderTargetSize = { (float)m_window->GetWidth(), (float)m_window->GetHeight()};
+	pc.InvRenderTargetSize = { 1.0f / (float)m_window->GetWidth(), 1.0f / (float)m_window->GetHeight() };
+	pc.NearZ = 1.0f;
+	pc.FarZ = 1000.0f;
+	pc.TotalTime = m_timer->TotalTime();
+	pc.DeltaTime = m_timer->DeltaTime();
+	pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+	pc.Lights[0].Strength = { 0.8f, 0.8f, 0.8f };
+	pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+	pc.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
+	pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
+	pc.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+
+	passCB->CopyData(0, pc);
+}
+
 
 bool CMainLoop::OnResize()
 {
@@ -404,19 +512,19 @@ void CMainLoop::CalculateFrameStats()
 
 	_frameCnt++;
 
-	if ((m_timer->TotalTime() - _timeElapsed) >= 1.0f)
-	{
-		float fps = (float)_frameCnt; // fps = frameCnt / 1
-		float mspf = 1000.0f / fps;
+	const bool IsOverOneSecond = ((m_timer->TotalTime() - _timeElapsed) >= 1.0f);
+	if (!IsOverOneSecond) return;
+	
+	float fps = (float)_frameCnt; // fps = frameCnt / 1
+	float mspf = 1000.0f / fps;
 
-		std::wstring fpsStr = std::to_wstring(fps);
-		std::wstring mspfStr = std::to_wstring(mspf);
-		m_windowCaption += L"    fps: " + fpsStr + L"   mspf: " + mspfStr;
-		m_window->SetText(m_windowCaption);
+	std::wstring fpsStr = std::to_wstring(fps);
+	std::wstring mspfStr = std::to_wstring(mspf);
+	m_windowCaption += L"    fps: " + fpsStr + L"   mspf: " + mspfStr;
+	m_window->SetText(m_windowCaption);
 
-		_frameCnt = 0;
-		_timeElapsed += 1.0f;
-	}
+	_frameCnt = 0;
+	_timeElapsed += 1.0f;
 }
 
 void CMainLoop::OnKeyboardInput()
@@ -434,45 +542,6 @@ void CMainLoop::OnKeyboardInput()
 		return pressedKeyList; });
 }
 
-void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
-void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
-XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
-XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
-XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
-
-void CMainLoop::UpdateMainPassCB()
-{
-	auto passCB = m_frameResources->GetUploadBuffer(eBufferType::PassCB);
-	XMMATRIX view = m_camera->GetView();
-	XMMATRIX proj = m_camera->GetProj();
-
-	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-	
-	PassConstants pc;
-	StoreMatrix4x4(pc.View, view);
-	StoreMatrix4x4(pc.InvView, Inverse(view));
-	StoreMatrix4x4(pc.Proj, proj);
-	StoreMatrix4x4(pc.InvProj, Inverse(proj));
-	StoreMatrix4x4(pc.ViewProj, viewProj);
-	StoreMatrix4x4(pc.InvViewProj, Inverse(viewProj));
-	pc.EyePosW = m_camera->GetPosition3f();
-	pc.RenderTargetSize = { (float)m_window->GetWidth(), (float)m_window->GetHeight()};
-	pc.InvRenderTargetSize = { 1.0f / (float)m_window->GetWidth(), 1.0f / (float)m_window->GetHeight() };
-	pc.NearZ = 1.0f;
-	pc.FarZ = 1000.0f;
-	pc.TotalTime = m_timer->TotalTime();
-	pc.DeltaTime = m_timer->DeltaTime();
-	pc.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	pc.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-	pc.Lights[0].Strength = { 0.8f, 0.8f, 0.8f };
-	pc.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
-	pc.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
-	pc.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
-	pc.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
-
-	passCB->CopyData(0, pc);
-}
-
 bool CMainLoop::Run()
 {
 	m_timer->Reset();
@@ -488,27 +557,23 @@ bool CMainLoop::Run()
 		{
 			m_timer->Tick();
 
-			if (!m_appPaused)
-			{
-				CalculateFrameStats();
-
-				OnKeyboardInput();
-
-				m_camera->Update(m_timer->DeltaTime());
-
-				//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
-				ReturnIfFalse(m_frameResources->Synchronize(m_directx3D.get()));
-
-				UpdateRenderItems();
-				UpdateMaterialBuffer();
-				UpdateMainPassCB();
-
-				ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_renderItems));
-			}
-			else
-			{
+			if (m_appPaused)
 				Sleep(100);
-			}
+			
+			CalculateFrameStats();
+
+			OnKeyboardInput();
+
+			m_camera->Update(m_timer->DeltaTime());
+
+			//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
+			ReturnIfFalse(m_frameResources->PrepareFrame(m_directx3D.get()));
+
+			UpdateRenderItems();
+			UpdateMaterialBuffer();
+			UpdateMainPassCB();
+
+			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_renderItems));
 		}
 	}
 

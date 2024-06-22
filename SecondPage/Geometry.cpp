@@ -26,15 +26,12 @@ bool CGeometry::Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, G
 
 bool CGeometry::LoadGraphicMemory(CDirectx3D* directx3D)
 {
-	ReturnIfFalse(directx3D->LoadData([geo = this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-		for (auto iter = geo->m_geometries.begin(); iter != geo->m_geometries.end(); ++iter)
-		{
-			auto& curMeshGeo = iter->second;
-			ReturnIfFalse(geo->Load(device, cmdList, curMeshGeo.get()));
-		}
-		return true; }));
-
-	return true;
+	return (directx3D->LoadData(
+		[geo = this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+			return std::all_of(geo->m_geometries.begin(), geo->m_geometries.end(), 
+				[&](auto& meshGeo) { return geo->Load(device, cmdList, meshGeo.second.get());
+				});
+		}));
 }
 
 bool CGeometry::SetMesh(std::unique_ptr<Geometry>&& meshGeo)

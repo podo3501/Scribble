@@ -10,11 +10,11 @@ bool CFrameResources::Resource::CreateUpdateBuffer(
 {
 	ReturnIfFailed(device->CreateCommandAllocator(
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
-		IID_PPV_ARGS(CmdListAlloc.GetAddressOf())));
+		IID_PPV_ARGS(cmdListAlloc.GetAddressOf())));
 
-	PassCB = std::make_unique<CUploadBuffer>(device, sizeof(PassConstants), passCount, true);
-	MaterialBuffer = std::make_unique<CUploadBuffer>(device, sizeof(MaterialData), materialCount, false);
-	InstanceBuffer = std::make_unique<CUploadBuffer>(device, sizeof(InstanceData), maxInstanceCount, false);
+	passCB = std::make_unique<CUploadBuffer>(device, sizeof(PassConstants), passCount, true);
+	materialBuffer = std::make_unique<CUploadBuffer>(device, sizeof(MaterialBuffer), materialCount, false);
+	instanceBuffer = std::make_unique<CUploadBuffer>(device, sizeof(InstanceBuffer), maxInstanceCount, false);
 
 	return true;
 }
@@ -32,7 +32,7 @@ bool CFrameResources::BuildFrameResources(ID3D12Device* device,
 	return true;
 }
 
-bool CFrameResources::Synchronize(CDirectx3D* directx3D)
+bool CFrameResources::PrepareFrame(CDirectx3D* directx3D)
 {
 	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
 	if (m_fenceCount == 0)
@@ -49,9 +49,9 @@ CUploadBuffer* CFrameResources::GetUploadBuffer(eBufferType bufferType)
 
 	switch (bufferType)
 	{
-	case eBufferType::PassCB:			return resource->PassCB.get();
-	case eBufferType::Material:		return resource->MaterialBuffer.get();
-	case eBufferType::Instance:		return resource->InstanceBuffer.get();
+	case eBufferType::PassCB:			return resource->passCB.get();
+	case eBufferType::Material:		return resource->materialBuffer.get();
+	case eBufferType::Instance:		return resource->instanceBuffer.get();
 	}
 
 	return nullptr;

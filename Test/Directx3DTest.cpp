@@ -87,7 +87,7 @@ namespace MainLoop
 		std::unique_ptr<CFrameResources> frameResources = std::make_unique<CFrameResources>();
 		EXPECT_EQ(frameResources->BuildFrameResources(
 			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true );
-		EXPECT_EQ(frameResources->Synchronize(m_directx3D.get()), true);
+		EXPECT_EQ(frameResources->PrepareFrame(m_directx3D.get()), true);
 		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
 	}
 

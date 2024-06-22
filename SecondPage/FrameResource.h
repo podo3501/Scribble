@@ -24,11 +24,11 @@ class CFrameResources
 	{
 		bool CreateUpdateBuffer(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
 
-		std::unique_ptr<CUploadBuffer> PassCB{ nullptr };
-		std::unique_ptr<CUploadBuffer> MaterialBuffer{ nullptr };
-		std::unique_ptr<CUploadBuffer> InstanceBuffer{ nullptr };
+		std::unique_ptr<CUploadBuffer> passCB{ nullptr };
+		std::unique_ptr<CUploadBuffer> materialBuffer{ nullptr };
+		std::unique_ptr<CUploadBuffer> instanceBuffer{ nullptr };
 
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc{ nullptr };
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdListAlloc{ nullptr };
 	};
 
 public:
@@ -38,10 +38,10 @@ public:
 
 	bool BuildFrameResources(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
-	bool Synchronize(CDirectx3D* directx3D);
+	bool PrepareFrame(CDirectx3D* directx3D);
 
 	CUploadBuffer* GetUploadBuffer(eBufferType bufferType);
-	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_resources[m_frameResIdx]->CmdListAlloc.Get();	}
+	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_resources[m_frameResIdx]->cmdListAlloc.Get();	}
 	inline void SetFence(UINT64 fenceIdx)	{ m_fenceCount = fenceIdx; }
 
 private:

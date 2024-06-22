@@ -15,16 +15,6 @@ struct Light
     static constexpr int MaxLights = 16;
 };
 
-struct InstanceData
-{
-    DirectX::XMFLOAT4X4 World{};
-    DirectX::XMFLOAT4X4 TexTransform{};
-    UINT     MaterialIndex = 0;
-    UINT     ObjPad0 = 0;
-    UINT     ObjPad1 = 0;
-    UINT     ObjPad2 = 0;
-};
-
 struct PassConstants
 {
     DirectX::XMFLOAT4X4 View{};
@@ -47,7 +37,17 @@ struct PassConstants
     Light Lights[Light::MaxLights]{};
 };
 
-struct MaterialData
+struct InstanceBuffer
+{
+    DirectX::XMFLOAT4X4 World{};
+    DirectX::XMFLOAT4X4 TexTransform{};
+    UINT     MaterialIndex = 0;
+    UINT     ObjPad0 = 0;
+    UINT     ObjPad1 = 0;
+    UINT     ObjPad2 = 0;
+};
+
+struct MaterialBuffer
 {
     DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
     DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };

@@ -75,7 +75,15 @@ private:
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
 	std::unique_ptr<CGeometry> m_geometry{ nullptr };
 
+	//랜더링시 필요한 데이터들
 	std::vector<std::unique_ptr<RenderItem>> m_renderItems{};
+	struct InstanceData
+	{
+		DirectX::XMMATRIX world{};
+		DirectX::XMMATRIX texTransform{};
+		UINT materialIndex{ 0 };
+	};
+	std::vector<std::unique_ptr<InstanceData>> Instances{};
 
 	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };

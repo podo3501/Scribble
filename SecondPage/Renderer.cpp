@@ -95,10 +95,10 @@ bool CRenderer::BuildDescriptorHeaps()
 
 bool CRenderer::BuildPSOs()
 {
-	for (auto gPso : GraphicsPSO_ALL)
-		ReturnIfFalse(MakePSOPipelineState(gPso));
-
-	return true;
+	return std::all_of(GraphicsPSO_ALL.begin(), GraphicsPSO_ALL.end(), 
+		[renderer = this](auto pso) {
+			return renderer->MakePSOPipelineState(pso); 
+		});
 }
 
 bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
@@ -183,8 +183,8 @@ void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector
 {
 	for (auto& ri : ritems)
 	{
-		m_cmdList->IASetVertexBuffers(0, 1, &RvToLv(ri->Geo->VertexBufferView()));
-		m_cmdList->IASetIndexBuffer(&RvToLv(ri->Geo->IndexBufferView()));
+		m_cmdList->IASetVertexBuffers(0, 1, &RvToLv(ri->geo->VertexBufferView()));
+		m_cmdList->IASetIndexBuffer(&RvToLv(ri->geo->IndexBufferView()));
 		m_cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
 		m_cmdList->SetGraphicsRootShaderResourceView(0, instanceBuffer->Resource()->GetGPUVirtualAddress());
