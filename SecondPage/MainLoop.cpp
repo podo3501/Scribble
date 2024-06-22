@@ -206,7 +206,8 @@ bool CMainLoop::BuildGraphicMemory()
 
 void CMainLoop::BuildRenderItems()
 {
-	auto geo = m_geometry->GetMesh(m_model->GetName());
+	const auto& renderName = m_model->GetName();
+	auto geo = m_geometry->GetMesh(renderName);
 
 	auto rItem = std::make_unique<RenderItem>();
 	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& smName, std::string&& matName,
@@ -227,7 +228,6 @@ void CMainLoop::BuildRenderItems()
 	
 	const int n = 5;
 	const int matCount = static_cast<int>(m_material->GetCount());
-	//rItem->Instances.resize(n * n * n);
 
 	float width = 200.0f;
 	float height = 200.0f;
@@ -245,39 +245,38 @@ void CMainLoop::BuildRenderItems()
 		{
 			for (int j = 0; j < n; ++j)
 			{
-				auto instance = std::make_unique<InstanceBuffer>();
-
-				int index = k * n * n + i * n + j;				
-				instance->world = XMFLOAT4X4(
-					1.0f, 0.0f, 0.0f, x + j * dx,
-					0.0f, 1.0f, 0.0f, y + i * dy,
-					0.0f, 0.0f, 1.0f, z + k * dz,
-					0.0f, 0.0f, 0.0f, 1.0f);
+				auto instance = std::make_shared<InstanceData>();
+				const XMFLOAT3 pos(x + j * dx, y + i * dy, z + k * dz);
+				instance->world = XMMATRIX(
+					1.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 1.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f,
+					pos.x, pos.y, pos.z, 1.0f);
 				
-				XMStoreFloat4x4(&instance->texTransform, XMMatrixTranspose(XMMatrixScaling(2.0f, 2.0f, 1.0f)));
-				instance->materialIndex = index % matCount;
-				rItem->instances.emplace_back(std::move(instance));
+				int index = k * n * n + i * n + j;
+				instance->texTransform = XMMatrixScaling(2.0f, 2.0f, 1.0f);
+				instance->matIndex = index % matCount;
+				m_instances.emplace_back(std::move(instance));
 			}
 		}
 	}
 
-	m_renderItems.emplace_back(std::move(rItem));
+	m_AllRItems[renderName].emplace_back(std::move(rItem));
 }
 
-BoundingFrustum MakeLocalSpaceFrustum(
-	const BoundingFrustum& camFrustum, const XMMATRIX& invView, const XMMATRIX& world)
+bool CMainLoop::IsInsideFrustum(const DirectX::BoundingSphere& bSphere, const XMMATRIX& invView, const XMMATRIX& world)
 {
 	BoundingFrustum frustum{};
 	XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
-	// View space to the object's local space.
 	XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
-	// Transform the camera frustum from view space to the object's local space.
-	camFrustum.Transform(frustum, viewToLocal);
 
-	return frustum;
+	m_camFrustum.Transform(frustum, viewToLocal);
+
+	const bool isInside = (frustum.Contains(bSphere) != DirectX::DISJOINT);
+	return (isInside || !m_frustumCullingEnabled);
 }
 
-std::wstring SetWindowCaption(int visibleCount, std::size_t totalCount)
+std::wstring SetWindowCaption(std::size_t visibleCount, std::size_t totalCount)
 {
 	std::wostringstream outs;
 	outs.precision(6);
@@ -293,91 +292,29 @@ void CMainLoop::UpdateRenderItems()
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
 
-	int visibleInstanceCount{ 0 };
-	std::size_t instanceSize{ 0 };
+	std::vector<std::shared_ptr<InstanceData>> insides{};
 
-	for (auto& e : m_renderItems)
+	//처리 안할것을 먼저 골라낸다.
+	auto& item = (*m_AllRItems[m_model->GetName()].begin());
+	std::copy_if(m_instances.begin(), m_instances.end(), std::back_inserter(insides),
+		[mainLoop = this, &invView, &item](auto& instance) {
+			return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
+		});
+	item->instanceCount = static_cast<UINT>(insides.size());
+	
+	int visibleCount{ 0 };
+	for (auto& instanceData : insides)
 	{
-		const auto& instanceData = e->instances;
-		instanceSize = instanceData.size();
+		InstanceBuffer curInsBuf{};
+		XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(instanceData->world));
+		XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(instanceData->texTransform));
+		curInsBuf.materialIndex = instanceData->matIndex;
 
-		//copy_if로 바꾸어보자
-		//std::copy_if(instanceData.begin(), instanceData.end(), )
-		for (auto& curInstance : instanceData)
-		{
-			instanceBuffer->CopyData(visibleInstanceCount++, *curInstance.get());
-			
-			//XMMATRIX world = XMLoadFloat4x4(&curInstance->World);
-			//XMMATRIX texTransform = XMLoadFloat4x4(&curInstance->TexTransform);
-			//BoundingFrustum localSpaceFrustum = MakeLocalSpaceFrustum(m_camFrustum, invView, world);
-
-			//// Perform the box/frustum intersection test in local space.
-			//const bool isInside = (localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT);
-
-			//if (isInside == false && m_frustumCullingEnabled)
-			//	continue;
-
-			////변환안한 데이터와 변환한 데이터가 같은 struct에 있으면 헷갈린다.
-			////InstanceBuffer data;
-			//auto data = std::make_unique<InstanceBuffer>();
-			//XMStoreFloat4x4(&data->World, /*XMMatrixTranspose*/(world));
-			//XMStoreFloat4x4(&data->TexTransform, XMMatrixTranspose(texTransform));
-			//data->MaterialIndex = curInstance->MaterialIndex;
-
-			// //Write the instance data to structured buffer for the visible objects.
-			//instanceBuffer->CopyData(visibleInstanceCount++, *data.get());
-
-		}
-
-		e->instanceCount = visibleInstanceCount;
+		instanceBuffer->CopyData(visibleCount++, curInsBuf);
 	}
 
-	m_windowCaption = SetWindowCaption(visibleInstanceCount, instanceSize);
+	m_windowCaption = SetWindowCaption(insides.size(), m_instances.size());
 }
-
-//void CMainLoop::UpdateRenderItems()
-//{
-//	XMMATRIX view = m_camera->GetView();
-//	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
-//	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
-//
-//	int visibleInstanceCount{ 0 };
-//	std::size_t instanceSize{ 0 };
-//
-//	for (auto& e : m_renderItems)
-//	{
-//		const auto& instanceData = e->Instances;
-//		instanceSize = instanceData.size();
-//
-//		//copy_if로 바꾸어보자
-//		//std::copy_if(instanceData.begin(), instanceData.end(), )
-//		for( auto& curInstance : instanceData)
-//		{
-//			XMMATRIX world = XMLoadFloat4x4(&curInstance->World);
-//			XMMATRIX texTransform = XMLoadFloat4x4(&curInstance->TexTransform);
-//			BoundingFrustum localSpaceFrustum = MakeLocalSpaceFrustum(m_camFrustum, invView, world);
-//
-//			// Perform the box/frustum intersection test in local space.
-//			const bool isInside = (localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT);
-//
-//			if (isInside == false && m_frustumCullingEnabled)
-//				continue;
-//
-//			//변환안한 데이터와 변환한 데이터가 같은 struct에 있으면 헷갈린다.
-//			InstanceBuffer data;
-//			XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
-//			XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
-//			data.MaterialIndex = curInstance->MaterialIndex;
-//
-//			// Write the instance data to structured buffer for the visible objects.
-//			instanceBuffer->CopyData(visibleInstanceCount++, data);
-//		}
-//
-//		e->InstanceCount = visibleInstanceCount;
-//	}
-//
-//	m_windowCaption = SetWindowCaption(visibleInstanceCount, instanceSize);
-//}
 
 void CMainLoop::UpdateMaterialBuffer()
 {
@@ -573,7 +510,7 @@ bool CMainLoop::Run()
 			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_renderItems));
+			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems[m_model->GetName()]));
 		}
 	}
 

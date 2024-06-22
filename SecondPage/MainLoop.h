@@ -45,6 +45,10 @@ private:
 	void BuildRenderItems();
 
 	bool MakeFrameResource();
+	bool IsInsideFrustum(
+		const DirectX::BoundingSphere& bSphere, 
+		const DirectX::XMMATRIX& invView, 
+		const DirectX::XMMATRIX& world);
 
 	void UpdateRenderItems();
 	void UpdateMaterialBuffer();
@@ -62,6 +66,14 @@ private:
 	void OnKeyboardInput();
 
 private:
+	struct InstanceData
+	{
+		DirectX::XMMATRIX world{};
+		DirectX::XMMATRIX texTransform{};
+		UINT matIndex{ 0u };
+	};
+
+private:
 	std::wstring m_resourcePath{};
 	std::unique_ptr<CWindow> m_window{ nullptr };
 	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
@@ -76,14 +88,8 @@ private:
 	std::unique_ptr<CGeometry> m_geometry{ nullptr };
 
 	//랜더링시 필요한 데이터들
-	std::vector<std::unique_ptr<RenderItem>> m_renderItems{};
-	struct InstanceData
-	{
-		DirectX::XMMATRIX world{};
-		DirectX::XMMATRIX texTransform{};
-		UINT materialIndex{ 0 };
-	};
-	std::vector<std::unique_ptr<InstanceData>> m_instances{};
+	std::vector<std::shared_ptr<InstanceData>> m_instances{};
+	std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>> m_AllRItems{};
 
 	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };

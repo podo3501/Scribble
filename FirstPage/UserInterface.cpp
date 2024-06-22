@@ -468,7 +468,6 @@ void InstancingAndCullingApp::UpdateInstanceData(const GameTimer& gt)
 			mCamFrustum.Transform(localSpaceFrustum, viewToLocal);
 
 			// Perform the box/frustum intersection test in local space.
-			//if ((localSpaceFrustum.Contains(e->BoundingBoxBounds) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
 			if ((localSpaceFrustum.Contains(e->BoundingSphere) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
 			{
 				InstanceData data;

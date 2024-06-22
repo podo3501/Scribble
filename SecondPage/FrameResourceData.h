@@ -41,10 +41,10 @@ struct InstanceBuffer
 {
     DirectX::XMFLOAT4X4 world{};
     DirectX::XMFLOAT4X4 texTransform{};
-    UINT     materialIndex = 0;
-    UINT     objPad0 = 0;
-    UINT     objPad1 = 0;
-    UINT     objPad2 = 0;
+    UINT     materialIndex{ 0u };
+    UINT     objPad0{ 0u };
+    UINT     objPad1{ 0u };
+    UINT     objPad2{ 0u };
 };
 
 struct MaterialBuffer
