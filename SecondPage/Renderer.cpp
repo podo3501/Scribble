@@ -13,9 +13,6 @@
 
 using Microsoft::WRL::ComPtr;
 
-//7인 이유는 텍스춰를 7장을 다 올린다음 동적으로 선택하기 위함이다.  Texture2D gDiffuseMap[7] : register(t0)
-constexpr UINT DescriptorHeapSize{ 7 };
-
 bool CRenderer::Initialize(CDirectx3D* directx3D)
 {
 	m_directx3D = directx3D;
@@ -46,17 +43,23 @@ bool CRenderer::OnResize(int wndWidth, int wndHeight)
 	return true;
 }
 
+constexpr UINT CubeCount{ 1 };
+constexpr UINT TextureCount{ 10 };
+constexpr UINT TotalHeapCount = CubeCount + TextureCount;
+
 bool CRenderer::BuildRootSignature()
 {
-	CD3DX12_DESCRIPTOR_RANGE texTable;
+	CD3DX12_DESCRIPTOR_RANGE cubeTexTable{}, texTable{};
 	
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, DescriptorHeapSize, 0, 0);
+	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 10, 0);	//t0
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 0, 0);	//t1(세번째인자)
 
-	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
-	slotRootParameter[0].InitAsShaderResourceView(0, 1);
-	slotRootParameter[1].InitAsShaderResourceView(1, 1);
-	slotRootParameter[2].InitAsConstantBufferView(0);
-	slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
+	slotRootParameter[0].InitAsConstantBufferView(0);
+	slotRootParameter[1].InitAsShaderResourceView(0, 1);
+	slotRootParameter[2].InitAsShaderResourceView(1, 1);
+	slotRootParameter[3].InitAsDescriptorTable(1, &cubeTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	slotRootParameter[4].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	auto staticSamplers = CoreUtil::GetStaticSamplers();
 
@@ -85,7 +88,7 @@ bool CRenderer::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
 	heapDesc.NodeMask = 0;
-	heapDesc.NumDescriptors = DescriptorHeapSize;
+	heapDesc.NumDescriptors = TotalHeapCount;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	ReturnIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvDescHeap)));

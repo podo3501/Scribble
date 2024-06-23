@@ -163,6 +163,21 @@
       <Project>{a867a4cd-56a7-4622-967c-9424ac2fa000}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Resource\Shaders\Common.hlsli" />
+    <None Include="..\Resource\Shaders\GraphicsHeader.hlsli" />
+    <None Include="..\Resource\Shaders\LightingUtil.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Resource\Shaders\PixelShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\VertexShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

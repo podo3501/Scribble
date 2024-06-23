@@ -22,17 +22,6 @@ struct MaterialData
     uint MatPad2;
 };
 
-Texture2D gDiffuseMap[7] : register(t0);    //t0...t6
-StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
-StructuredBuffer<MaterialData> gMaterialData : register(t1, space1);
-
-SamplerState gsamPointWrap : register(s0);
-SamplerState gsamPointClamp : register(s1);
-SamplerState gsamLinearWrap : register(s2);
-SamplerState gsamLinearClamp : register(s3);
-SamplerState gsamAnisotropicWrap : register(s4);
-SamplerState gsamAnisotropicClamp : register(s5);
-
 cbuffer PassCB : register(b0)
 {
     float4x4 gView;
@@ -53,6 +42,19 @@ cbuffer PassCB : register(b0)
     
     Light gLights[MaxLights];
 };
+
+StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
+StructuredBuffer<MaterialData> gMaterialData : register(t1, space1);
+
+Texture2D gDiffuseMap[10] : register(t0); //t1...t10
+TextureCube gCubeMap : register(t10);
+
+SamplerState gsamPointWrap : register(s0);
+SamplerState gsamPointClamp : register(s1);
+SamplerState gsamLinearWrap : register(s2);
+SamplerState gsamLinearClamp : register(s3);
+SamplerState gsamAnisotropicWrap : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);
 
 struct VertexIn
 {

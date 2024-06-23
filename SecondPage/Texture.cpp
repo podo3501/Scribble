@@ -30,11 +30,12 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
 
 void CTexture::CreateShaderResourceView(eType type)
 {
+	static auto offsetIndex{ 0 };
 	auto device = m_renderer->GetDevice();
 	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	auto srvDescHeap = m_renderer->GetSrvDescriptorHeap();
 	for_each(m_texMemories[type].begin(), m_texMemories[type].end(),
-		[srvDescHeap, cbvSrvUavDescSize, device, index{ 0 }](auto& curTex) mutable {
+		[texture = this, srvDescHeap, cbvSrvUavDescSize, device, type](auto& curTex) mutable {
 			auto& curTexRes = curTex->resource;
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 			srvDesc.Format = curTexRes->GetDesc().Format;
@@ -43,8 +44,19 @@ void CTexture::CreateShaderResourceView(eType type)
 			srvDesc.Texture2D.MostDetailedMip = 0;
 			srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+			if (type == eType::Cube)
+			{
+				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+				srvDesc.TextureCube.MostDetailedMip = 0;
+				srvDesc.TextureCube.MipLevels = curTexRes->GetDesc().MipLevels;
+				srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
+				srvDesc.Format = curTexRes->GetDesc().Format;
+				texture->m_skyTexHeapIndex = offsetIndex;
+			}
+
 			CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-			hCpuDesc.Offset(index++, cbvSrvUavDescSize);
+			hCpuDesc.Offset(offsetIndex++, cbvSrvUavDescSize);
 			device->CreateShaderResourceView(curTex->resource.Get(), &srvDesc, hCpuDesc);
 		});
 }
@@ -53,9 +65,10 @@ bool CTexture::LoadGraphicMemory()
 {
 	std::vector<std::wstring> commonFilenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
-	std::vector<std::wstring> cubeFilenames = {};
-	//큐브 텍스춰를 로딩할 차례
+	std::vector<std::wstring> cubeFilenames = { L"grasscube1024.dds" };
+
 	ReturnIfFalse(LoadTexture(eType::Common, commonFilenames));
+	//ReturnIfFalse(LoadTexture(eType::Cube, cubeFilenames));
 	
 	return true;
 }

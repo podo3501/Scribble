@@ -49,5 +49,6 @@ private:
 	const std::wstring m_filePath{ L"Textures/" };
 
 	std::map<eType, std::vector<std::unique_ptr<TextureMemory>>> m_texMemories{};
+	int m_skyTexHeapIndex{ 0 };
 };
 
