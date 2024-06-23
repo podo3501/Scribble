@@ -43,16 +43,18 @@ bool CRenderer::OnResize(int wndWidth, int wndHeight)
 	return true;
 }
 
-constexpr UINT CubeCount{ 1 };
-constexpr UINT TextureCount{ 10 };
+constexpr UINT CubeCount{ 1u };
+constexpr UINT TextureCount{ 7u };
 constexpr UINT TotalHeapCount = CubeCount + TextureCount;
 
+//셰이더의 내용물은 늘 자료가 있다고 가정한다.
+//남아서 넘치는 건 상관없지만 셰이더 데이터에 빈공간이 있으면 안된다.
 bool CRenderer::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE cubeTexTable{}, texTable{};
 	
-	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 10, 0);	//t0
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 0, 0);	//t1(세번째인자)
+	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 0, 0);	//t0
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 1, 0);	//t1...t10(세번째인자)
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
 	slotRootParameter[0].InitAsConstantBufferView(0);
@@ -160,13 +162,13 @@ bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
 	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	auto matBuf = frameResources->GetUploadBuffer(eBufferType::Material);
-	m_cmdList->SetGraphicsRootShaderResourceView(1, matBuf->Resource()->GetGPUVirtualAddress());
-
 	auto passCB = frameResources->GetUploadBuffer(eBufferType::PassCB);
-	m_cmdList->SetGraphicsRootConstantBufferView(2, passCB->Resource()->GetGPUVirtualAddress());
+	m_cmdList->SetGraphicsRootConstantBufferView(0, passCB->Resource()->GetGPUVirtualAddress());
 
-	m_cmdList->SetGraphicsRootDescriptorTable(3, m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+	auto matBuf = frameResources->GetUploadBuffer(eBufferType::Material);
+	m_cmdList->SetGraphicsRootShaderResourceView(2, matBuf->Resource()->GetGPUVirtualAddress());
+
+	m_cmdList->SetGraphicsRootDescriptorTable(4, m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
 	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem);
 
@@ -190,7 +192,7 @@ void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector
 		m_cmdList->IASetIndexBuffer(&RvToLv(ri->geo->IndexBufferView()));
 		m_cmdList->IASetPrimitiveTopology(ri->primitiveType);
 
-		m_cmdList->SetGraphicsRootShaderResourceView(0, instanceBuffer->Resource()->GetGPUVirtualAddress());
+		m_cmdList->SetGraphicsRootShaderResourceView(1, instanceBuffer->Resource()->GetGPUVirtualAddress());
 
 		m_cmdList->DrawIndexedInstanced(ri->indexCount, ri->instanceCount,
 			ri->startIndexLocation, ri->baseVertexLocation, 0);

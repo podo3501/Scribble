@@ -5,6 +5,7 @@
 #include <d3dcommon.h>
 #include <array>
 #include <string>
+#include "../Core/headerUtility.h"
 
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct D3D12_INPUT_ELEMENT_DESC;
@@ -39,5 +40,8 @@ private:
 	std::wstring m_filePath{ L"Shaders/" };
 
 	std::array<Microsoft::WRL::ComPtr<ID3DBlob>, static_cast<size_t>(ShaderType::Count)> m_shaderList{};
+	using ShaderList = std::array<Microsoft::WRL::ComPtr<ID3DBlob>, static_cast<size_t>(ShaderType::Count)>;
+	std::array<ShaderList, 2> m_shaderListTest{};
+
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout{};
 };

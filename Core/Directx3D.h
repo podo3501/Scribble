@@ -19,6 +19,12 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+#if defined(DEBUG) || defined(_DEBUG)
+#pragma comment(lib, "../Lib/DirectXTK12_d.lib")
+#else
+#pragma comment(lib, "../Lib/DirectXTK12.lib")
+#endif
+
 class CWindow;
 struct IDXGIFactory4;
 struct ID3D12Device;

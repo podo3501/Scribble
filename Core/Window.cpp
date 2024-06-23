@@ -68,7 +68,7 @@ int CWindow::GetWidth() { return m_width; }
 int CWindow::GetHeight() { return m_height; }
 HWND CWindow::GetHandle() { return m_wnd; }
 
-static CWindow* gWindow = nullptr;
+CWindow* gWindow = nullptr;
 bool CWindow::Initialize(bool bShow)
 {
 	gWindow = this;

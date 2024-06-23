@@ -1,14 +1,9 @@
 #include "Shader.h"
-#include "../Core/Utility.h"
+//#include "../Core/Utility.h"
 #include "../Core/d3dUtil.h"
 #include <d3d12.h>
 
 using Microsoft::WRL::ComPtr;
-
-inline D3D12_SHADER_BYTECODE GetShaderBytecode(ID3DBlob* shader)
-{
-	return { shader->GetBufferPointer(), shader->GetBufferSize() };
-}
 
 std::string CShader::GetShaderVersion(ShaderType shaderType)
 {
@@ -30,6 +25,11 @@ bool CShader::InsertShaderList(ShaderType shaderType, std::wstring&& filename)
 		std::move(filename), nullptr, "main", std::move(shaderVersion), &m_shaderList[toUType(shaderType)]));
 
 	return true;
+}
+
+inline D3D12_SHADER_BYTECODE GetShaderBytecode(ID3DBlob* shader)
+{
+	return { shader->GetBufferPointer(), shader->GetBufferSize() };
 }
 
 bool CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)

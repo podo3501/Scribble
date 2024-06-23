@@ -30,7 +30,6 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
 
 void CTexture::CreateShaderResourceView(eType type)
 {
-	static auto offsetIndex{ 0 };
 	auto device = m_renderer->GetDevice();
 	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	auto srvDescHeap = m_renderer->GetSrvDescriptorHeap();
@@ -52,11 +51,11 @@ void CTexture::CreateShaderResourceView(eType type)
 				srvDesc.TextureCube.MipLevels = curTexRes->GetDesc().MipLevels;
 				srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 				srvDesc.Format = curTexRes->GetDesc().Format;
-				texture->m_skyTexHeapIndex = offsetIndex;
+				texture->m_skyTexHeapIndex = texture->m_offsetIndex;
 			}
 
 			CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-			hCpuDesc.Offset(offsetIndex++, cbvSrvUavDescSize);
+			hCpuDesc.Offset(texture->m_offsetIndex++, cbvSrvUavDescSize);
 			device->CreateShaderResourceView(curTex->resource.Get(), &srvDesc, hCpuDesc);
 		});
 }

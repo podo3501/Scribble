@@ -2,7 +2,7 @@
 #include "./Utility.h"
 #include <comdef.h>
 #include <fstream>
-#include "../Common/DirectXTK12Inc/WICTextureLoader.h"
+#include "../Core/DirectXTK12Inc/WICTextureLoader.h"
 
 using Microsoft::WRL::ComPtr;
 
