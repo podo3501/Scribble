@@ -21,20 +21,10 @@ struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
 struct RenderItem;
+enum class GraphicsPSO;
 
 class CRenderer
 {
-	enum class GraphicsPSO : int
-	{
-		Opaque,
-		Count
-	};
-
-	static constexpr std::array<GraphicsPSO, static_cast<size_t>(GraphicsPSO::Count)> GraphicsPSO_ALL
-	{
-		GraphicsPSO::Opaque,
-	};
-
 public:
 	template<typename T>
 	CRenderer(T&& resPath)
@@ -60,7 +50,7 @@ private:
 	bool BuildDescriptorHeaps();
 	bool BuildPSOs();
 	bool MakePSOPipelineState(GraphicsPSO psoType);
-	bool MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void DrawRenderItems(CUploadBuffer* instanceBuffer,
 		const std::vector<std::unique_ptr<RenderItem>>& ritems);
 
@@ -76,7 +66,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature{ nullptr };
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap{ nullptr };
 
-	std::array<Microsoft::WRL::ComPtr<ID3D12PipelineState>, static_cast<size_t>(GraphicsPSO::Count)> m_psoList{};
+	std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList{};
 
 	D3D12_VIEWPORT m_screenViewport{};
 	D3D12_RECT m_scissorRect{};

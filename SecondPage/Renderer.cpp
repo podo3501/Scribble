@@ -15,6 +15,8 @@ using Microsoft::WRL::ComPtr;
 
 bool CRenderer::Initialize(CDirectx3D* directx3D)
 {
+	m_psoList.resize(EtoV(GraphicsPSO::Count));
+
 	m_directx3D = directx3D;
 	m_device = directx3D->GetDevice();
 	m_cmdList = directx3D->GetCommandList();
@@ -43,10 +45,6 @@ bool CRenderer::OnResize(int wndWidth, int wndHeight)
 	return true;
 }
 
-constexpr UINT CubeCount{ 1u };
-constexpr UINT TextureCount{ 7u };
-constexpr UINT TotalHeapCount = CubeCount + TextureCount;
-
 enum class ParamType : int
 {
 	Pass = 0,
@@ -59,6 +57,9 @@ enum class ParamType : int
 
 //셰이더의 내용물은 늘 자료가 있다고 가정한다.
 //남아서 넘치는 건 상관없지만 셰이더 데이터에 빈공간이 있으면 안된다.
+constexpr UINT CubeCount{ 1u };
+constexpr UINT TextureCount{ 7u };
+constexpr UINT TotalHeapCount = CubeCount + TextureCount;
 bool CRenderer::BuildRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE cubeTexTable{}, texTable{};
@@ -123,7 +124,8 @@ bool CRenderer::BuildPSOs()
 bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	ReturnIfFalse(MakeOpaqueDesc(&psoDesc));
+	ReturnIfFalse(m_shader->SetPipelineStateDesc(psoType, &psoDesc));
+	MakeOpaqueDesc(&psoDesc);
 
 	switch (psoType)
 	{
@@ -137,7 +139,7 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	return true;
 }
 
-bool CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
 	inoutDesc->NodeMask = 0;
 	inoutDesc->SampleMask = UINT_MAX;
@@ -148,10 +150,7 @@ bool CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	inoutDesc->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	inoutDesc->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-	ReturnIfFalse(m_shader->SetPipelineStateDesc(inoutDesc));
 	m_directx3D->SetPipelineStateDesc(inoutDesc);
-
-	return true;
 }
 
 bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std::vector<std::unique_ptr<RenderItem>>& renderItem)
@@ -182,7 +181,7 @@ bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std
 	auto passCB = frameResources->GetUploadBuffer(eBufferType::PassCB);
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), passCB->Resource()->GetGPUVirtualAddress());
 
-	//m_cmdList->SetGraphicsRootDescriptorTable(3, m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+	m_cmdList->SetGraphicsRootDescriptorTable(3, m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
 	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());

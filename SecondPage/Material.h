@@ -9,17 +9,22 @@
 class CUploadBuffer;
 struct FrameResource;
 
+enum class TextureType : int
+{
+	None = 0,
+	Texture,
+	CubeTexture,
+	Total,
+};
+
 struct Material
 {
 	std::string name{};
+	TextureType type{ TextureType::None };
 	int matCBIndex{ -1 };
 	int diffuseSrvHeapIndex{ -1 };
 	int normalSrvHeapIndex{ -1 };
 
-	// Dirty flag indicating the material has changed and we need to update the constant buffer.
-	// Because we have a material constant buffer for each FrameResource, we have to apply the
-	// update to each FrameResource.  Thus, when we modify a material we should set 
-	// NumFramesDirty = gFrameResourceCount so that each frame resource gets the update.
 	int numFramesDirty{ gFrameResourceCount };
 
 	DirectX::XMFLOAT4 diffuseAlbedo{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -42,8 +47,9 @@ public:
 	void MakeMaterialBuffer(CUploadBuffer** outMatBuffer);
 
 	Material* GetMaterial(const std::string& matName);
-	size_t GetCount();
+	size_t GetCount(TextureType type);
+	int GetStartIndex(TextureType type);
 
 private:
-	std::unordered_map<std::string, std::unique_ptr<Material>> m_materials{};
+	std::vector<std::unique_ptr<Material>> m_materials{};
 };

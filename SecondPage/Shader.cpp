@@ -1,42 +1,44 @@
 #include "Shader.h"
-//#include "../Core/Utility.h"
 #include "../Core/d3dUtil.h"
-#include <d3d12.h>
+#include "./RendererDefine.h"
 
 using Microsoft::WRL::ComPtr;
 
-std::string CShader::GetShaderVersion(ShaderType shaderType)
+CShader::CShader(std::wstring& resPath)
+	: m_resPath(std::move(resPath))
 {
-	switch (shaderType)
-	{
-	case ShaderType::VS:	return "vs_5_1";	break;
-	case ShaderType::PS: return "ps_5_1";	break;
-	}
-	return "";
+	m_shaderList.resize(EtoV(GraphicsPSO::Count));
 }
 
-bool CShader::InsertShaderList(ShaderType shaderType, std::wstring&& filename)
+bool CShader::InsertShaderList(GraphicsPSO psoType, ShaderType shaderType, std::wstring&& filename)
 {
-	std::string shaderVersion = GetShaderVersion(shaderType);
-	if (shaderVersion.empty())
-		return false;
-	
 	ReturnIfFalse(CoreUtil::CompileShader(
-		std::move(filename), nullptr, "main", std::move(shaderVersion), &m_shaderList[EtoV(shaderType)]));
+		std::move(filename), nullptr, "main", m_shaderVersion[EtoV(shaderType)],
+		&m_shaderList[EtoV(psoType)][EtoV(shaderType)]));
 
 	return true;
 }
 
-inline D3D12_SHADER_BYTECODE GetShaderBytecode(ID3DBlob* shader)
+inline D3D12_SHADER_BYTECODE CShader::GetShaderBytecode(GraphicsPSO psoType, ShaderType shaderType) const
 {
+	auto shader = m_shaderList[EtoV(psoType)][EtoV(shaderType)].Get();
 	return { shader->GetBufferPointer(), shader->GetBufferSize() };
 }
 
-bool CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+std::wstring CShader::GetShaderFilename(GraphicsPSO psoType, ShaderType shaderType)
 {
-	std::wstring filePath = m_resPath + m_filePath;
-	ReturnIfFalse(InsertShaderList(ShaderType::VS, filePath + L"VertexShader.hlsl"));
-	ReturnIfFalse(InsertShaderList(ShaderType::PS, filePath + L"PixelShader.hlsl"));
+	static std::wstring shaderFilename[EtoV(GraphicsPSO::Count)][EtoV(ShaderType::Count)] =
+	{
+		{ L"VertexShader.hlsl", L"PixelShader.hlsl"},
+		//{ L"SkyVS.hlsl", L"SkyPS.hlsl"},
+	};
+	return m_resPath + m_filePath + shaderFilename[EtoV(psoType)][EtoV(shaderType)];
+}
+
+bool CShader::SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	ReturnIfFalse(InsertShaderList(psoType, ShaderType::VS, GetShaderFilename(psoType, ShaderType::VS)));
+	ReturnIfFalse(InsertShaderList(psoType, ShaderType::PS, GetShaderFilename(psoType, ShaderType::PS)));
 
 	m_inputLayout =
 	{
@@ -45,8 +47,8 @@ bool CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	inoutDesc->VS = GetShaderBytecode(m_shaderList[EtoV(ShaderType::VS)].Get());
-	inoutDesc->PS = GetShaderBytecode(m_shaderList[EtoV(ShaderType::PS)].Get());
+	inoutDesc->VS = GetShaderBytecode(psoType, ShaderType::VS);
+	inoutDesc->PS = GetShaderBytecode(psoType, ShaderType::PS);
 	inoutDesc->InputLayout = { m_inputLayout.data(), static_cast<UINT>(m_inputLayout.size()) };
 
 	return true;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <d3d12.h>
 #include <vector>
 #include <wrl.h>
 #include <d3dcommon.h>
@@ -9,6 +10,7 @@
 
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct D3D12_INPUT_ELEMENT_DESC;
+enum class GraphicsPSO;
 
 class CShader
 {
@@ -19,29 +21,32 @@ class CShader
 		Count,
 	};
 
-public:
-	template<typename T>
-	CShader(T&& resPath)
-		: m_resPath(std::forward<T>(resPath))
-	{}
+	inline static std::string m_shaderVersion[EtoV(ShaderType::Count)] =
+	{
+		"vs_5_1",
+		"ps_5_1",
+	};
 
+public:
+	CShader(std::wstring& resPath);
+	
 	CShader() = delete;
 	CShader(const CShader&) = delete;
 	CShader& operator=(const CShader&) = delete;
 
-	bool SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	bool SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 private:
-	std::string GetShaderVersion(ShaderType shaderType);
-	bool InsertShaderList(ShaderType shaderType, std::wstring&& filename);
+	bool InsertShaderList(GraphicsPSO psoType, ShaderType shaderType, std::wstring&& filename);
+	inline D3D12_SHADER_BYTECODE GetShaderBytecode(GraphicsPSO psoType, ShaderType shaderType) const;
+	std::wstring GetShaderFilename(GraphicsPSO psoType, ShaderType shaderType);
 
 private:
 	std::wstring m_resPath{};
 	std::wstring m_filePath{ L"Shaders/" };
 
-	std::array<Microsoft::WRL::ComPtr<ID3DBlob>, static_cast<size_t>(ShaderType::Count)> m_shaderList{};
-	using ShaderList = std::array<Microsoft::WRL::ComPtr<ID3DBlob>, static_cast<size_t>(ShaderType::Count)>;
-	std::array<ShaderList, 2> m_shaderListTest{};
+	using ShaderList = std::array<Microsoft::WRL::ComPtr<ID3DBlob>, EtoV(ShaderType::Count)>;
+	std::vector<ShaderList> m_shaderList{};
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout{};
 };

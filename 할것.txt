@@ -1,9 +1,6 @@
-define에서 XMFLOAT4X4로 돼 있는데 Update일 경우에는 XMMATRIX에서 처리를 끝내고
-Gpu에 넘겨줄때 XMFLOAT4X4로 바꾸게 하는 것, 초기화 지운거 복원
+틈나는대로 noexcept, const, constexpr 키워드 쓰기
 
-카메라에 XMFLOAT4X4 이렇게 설정돼 있는 부분 삭제
-XMMATRIX로 계산하고 마지막에 넘겨줄때 transpose 하고 XMFLOAT4x4로 바꾼다.
-
-업데이트쪽 mainLoop에서 하는거 각 클래스로 분산시키기
+텍스츄어 인덱스 matData.diffuseMapIndex = m->diffuseSrvHeapIndex;
+이게 어떻게 돌아가는지 확인해보자
 
 cubemap 붙이기

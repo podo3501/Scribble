@@ -59,5 +59,14 @@ namespace STDTest
 
 		EXPECT_EQ(static_cast<int>(b.size()), 2);
 		EXPECT_EQ(result, false);
+
+		std::vector<int> vecTest{};
+		vecTest.resize(3);
+		vecTest[2] = 1;
+
+		std::map<int, int> intMap;
+		for_each(intMap.begin(), intMap.end(), [](auto& iter) {
+			int test = iter.second;
+			});
 	}
 }

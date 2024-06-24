@@ -59,7 +59,7 @@ public:
 	bool OnResize();
 	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
 
-	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;

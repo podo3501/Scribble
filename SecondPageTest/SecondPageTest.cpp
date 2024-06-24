@@ -68,7 +68,7 @@ namespace MainLoop
 	{
 		std::unique_ptr<CFrameResources> frameResources = std::make_unique<CFrameResources>();
 		EXPECT_EQ(frameResources->BuildFrameResources(
-			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true);
+			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))), true);
 		EXPECT_EQ(frameResources->PrepareFrame(m_directx3D.get()), true);
 		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
 	}
@@ -85,7 +85,7 @@ namespace MainLoop
 		//프레임당 쓰이는 데이터 공간을 확보
 		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
 		EXPECT_EQ(m_frameResources->BuildFrameResources(
-			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount())), true);
+			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))), true);
 
 		EXPECT_EQ(model->Convert(geometry.get()), true);
 		//시스템 메모리에서 그래픽 메모리에 데이터 올리기

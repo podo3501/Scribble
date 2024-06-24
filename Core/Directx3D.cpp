@@ -389,7 +389,7 @@ bool CDirectx3D::WaitUntilGpuFinished(UINT64 fenceCount)
 	return true;
 }
 
-void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept
 {
 	inoutDesc->RTVFormats[0] = m_backBufferFormat;
 	inoutDesc->DSVFormat = m_depthStencilFormat;

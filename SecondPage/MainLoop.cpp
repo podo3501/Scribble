@@ -154,24 +154,17 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
 
-	//초기화
-	ReturnIfFalse(InitializeClass());
-
+	ReturnIfFalse(InitializeClass());	//초기화
 	ReturnIfFalse(OnResize());
 
-	//데이터를 시스템 메모리에 올리기
-	ReturnIfFalse(BuildCpuMemory());
-	
-	//그래픽 메모리에 올릴 준비단계
-	ReturnIfFalse(m_model->Convert(m_geometry.get()));
+	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
+	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
 	BuildRenderItems();
+	
+	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
+	ReturnIfFalse(MakeFrameResource());		//한 프레임에 쓰일 리소스를 만듦
 
-	//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-	ReturnIfFalse(BuildGraphicMemory());
-
-	ReturnIfFalse(MakeFrameResource());
-
-	AddKeyListener();
+	AddKeyListener();	//키 리스너 등록
 
 	return true;
 }
@@ -180,7 +173,7 @@ bool CMainLoop::MakeFrameResource()
 {
 	m_frameResources = std::make_unique<CFrameResources>();
 	ReturnIfFalse(m_frameResources->BuildFrameResources(m_renderer->GetDevice(),
-		1, 125, static_cast<UINT>(m_material->GetCount())));
+		1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))));
 
 	return true;
 }
@@ -227,7 +220,8 @@ void CMainLoop::BuildRenderItems()
 	MakeRenderItem(m_model->GetSubmeshName(), "tile0", XMMatrixIdentity(), XMMatrixIdentity());
 	
 	const int n = 5;
-	const int matCount = static_cast<int>(m_material->GetCount());
+	const int matCount = static_cast<int>(m_material->GetCount(TextureType::Texture));
+	const int startIndex = m_material->GetStartIndex(TextureType::Texture);
 
 	float width = 200.0f;
 	float height = 200.0f;
@@ -255,7 +249,7 @@ void CMainLoop::BuildRenderItems()
 				
 				int index = k * n * n + i * n + j;
 				instance->texTransform = XMMatrixScaling(2.0f, 2.0f, 1.0f);
-				instance->matIndex = index % matCount;
+				instance->matIndex = index % matCount;// +startIndex;
 				m_instances.emplace_back(std::move(instance));
 			}
 		}
@@ -321,12 +315,6 @@ void CMainLoop::UpdateMaterialBuffer()
 	auto materialBuffer = m_frameResources->GetUploadBuffer(eBufferType::Material);
 	m_material->MakeMaterialBuffer(&materialBuffer);
 }
-
-//void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
-//void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
-//XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
-//XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
-//XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
 
 void CMainLoop::UpdateMainPassCB()
 {
@@ -472,12 +460,10 @@ bool CMainLoop::Run()
 				Sleep(100);
 			
 			CalculateFrameStats();
-
 			OnKeyboardInput();
 
 			m_camera->Update(m_timer->DeltaTime());
 
-			//m_frameResource, m_renderItems, m_geometries이 세개는 RAM->VRAM으로 가는 연결다리 변수이다 나중에 리팩토링 하자
 			ReturnIfFalse(m_frameResources->PrepareFrame(m_directx3D.get()));
 
 			UpdateRenderItems();
