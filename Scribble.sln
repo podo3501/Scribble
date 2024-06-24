@@ -18,7 +18,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "솔루션 항목", "솔루션 항목", "{FAD60AA4-F0FD-47B4-AD00-19B6AC25035D}"
 	ProjectSection(SolutionItems) = preProject
 		문제점해결.txt = 문제점해결.txt
-		할일.txt = 할일.txt
+		할것.txt = 할것.txt
 	EndProjectSection
 EndProject
 Global

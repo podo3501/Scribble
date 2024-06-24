@@ -123,7 +123,7 @@ namespace MainLoop
 			return std::vector<int>{'W'};
 			});
 		camera.Update(deltaTime);
-		DirectX::XMFLOAT3 pos = camera.GetPosition3f();
+		DirectX::XMFLOAT3 pos = camera.GetPosition();
 		EXPECT_EQ(pos.z, 1.0f);
 	}
 
