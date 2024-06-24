@@ -4,8 +4,8 @@
 #include "../Core/d3dx12.h"
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
-#include "../Core/GameTimer.h"
-#include "../Core/UploadBuffer.h"
+#include "./GameTimer.h"
+#include "./UploadBuffer.h"
 #include "./FrameResource.h"
 #include "./RendererData.h"
 #include "./Shader.h"
@@ -47,6 +47,16 @@ constexpr UINT CubeCount{ 1u };
 constexpr UINT TextureCount{ 7u };
 constexpr UINT TotalHeapCount = CubeCount + TextureCount;
 
+enum class ParamType : int
+{
+	Pass = 0,
+	Material,
+	Instance,
+	Cube,
+	Diffuse,
+	Count,
+};
+
 //셰이더의 내용물은 늘 자료가 있다고 가정한다.
 //남아서 넘치는 건 상관없지만 셰이더 데이터에 빈공간이 있으면 안된다.
 bool CRenderer::BuildRootSignature()
@@ -56,17 +66,21 @@ bool CRenderer::BuildRootSignature()
 	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 0, 0);	//t0
 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 1, 0);	//t1...t10(세번째인자)
 
-	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
-	slotRootParameter[0].InitAsConstantBufferView(0);
-	slotRootParameter[1].InitAsShaderResourceView(0, 1);
-	slotRootParameter[2].InitAsShaderResourceView(1, 1);
-	slotRootParameter[3].InitAsDescriptorTable(1, &cubeTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	slotRootParameter[4].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	std::array<CD3DX12_ROOT_PARAMETER, EtoV(ParamType::Count)> slotRootParameter;
+	auto GetRootParameter = [&slotRootParameter](ParamType type) {
+		return &slotRootParameter[EtoV(type)];	};
+
+	GetRootParameter(ParamType::Pass)->InitAsConstantBufferView(0);
+	GetRootParameter(ParamType::Material)->InitAsShaderResourceView(0, 1);
+	GetRootParameter(ParamType::Instance)->InitAsShaderResourceView(1, 1);
+	GetRootParameter(ParamType::Cube)->InitAsDescriptorTable(1, &cubeTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(ParamType::Diffuse)->InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	auto staticSamplers = CoreUtil::GetStaticSamplers();
 
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(_countof(slotRootParameter), slotRootParameter,
-		(UINT)staticSamplers.size(), staticSamplers.data(),
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		static_cast<UINT>(slotRootParameter.size()), slotRootParameter.data(),
+		static_cast<UINT>(staticSamplers.size()), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> serialized = nullptr;
@@ -118,7 +132,7 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	}
 	
 	ReturnIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, 
-		IID_PPV_ARGS(&m_psoList[toUType(psoType)])));
+		IID_PPV_ARGS(&m_psoList[EtoV(psoType)])));
 
 	return true;
 }
@@ -144,7 +158,7 @@ bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std
 {
 	auto cmdListAlloc = frameResources->GetCurrCmdListAlloc();
 	ReturnIfFailed(cmdListAlloc->Reset());
-	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[toUType(GraphicsPSO::Opaque)].Get()));
+	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[EtoV(GraphicsPSO::Opaque)].Get()));
 
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
@@ -162,13 +176,18 @@ bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
 	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	auto passCB = frameResources->GetUploadBuffer(eBufferType::PassCB);
-	m_cmdList->SetGraphicsRootConstantBufferView(0, passCB->Resource()->GetGPUVirtualAddress());
-
 	auto matBuf = frameResources->GetUploadBuffer(eBufferType::Material);
-	m_cmdList->SetGraphicsRootShaderResourceView(2, matBuf->Resource()->GetGPUVirtualAddress());
+	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Material), matBuf->Resource()->GetGPUVirtualAddress());
 
-	m_cmdList->SetGraphicsRootDescriptorTable(4, m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+	auto passCB = frameResources->GetUploadBuffer(eBufferType::PassCB);
+	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), passCB->Resource()->GetGPUVirtualAddress());
+
+	//m_cmdList->SetGraphicsRootDescriptorTable(3, m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+
+	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+	texDescriptor.Offset(CubeCount, cbvSrvUavDescSize);
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), texDescriptor);
 
 	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem);
 
@@ -192,7 +211,7 @@ void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector
 		m_cmdList->IASetIndexBuffer(&RvToLv(ri->geo->IndexBufferView()));
 		m_cmdList->IASetPrimitiveTopology(ri->primitiveType);
 
-		m_cmdList->SetGraphicsRootShaderResourceView(1, instanceBuffer->Resource()->GetGPUVirtualAddress());
+		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance), instanceBuffer->Resource()->GetGPUVirtualAddress());
 
 		m_cmdList->DrawIndexedInstanced(ri->indexCount, ri->instanceCount,
 			ri->startIndexLocation, ri->baseVertexLocation, 0);

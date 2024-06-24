@@ -8,8 +8,8 @@
 #include "../Core/Directx3D.h"
 #include "../Core/Window.h"
 #include "../Core/d3dUtil.h"
-#include "../Core/UploadBuffer.h"
-#include "../Core/GameTimer.h"
+#include "../SecondPage/UploadBuffer.h"
+#include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Texture.h"
 #include "../SecondPage/Renderer.h"
@@ -21,24 +21,6 @@
 #include "../SecondPage/RendererData.h"
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/Geometry.h"
-//텍스츄어가 적용이 안 돼 있다. 
-namespace STDTest
-{
-	TEST(std, all_of)
-	{
-		std::vector<int> a = { 1, 2, 3, 4, 5 };
-		std::vector<int> b{};
-		bool result = std::all_of(a.begin(), a.end(), [&b](auto& iter) {
-			if (iter == 3)
-				return false;
-			b.emplace_back(iter);
-			return true;
-			});
-
-		EXPECT_EQ(static_cast<int>(b.size()), 2);
-		EXPECT_EQ(result, false);
-	}
-}
 
 namespace MainLoop
 {

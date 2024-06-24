@@ -3,7 +3,8 @@
 
 template <typename E>
 constexpr auto
-toUType(E enumerator) noexcept
+EtoV(E enumerator) noexcept
 {
 	return static_cast<std::underlying_type_t<E>>(enumerator);
 }
+

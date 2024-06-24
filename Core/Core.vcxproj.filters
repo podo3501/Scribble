@@ -39,12 +39,6 @@
     <ClInclude Include="Utility.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="UploadBuffer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="GameTimer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="headerUtility.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -63,12 +57,6 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="d3dUtil.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="UploadBuffer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="GameTimer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

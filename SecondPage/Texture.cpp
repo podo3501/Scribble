@@ -66,8 +66,8 @@ bool CTexture::LoadGraphicMemory()
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
 	std::vector<std::wstring> cubeFilenames = { L"grasscube1024.dds" };
 
+	ReturnIfFalse(LoadTexture(eType::Cube, cubeFilenames));
 	ReturnIfFalse(LoadTexture(eType::Common, commonFilenames));
-	//ReturnIfFalse(LoadTexture(eType::Cube, cubeFilenames));
 	
 	return true;
 }

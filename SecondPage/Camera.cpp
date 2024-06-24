@@ -1,6 +1,7 @@
 ﻿#include "Camera.h"
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
+#include "../SecondPage/FrameResourceData.h"
 
 using namespace DirectX;
 
@@ -283,6 +284,22 @@ void CCamera::Move(eMove move, float speed)
 	case eMove::Pitch:			Pitch(speed);		break;
 	case eMove::RotateY:		RotateY(speed);	break;
 	}
+}
+
+void CCamera::GetPassCB(PassConstants* pc)
+{
+	XMMATRIX view = GetView();
+	XMMATRIX proj = GetProj();
+	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+
+	XMStoreFloat4x4(&pc->view, XMMatrixTranspose(view));
+	XMStoreFloat4x4(&pc->invView, XMMatrixInverse(nullptr, view));
+	XMStoreFloat4x4(&pc->proj, XMMatrixTranspose(proj));
+	XMStoreFloat4x4(&pc->invProj, XMMatrixInverse(nullptr, proj));
+	XMStoreFloat4x4(&pc->viewProj, XMMatrixTranspose(viewProj));
+	XMStoreFloat4x4(&pc->invViewProj, XMMatrixInverse(nullptr, viewProj));
+
+	pc->eyePosW = GetPosition3f();
 }
 
 void CCamera::Update(float deltaTime)

@@ -4,6 +4,8 @@
 #include <map>
 #include <DirectXMath.h>
 
+struct PassConstants;
+
 enum class eMove
 {
 	Forward = 1,
@@ -77,6 +79,8 @@ public:
 	void SetSpeed(eMove move, float moveSpeed);
 	void Move(eMove move, bool forward, float deltaTime);
 	void Move(eMove move, float speed);
+
+	void GetPassCB(PassConstants* pc);
 
 	void Update(float deltaTime);
 	// After modifying camera position/orientation, call to rebuild the view matrix.

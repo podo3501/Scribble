@@ -5,8 +5,8 @@
 #include "../Core/Utility.h"
 #include "../Core/Window.h"
 #include "../Core/Directx3D.h"
-#include "../Core/UploadBuffer.h"
-#include "../Core/GameTimer.h"
+#include "./UploadBuffer.h"
+#include "./GameTimer.h"
 #include "./RendererData.h"
 #include "./Shader.h"
 #include "./Renderer.h"
@@ -319,56 +319,30 @@ void CMainLoop::UpdateRenderItems()
 void CMainLoop::UpdateMaterialBuffer()
 {
 	auto materialBuffer = m_frameResources->GetUploadBuffer(eBufferType::Material);
-	const auto& materials = m_material->GetTotalMaterial();
-	for (auto& e : materials)
-	{
-		Material* m = e.second.get();
-		if (m->numFramesDirty <= 0)
-			continue;
-
-		XMMATRIX matTransform = XMLoadFloat4x4(&m->matTransform);
-
-		MaterialBuffer matData;
-		matData.diffuseAlbedo = m->diffuseAlbedo;
-		matData.fresnelR0 = m->fresnelR0;
-		matData.roughness = m->roughness;
-		XMStoreFloat4x4(&matData.matTransform, XMMatrixTranspose(matTransform));
-		matData.diffuseMapIndex = m->diffuseSrvHeapIndex;
-
-		materialBuffer->CopyData(m->matCBIndex, matData);
-
-		m->numFramesDirty--;
-	}
+	m_material->MakeMaterialBuffer(&materialBuffer);
 }
 
-void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
-void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
-XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
-XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
-XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
+//void StoreMatrix4x4(XMFLOAT4X4& dest, XMFLOAT4X4& src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(XMLoadFloat4x4(&src))); }
+//void StoreMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
+//XMMATRIX Multiply(XMFLOAT4X4& m1, XMFLOAT4X4 m2) { return XMMatrixMultiply(XMLoadFloat4x4(&m1), XMLoadFloat4x4(&m2)); }
+//XMMATRIX Inverse(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
+//XMMATRIX Inverse(XMFLOAT4X4& src) { return Inverse(RvToLv(XMLoadFloat4x4(&src))); }
 
 void CMainLoop::UpdateMainPassCB()
 {
 	auto passCB = m_frameResources->GetUploadBuffer(eBufferType::PassCB);
-	XMMATRIX view = m_camera->GetView();
-	XMMATRIX proj = m_camera->GetProj();
-
-	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 	
 	PassConstants pc;
-	StoreMatrix4x4(pc.view, view);
-	StoreMatrix4x4(pc.invView, Inverse(view));
-	StoreMatrix4x4(pc.proj, proj);
-	StoreMatrix4x4(pc.invProj, Inverse(proj));
-	StoreMatrix4x4(pc.viewProj, viewProj);
-	StoreMatrix4x4(pc.invViewProj, Inverse(viewProj));
-	pc.eyePosW = m_camera->GetPosition3f();
-	pc.renderTargetSize = { (float)m_window->GetWidth(), (float)m_window->GetHeight()};
-	pc.invRenderTargetSize = { 1.0f / (float)m_window->GetWidth(), 1.0f / (float)m_window->GetHeight() };
+	m_camera->GetPassCB(&pc);
+	m_timer->GetPassCB(&pc);
+
+	float width = (float)m_window->GetWidth();
+	float height = (float)m_window->GetHeight();
+	pc.renderTargetSize = { width, height };
+	pc.invRenderTargetSize = { 1.0f / width, 1.0f / height };
+
 	pc.nearZ = 1.0f;
 	pc.farZ = 1000.0f;
-	pc.totalTime = m_timer->TotalTime();
-	pc.deltaTime = m_timer->DeltaTime();
 	pc.ambientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
 	pc.lights[0].direction = { 0.57735f, -0.57735f, 0.57735f };
 	pc.lights[0].strength = { 0.8f, 0.8f, 0.8f };

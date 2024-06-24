@@ -43,11 +43,11 @@ cbuffer PassCB : register(b0)
     Light gLights[MaxLights];
 };
 
-StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
-StructuredBuffer<MaterialData> gMaterialData : register(t1, space1);
+StructuredBuffer<MaterialData> gMaterialData : register(t0, space1);
+StructuredBuffer<InstanceData> gInstanceData : register(t1, space1);
 
 TextureCube gCubeMap : register(t0);
-Texture2D gDiffuseMap[7] : register(t1); //t1...t10
+Texture2D gDiffuseMap[7] : register(t1); //t1...t7
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);

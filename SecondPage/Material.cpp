@@ -1,5 +1,7 @@
 #include "./Material.h"
 #include "../Core/d3dUtil.h"
+#include "./UploadBuffer.h"
+#include "./FrameResourceData.h"
 
 using namespace DirectX;
 
@@ -27,6 +29,27 @@ void CMaterial::Build()
 	MakeMaterial("ice0", 4, 4, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
 	MakeMaterial("grass0", 5, 5, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
 	MakeMaterial("skullMat", 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
+}
+
+void CMaterial::MakeMaterialBuffer(CUploadBuffer** outMatBuffer)
+{
+	for (auto& e : m_materials)
+	{
+		Material* m = e.second.get();
+		if (m->numFramesDirty <= 0)
+			continue;
+
+		MaterialBuffer matData;
+		matData.diffuseAlbedo = m->diffuseAlbedo;
+		matData.fresnelR0 = m->fresnelR0;
+		matData.roughness = m->roughness;
+		XMStoreFloat4x4(&matData.matTransform, XMMatrixTranspose(m->transform));
+		matData.diffuseMapIndex = m->diffuseSrvHeapIndex;
+
+		(*outMatBuffer)->CopyData(m->matCBIndex, matData);
+
+		m->numFramesDirty--;
+	}
 }
 
 Material* CMaterial::GetMaterial(const std::string& matName)

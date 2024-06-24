@@ -43,3 +43,21 @@ namespace Experiment
 		uiTest.Draw(testUI);
 	}
 }
+
+namespace STDTest
+{
+	TEST(STD, all_of)
+	{
+		std::vector<int> a = { 1, 2, 3, 4, 5 };
+		std::vector<int> b{};
+		bool result = std::all_of(a.begin(), a.end(), [&b](auto& iter) {
+			if (iter == 3)
+				return false;
+			b.emplace_back(iter);
+			return true;
+			});
+
+		EXPECT_EQ(static_cast<int>(b.size()), 2);
+		EXPECT_EQ(result, false);
+	}
+}

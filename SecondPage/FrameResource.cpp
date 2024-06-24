@@ -1,8 +1,8 @@
 ﻿#include "FrameResource.h"
 #include <d3d12.h>
 #include "../Core/d3dUtil.h"
-#include "../Core/UploadBuffer.h"
 #include "../Core/Directx3D.h"
+#include "./UploadBuffer.h"
 #include "./RendererDefine.h"
 
 bool CFrameResources::Resource::CreateUpdateBuffer(

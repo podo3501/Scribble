@@ -22,7 +22,7 @@ bool CShader::InsertShaderList(ShaderType shaderType, std::wstring&& filename)
 		return false;
 	
 	ReturnIfFalse(CoreUtil::CompileShader(
-		std::move(filename), nullptr, "main", std::move(shaderVersion), &m_shaderList[toUType(shaderType)]));
+		std::move(filename), nullptr, "main", std::move(shaderVersion), &m_shaderList[EtoV(shaderType)]));
 
 	return true;
 }
@@ -45,8 +45,8 @@ bool CShader::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	inoutDesc->VS = GetShaderBytecode(m_shaderList[toUType(ShaderType::VS)].Get());
-	inoutDesc->PS = GetShaderBytecode(m_shaderList[toUType(ShaderType::PS)].Get());
+	inoutDesc->VS = GetShaderBytecode(m_shaderList[EtoV(ShaderType::VS)].Get());
+	inoutDesc->PS = GetShaderBytecode(m_shaderList[EtoV(ShaderType::PS)].Get());
 	inoutDesc->InputLayout = { m_inputLayout.data(), static_cast<UINT>(m_inputLayout.size()) };
 
 	return true;
