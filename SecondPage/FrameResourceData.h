@@ -64,7 +64,14 @@ struct MaterialBuffer
 //geometry ฐüทร struct
 struct Vertex
 {
-    DirectX::XMFLOAT3 pos;
-    DirectX::XMFLOAT3 normal;
-    DirectX::XMFLOAT2 texC;
+    Vertex() = default;
+    Vertex(
+        const DirectX::XMFLOAT3& p,
+        const DirectX::XMFLOAT3& n,
+        const DirectX::XMFLOAT2& t)
+        : pos(p), normal(n), texC(t) {}
+
+    DirectX::XMFLOAT3 pos{};
+    DirectX::XMFLOAT3 normal{};
+    DirectX::XMFLOAT2 texC{};
 };

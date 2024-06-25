@@ -3,33 +3,47 @@
 #include "../Core/d3dUtil.h"
 #include "./FrameResource.h"
 #include "./Geometry.h"
+#include "./GeometryGenerator.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-bool CModel::LoadGeometry(ModelType type, std::string&& name, std::wstring&& filename)
+bool CModel::LoadGeometry(ModelType type, std::string&& geoName, std::string&& subName, std::wstring&& filename)
+{
+	auto meshData = std::make_unique<MeshData>();
+
+	auto result = true;
+	switch (type)
+	{
+	case ModelType::Generator:		Generator(meshData.get());									break;
+	case ModelType::ReadFile:			result = ReadFile(filename, meshData.get());		break;
+	default: return false;
+	}
+	if (!result) return result;
+
+	meshData->name = std::move(subName);
+	m_meshDataList[geoName].emplace_back(std::move(meshData));
+
+	return true;
+}
+
+void CModel::Generator(MeshData* outData)
+{
+	CGeometryGenerator geoGen{};
+	CGeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
+	
+	std::transform(box.Vertices.begin(), box.Vertices.end(), std::back_inserter(outData->vertices),
+		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC); });
+	outData->indices.insert(outData->indices.end(), box.Indices32.begin(), box.Indices32.end());
+}
+
+bool CModel::ReadFile(const std::wstring& filename, MeshData* outData)
 {
 	std::wstring fullFilename = m_resPath + m_filePath + filename;
 	std::ifstream fin(fullFilename);
 	if (fin.bad())
 		return false;
 
-	auto meshData = std::make_unique<MeshData>();
-	switch (type)
-	{
-	case ModelType::Common:		ReadCommon(fin, meshData.get());			break;
-	default: return false;
-	}
-	fin.close();
-
-	meshData->name = std::move(name);
-	m_meshDataList.emplace_back(std::move(meshData));
-
-	return true;
-}
-
-void CModel::ReadCommon(std::ifstream& fin, MeshData* outData)
-{
 	UINT vCount = 0;
 	UINT iCount = 0;
 	std::string ignore;
@@ -85,6 +99,9 @@ void CModel::ReadCommon(std::ifstream& fin, MeshData* outData)
 		fin >> readIdx;
 		outData->indices.emplace_back(std::move(readIdx));
 	}
+	fin.close();
+
+	return true; 
 }
 
 CModel::Offsets CModel::SetSubmesh(Geometry* geo, Offsets& offsets, MeshData* data)
@@ -105,10 +122,11 @@ CModel::Offsets CModel::SetSubmesh(Geometry* geo, Offsets& offsets, MeshData* da
 		offsets.second + indexCount);
 }
 
-void CModel::SetSubmeshList(Geometry* geo, std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices)
+void CModel::SetSubmeshList(Geometry* geo, const std::vector<std::unique_ptr<MeshData>>& meshDataList, 
+	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices)
 {
 	Offsets offsets{ 0, 0 };
-	for_each(m_meshDataList.begin(), m_meshDataList.end(),
+	for_each(meshDataList.begin(), meshDataList.end(),
 		[model = this, &offsets, geo, &totalVertices, &totalIndices](auto& data) { 
 			offsets = model->SetSubmesh(geo, offsets, data.get());
 			std::copy(data->vertices.begin(), data->vertices.end(), std::back_inserter(totalVertices));
@@ -116,12 +134,11 @@ void CModel::SetSubmeshList(Geometry* geo, std::vector<Vertex>& totalVertices, s
 		});
 }
 
-bool CModel::Convert(CGeometry* geomtry)
+bool CModel::ConvertGeometry(Geometry* geo, const std::vector<std::unique_ptr<MeshData>>& meshDataList)
 {
-	auto geo = geomtry->GetGeometry();
 	std::vector<Vertex> totalVertices{};
 	std::vector<std::int32_t> totalIndices{};
-	SetSubmeshList(geo, totalVertices, totalIndices);
+	SetSubmeshList(geo, meshDataList, totalVertices, totalIndices);
 
 	UINT vbByteSize = static_cast<UINT>(totalVertices.size()) * sizeof(Vertex);
 	UINT ibByteSize = static_cast<UINT>(totalIndices.size()) * sizeof(std::int32_t);
@@ -144,23 +161,11 @@ bool CModel::Convert(CGeometry* geomtry)
 	return true;
 }
 
-//bool CModel::AddData(std::string& meshName, const MeshData& meshData)
-//{
-//	auto meshGeo = std::make_unique<Geometry>();
-//
-//	//SubmeshGeometry 값을 다 채운다음 move로 옮기자
-//	SubmeshGeometry submesh;
-//	//auto& submesh = meshGeo->drawArgs[m_submeshName];
-//	submesh.indexCount = static_cast<UINT>(meshData.indices.size());
-//	submesh.startIndexLocation = 0;
-//	submesh.baseVertexLocation = 0;
-//	submesh.boundingBox = meshData.boundingBox;
-//	submesh.boundingSphere = meshData.boundingSphere;
-//
-//	m_submeshes.insert(std::make_pair(name, submesh));
-//	/*meshGeo->drawArgs.insert(std::make_pair())
-//
-//	ReturnIfFalse(geometry->SetMesh(std::move(meshGeo)));*/
-//
-//	return true;
-//}
+bool CModel::Convert(CGeometry* geometry)
+{
+	return std::all_of(m_meshDataList.begin(), m_meshDataList.end(),
+		[model = this, geometry](auto& iter) {
+			auto geo = geometry->GetGeometry(iter.first);
+			return model->ConvertGeometry(geo, iter.second);
+		});
+}

@@ -3,7 +3,6 @@
 #include "../Core/Directx3D.h"
 
 CGeometry::CGeometry()
-	: m_geometries{ std::make_unique<Geometry>() }
 {}
 
 bool CGeometry::Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Geometry* meshGeo)
@@ -29,6 +28,20 @@ bool CGeometry::LoadGraphicMemory(CDirectx3D* directx3D)
 {
 	return (directx3D->LoadData(
 		[geo = this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-			return geo->Load(device, cmdList, geo->m_geometries.get());
+			return std::all_of(geo->m_geometries.begin(), geo->m_geometries.end(),
+				[&](auto& meshGeo) { return geo->Load(device, cmdList, meshGeo.second.get());
+				});
 		}));
 }
+
+Geometry* CGeometry::GetGeometry(const std::string& geoName)
+{ 
+	auto find = m_geometries.find(geoName);
+	if (find != m_geometries.end()) 
+		return find->second.get();
+	
+	auto geo = std::make_unique<Geometry>();
+	m_geometries[geoName] = std::move(geo);
+
+	return m_geometries[geoName].get();
+};

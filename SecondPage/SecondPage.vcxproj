@@ -136,6 +136,7 @@
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="KeyInputManager.cpp" />
     <ClCompile Include="MainLoop.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -151,6 +152,7 @@
     <ClInclude Include="FrameResourceData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="KeyInputManager.h" />
     <ClInclude Include="MainLoop.h" />
     <ClInclude Include="Material.h" />

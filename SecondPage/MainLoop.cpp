@@ -158,7 +158,7 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 	ReturnIfFalse(OnResize());
 
 	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
-	BuildRenderItems("skull");
+	BuildRenderItems("things", "skull");
 	
 	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 	ReturnIfFalse(MakeFrameResource());		//한 프레임에 쓰일 리소스를 만듦
@@ -182,7 +182,7 @@ bool CMainLoop::BuildCpuMemory()
 	m_material = std::make_unique<CMaterial>();
 	m_material->Build();
 	m_model = std::make_unique<CModel>(m_resourcePath);
-	ReturnIfFalse(m_model->LoadGeometry(ModelType::Common, "skull", L"skull.txt"));
+	ReturnIfFalse(m_model->LoadGeometry(ModelType::ReadFile, "things", "skull", L"skull.txt"));
 	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
 
 	return true;
@@ -197,9 +197,9 @@ bool CMainLoop::BuildGraphicMemory()
 	return true;
 }
 
-void CMainLoop::BuildRenderItems(const std::string& meshName)
+void CMainLoop::BuildRenderItems(const std::string& geoName, const std::string& meshName)
 {
-	auto geo = m_geometry->GetGeometry();
+	auto geo = m_geometry->GetGeometry(geoName);
 
 	auto rItem = std::make_unique<RenderItem>();
 	auto MakeRenderItem = [&, objIdx{ 0 }](const std::string& smName, std::string&& matName,
