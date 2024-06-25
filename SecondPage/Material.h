@@ -21,9 +21,7 @@ struct Material
 {
 	std::string name{};
 	TextureType type{ TextureType::None };
-	int matCBIndex{ -1 };
-	int diffuseSrvHeapIndex{ -1 };
-	int normalSrvHeapIndex{ -1 };
+	int normalSrvHeapIndex{ -1 };	//normal map
 
 	int numFramesDirty{ gFrameResourceCount };
 

@@ -62,9 +62,9 @@ void CTexture::CreateShaderResourceView(eType type)
 
 bool CTexture::LoadGraphicMemory()
 {
+	std::vector<std::wstring> cubeFilenames = { L"grasscube1024.dds" };
 	std::vector<std::wstring> commonFilenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
 		L"ice.dds", L"grass.dds", L"white1x1.dds" };
-	std::vector<std::wstring> cubeFilenames = { L"grasscube1024.dds" };
 
 	ReturnIfFalse(LoadTexture(eType::Cube, cubeFilenames));
 	ReturnIfFalse(LoadTexture(eType::Common, commonFilenames));

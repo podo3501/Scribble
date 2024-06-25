@@ -158,8 +158,7 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 	ReturnIfFalse(OnResize());
 
 	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
-	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
-	BuildRenderItems();
+	BuildRenderItems("skull");
 	
 	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
 	ReturnIfFalse(MakeFrameResource());		//한 프레임에 쓰일 리소스를 만듦
@@ -183,7 +182,8 @@ bool CMainLoop::BuildCpuMemory()
 	m_material = std::make_unique<CMaterial>();
 	m_material->Build();
 	m_model = std::make_unique<CModel>(m_resourcePath);
-	ReturnIfFalse(m_model->Read());
+	ReturnIfFalse(m_model->LoadGeometry(ModelType::Common, "skull", L"skull.txt"));
+	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
 
 	return true;
 }
@@ -197,13 +197,12 @@ bool CMainLoop::BuildGraphicMemory()
 	return true;
 }
 
-void CMainLoop::BuildRenderItems()
+void CMainLoop::BuildRenderItems(const std::string& meshName)
 {
-	const auto& renderName = m_model->GetName();
-	auto geo = m_geometry->GetMesh(renderName);
+	auto geo = m_geometry->GetGeometry();
 
 	auto rItem = std::make_unique<RenderItem>();
-	auto MakeRenderItem = [&, objIdx{ 0 }](std::string&& smName, std::string&& matName,
+	auto MakeRenderItem = [&, objIdx{ 0 }](const std::string& smName, std::string&& matName,
 		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
 			auto& sm = geo->drawArgs[smName];
 			rItem->geo = geo;
@@ -217,7 +216,7 @@ void CMainLoop::BuildRenderItems()
 			rItem->indexCount = sm.indexCount;
 			rItem->boundingBox = sm.boundingBox;
 			rItem->boundingSphere = sm.boundingSphere; };
-	MakeRenderItem(m_model->GetSubmeshName(), "tile0", XMMatrixIdentity(), XMMatrixIdentity());
+	MakeRenderItem(meshName, "tile0", XMMatrixIdentity(), XMMatrixIdentity());
 	
 	const int n = 5;
 	const int matCount = static_cast<int>(m_material->GetCount(TextureType::Texture));
@@ -249,13 +248,13 @@ void CMainLoop::BuildRenderItems()
 				
 				int index = k * n * n + i * n + j;
 				instance->texTransform = XMMatrixScaling(2.0f, 2.0f, 1.0f);
-				instance->matIndex = index % matCount;// +startIndex;
+				instance->matIndex = WrapAround(index + startIndex, startIndex, matCount + startIndex);
 				m_instances.emplace_back(std::move(instance));
 			}
 		}
 	}
 
-	m_AllRItems[renderName].emplace_back(std::move(rItem));
+	m_AllRItems[meshName].emplace_back(std::move(rItem));
 }
 
 bool CMainLoop::IsInsideFrustum(const DirectX::BoundingSphere& bSphere, const XMMATRIX& invView, const XMMATRIX& world)
@@ -289,7 +288,7 @@ void CMainLoop::UpdateRenderItems()
 	std::vector<std::shared_ptr<InstanceData>> insides{};
 
 	//처리 안할것을 먼저 골라낸다.
-	auto& item = (*m_AllRItems[m_model->GetName()].begin());
+	auto& item = (*m_AllRItems["skull"].begin());
 	std::copy_if(m_instances.begin(), m_instances.end(), std::back_inserter(insides),
 		[mainLoop = this, &invView, &item](auto& instance) {
 			return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
@@ -470,7 +469,7 @@ bool CMainLoop::Run()
 			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems[m_model->GetName()]));
+			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems["skull"]));
 		}
 	}
 

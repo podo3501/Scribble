@@ -93,12 +93,11 @@ public:
 	CGeometry& operator=(const CGeometry&) = delete;
 
 	bool LoadGraphicMemory(CDirectx3D* directx3D);
-	bool SetMesh(std::unique_ptr<Geometry>&& meshGeo);
-	Geometry* GetMesh(const std::string& meshName);
+	inline Geometry* GetGeometry() { return m_geometries.get(); };
 
 private:
 	bool Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, Geometry* meshGeo);
 
 private:
-	std::unordered_map<std::string, std::unique_ptr<Geometry>> m_geometries{};
+	std::unique_ptr<Geometry> m_geometries{ nullptr };
 };

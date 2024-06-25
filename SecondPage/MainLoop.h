@@ -42,7 +42,7 @@ private:
 
 	bool BuildCpuMemory();
 	bool BuildGraphicMemory();
-	void BuildRenderItems();
+	void BuildRenderItems(const std::string& meshName);
 
 	bool MakeFrameResource();
 	bool IsInsideFrustum(

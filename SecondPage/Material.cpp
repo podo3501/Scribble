@@ -10,45 +10,52 @@ CMaterial::CMaterial()
 
 void CMaterial::Build()
 {
-	auto MakeMaterial = [&](std::string&& name, TextureType type, int matCBIdx, int diffuseSrvHeapIdx,
-		XMFLOAT4 diffuseAlbedo, XMFLOAT3 fresnelR0, float rough) {
+	auto MakeMaterial = [&](std::string&& name, TextureType type, XMFLOAT4 diffuseAlbedo, 
+		XMFLOAT3 fresnelR0, float rough) {
 			auto curMat = std::make_unique<Material>();
 			curMat->type = type;
 			curMat->name = name;
-			curMat->matCBIndex = matCBIdx;
-			curMat->diffuseSrvHeapIndex = diffuseSrvHeapIdx;
 			curMat->diffuseAlbedo = diffuseAlbedo;
 			curMat->fresnelR0 = fresnelR0;
 			curMat->roughness = rough;
 			m_materials.emplace_back(std::move(curMat));
 		};
 
-	MakeMaterial("sky", TextureType::CubeTexture, 0, 0, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f);
-	MakeMaterial("bricks0", TextureType::Texture, 1, 1, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f);
-	MakeMaterial("stone0", TextureType::Texture, 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f);
-	MakeMaterial("tile0", TextureType::Texture, 3, 3, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f);
-	MakeMaterial("checkboard0", TextureType::Texture, 4, 4, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
-	MakeMaterial("ice0", TextureType::Texture, 5, 5, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
-	MakeMaterial("grass0", TextureType::Texture, 6, 6, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
-	MakeMaterial("skullMat", TextureType::Texture, 7, 7, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
+	MakeMaterial("sky", TextureType::CubeTexture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f);
+	MakeMaterial("bricks0", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f);
+	MakeMaterial("stone0", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f);
+	MakeMaterial("tile0", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f);
+	MakeMaterial("checkboard0", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("ice0", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
+	MakeMaterial("grass0", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("skullMat", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
 }
 
 void CMaterial::MakeMaterialBuffer(CUploadBuffer** outMatBuffer)
 {
+	int matCBIndex = { 0 };
+	TextureType curType{ TextureType::None };
+	int diffuseIndex = { 0 };
 	for (auto& e : m_materials)
 	{
 		Material* m = e.get();
 		if (m->numFramesDirty <= 0)
 			continue;
 
+		if (curType != m->type)
+		{
+			curType = m->type;
+			diffuseIndex = 0;
+		}
+
 		MaterialBuffer matData;
+		matData.diffuseMapIndex = diffuseIndex++;
 		matData.diffuseAlbedo = m->diffuseAlbedo;
 		matData.fresnelR0 = m->fresnelR0;
 		matData.roughness = m->roughness;
 		XMStoreFloat4x4(&matData.matTransform, XMMatrixTranspose(m->transform));
-		matData.diffuseMapIndex = m->diffuseSrvHeapIndex;
 
-		(*outMatBuffer)->CopyData(m->matCBIndex, matData);
+		(*outMatBuffer)->CopyData(matCBIndex++, matData);
 
 		m->numFramesDirty--;
 	}
@@ -81,10 +88,13 @@ size_t CMaterial::GetCount(TextureType type)
 
 int CMaterial::GetStartIndex(TextureType type)
 {
-	auto findIter = std::find_if(m_materials.begin(), m_materials.end(),
-		[type](auto& iter) { return iter->type == type; });
-	if (findIter == m_materials.end()) 
-		return -1; 
+	int startIdx{ 0 };
+	for (auto& mat : m_materials)
+	{
+		if (mat->type == type)
+			return startIdx;
+		++startIdx;
+	}
 
-	return (*findIter)->diffuseSrvHeapIndex;
+	return -1;
 }

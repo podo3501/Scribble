@@ -80,7 +80,7 @@ namespace MainLoop
 		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
 		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
 
-		EXPECT_EQ(model->Read(), true);
+		EXPECT_EQ(model->LoadGeometry(ModelType::Common, "skull", L"skull.txt"), true);
 
 		//프레임당 쓰이는 데이터 공간을 확보
 		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
@@ -131,6 +131,23 @@ namespace MainLoop
 	{
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
 		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr), false), true);
+	}
+
+	class MainLoopClassTest : public ::testing::Test
+	{
+	public:
+		MainLoopClassTest() {};
+
+	protected:
+		std::wstring m_resourcePath{ L"../Resource/" };
+	};
+
+	TEST_F(MainLoopClassTest, ModelTest)
+	{
+		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
+		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
+		EXPECT_EQ(model->LoadGeometry(ModelType::Common, "skull", L"skull.txt"), true);
+		EXPECT_EQ(model->Convert(geometry.get()), true);
 	}
 } //SecondPage
 

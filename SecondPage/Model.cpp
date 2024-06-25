@@ -7,16 +7,29 @@
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-bool CModel::Read()
+bool CModel::LoadGeometry(ModelType type, std::string&& name, std::wstring&& filename)
 {
-	std::wstring filename = m_resPath + m_filePath + L"skull.txt";
-	std::ifstream fin(filename);
+	std::wstring fullFilename = m_resPath + m_filePath + filename;
+	std::ifstream fin(fullFilename);
 	if (fin.bad())
-	{
-		MessageBox(0, filename.c_str(), 0, 0);
 		return false;
-	}
 
+	auto meshData = std::make_unique<MeshData>();
+	switch (type)
+	{
+	case ModelType::Common:		ReadCommon(fin, meshData.get());			break;
+	default: return false;
+	}
+	fin.close();
+
+	meshData->name = std::move(name);
+	m_meshDataList.emplace_back(std::move(meshData));
+
+	return true;
+}
+
+void CModel::ReadCommon(std::ifstream& fin, MeshData* outData)
+{
 	UINT vCount = 0;
 	UINT iCount = 0;
 	std::string ignore;
@@ -32,7 +45,7 @@ bool CModel::Read()
 
 	for (auto i{ 0u }; i < vCount; ++i)
 	{
-		Vertex curVertex;
+		Vertex curVertex{};
 		fin >> curVertex.pos.x >> curVertex.pos.y >> curVertex.pos.z;
 		fin >> curVertex.normal.x >> curVertex.normal.y >> curVertex.normal.z;
 
@@ -55,57 +68,99 @@ bool CModel::Read()
 		vMin = XMVectorMin(vMin, P);
 		vMax = XMVectorMax(vMax, P);
 
-		m_vertices.emplace_back(std::move(curVertex));
+		outData->vertices.emplace_back(std::move(curVertex));
 	}
 
-	XMStoreFloat3(&m_boundingBox.Center, 0.5f * (vMin + vMax));
-	XMStoreFloat3(&m_boundingBox.Extents, 0.5f * (vMax - vMin));
+	XMStoreFloat3(&outData->boundingBox.Center, 0.5f * (vMin + vMax));
+	XMStoreFloat3(&outData->boundingBox.Extents, 0.5f * (vMax - vMin));
 
-	XMStoreFloat3(&m_boundingSphere.Center, 0.5f * (vMin + vMax));
-	m_boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
+	XMStoreFloat3(&outData->boundingSphere.Center, 0.5f * (vMin + vMax));
+	outData->boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
 
 	fin >> ignore >> ignore >> ignore;
-	
-	std::int32_t readIdx{ 0 };
+
 	for (auto iter{ 0u }; iter < iCount * 3; ++iter)
 	{
+		std::int32_t readIdx{ 0 };
 		fin >> readIdx;
-		m_indices.emplace_back(readIdx);
+		outData->indices.emplace_back(std::move(readIdx));
 	}
-	
-	fin.close();
-
-	return true;
 }
 
-bool CModel::Convert(CGeometry* geometry)
+CModel::Offsets CModel::SetSubmesh(Geometry* geo, Offsets& offsets, MeshData* data)
 {
-	UINT vbByteSize = static_cast<UINT>(m_vertices.size()) * sizeof(Vertex);
-	UINT ibByteSize = static_cast<UINT>(m_indices.size()) * sizeof(std::int32_t);
+	UINT indexCount = static_cast<UINT>(data->indices.size());
 
-	auto meshGeo = std::make_unique<Geometry>();
-	meshGeo->name = m_name;
+	SubmeshGeometry submesh{};
+	submesh.baseVertexLocation = offsets.first;
+	submesh.startIndexLocation = offsets.second;
+	submesh.boundingBox = data->boundingBox;
+	submesh.boundingSphere = data->boundingSphere;
+	submesh.indexCount = indexCount;
 
-	auto& submesh = meshGeo->drawArgs[m_submeshName];
-	submesh.indexCount = static_cast<UINT>(m_indices.size());
-	submesh.startIndexLocation = 0;
-	submesh.baseVertexLocation = 0;
-	submesh.boundingBox = m_boundingBox;
-	submesh.boundingSphere = m_boundingSphere;
+	geo->drawArgs.insert(std::make_pair(data->name, std::move(submesh)));
 
-	meshGeo->vertexBufferByteSize = vbByteSize;
-	meshGeo->vertexByteStride = sizeof(Vertex);
+	return Offsets(
+		offsets.first + static_cast<UINT>(data->vertices.size()),
+		offsets.second + indexCount);
+}
 
-	ReturnIfFailed(D3DCreateBlob(vbByteSize, &meshGeo->vertexBufferCPU));
-	CopyMemory(meshGeo->vertexBufferCPU->GetBufferPointer(), m_vertices.data(), vbByteSize);
+void CModel::SetSubmeshList(Geometry* geo, std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices)
+{
+	Offsets offsets{ 0, 0 };
+	for_each(m_meshDataList.begin(), m_meshDataList.end(),
+		[model = this, &offsets, geo, &totalVertices, &totalIndices](auto& data) { 
+			offsets = model->SetSubmesh(geo, offsets, data.get());
+			std::copy(data->vertices.begin(), data->vertices.end(), std::back_inserter(totalVertices));
+			std::copy(data->indices.begin(), data->indices.end(), std::back_inserter(totalIndices)); 
+		});
+}
 
-	ReturnIfFailed(D3DCreateBlob(ibByteSize, &meshGeo->indexBufferCPU));
-	CopyMemory(meshGeo->indexBufferCPU->GetBufferPointer(), m_indices.data(), ibByteSize);
+bool CModel::Convert(CGeometry* geomtry)
+{
+	auto geo = geomtry->GetGeometry();
+	std::vector<Vertex> totalVertices{};
+	std::vector<std::int32_t> totalIndices{};
+	SetSubmeshList(geo, totalVertices, totalIndices);
 
-	meshGeo->indexFormat = DXGI_FORMAT_R32_UINT;
-	meshGeo->indexBufferByteSize = ibByteSize;
+	UINT vbByteSize = static_cast<UINT>(totalVertices.size()) * sizeof(Vertex);
+	UINT ibByteSize = static_cast<UINT>(totalIndices.size()) * sizeof(std::int32_t);
 
-	ReturnIfFalse(geometry->SetMesh(std::move(meshGeo)));
+	geo->vertexBufferByteSize = vbByteSize;
+	geo->vertexByteStride = sizeof(Vertex);
+
+	geo->indexBufferByteSize = ibByteSize;
+	geo->indexFormat = DXGI_FORMAT_R32_UINT;
+
+	auto& vertexBuffer = geo->vertexBufferCPU;
+	auto& indexBuffer = geo->indexBufferCPU;
+
+	ReturnIfFailed(D3DCreateBlob(vbByteSize, &vertexBuffer));
+	CopyMemory(vertexBuffer->GetBufferPointer(), totalVertices.data(), vbByteSize);
+
+	ReturnIfFailed(D3DCreateBlob(ibByteSize, &indexBuffer));
+	CopyMemory(indexBuffer->GetBufferPointer(), totalIndices.data(), ibByteSize);
 
 	return true;
 }
+
+//bool CModel::AddData(std::string& meshName, const MeshData& meshData)
+//{
+//	auto meshGeo = std::make_unique<Geometry>();
+//
+//	//SubmeshGeometry 값을 다 채운다음 move로 옮기자
+//	SubmeshGeometry submesh;
+//	//auto& submesh = meshGeo->drawArgs[m_submeshName];
+//	submesh.indexCount = static_cast<UINT>(meshData.indices.size());
+//	submesh.startIndexLocation = 0;
+//	submesh.baseVertexLocation = 0;
+//	submesh.boundingBox = meshData.boundingBox;
+//	submesh.boundingSphere = meshData.boundingSphere;
+//
+//	m_submeshes.insert(std::make_pair(name, submesh));
+//	/*meshGeo->drawArgs.insert(std::make_pair())
+//
+//	ReturnIfFalse(geometry->SetMesh(std::move(meshGeo)));*/
+//
+//	return true;
+//}
