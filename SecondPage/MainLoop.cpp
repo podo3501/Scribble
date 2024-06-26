@@ -17,7 +17,7 @@
 #include "./Camera.h"
 #include "./KeyInputManager.h"
 #include "./Geometry.h"
-#include "./Dummy.h"
+#include "./Instance.h"
 
 using namespace DirectX;
 
@@ -146,7 +146,10 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 	ReturnIfFalse(MakeFrameResource());		//한 프레임에 쓰일 리소스를 만듦
 
 	//view에서 작업할 것들(run은 실시간으로 projection과 관련한다)
-	BuildRenderItems("things", "skull");
+	m_instance->CreateInstanceData(nullptr, "nature", "cube");
+	m_instance->CreateInstanceData(m_material.get(), "things", "skull");
+	BuildRenderItems("nature", "cube", "sky");
+	BuildRenderItems("things", "skull", "tile0");
 
 	return true;
 }
@@ -166,7 +169,7 @@ bool CMainLoop::InitializeClass()
 	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));
 
 	m_geometry = std::make_unique<CGeometry>();
-	m_dummy = std::make_unique<CDummy>();
+	m_instance = std::make_unique<CInstance>();
 
 	return true;
 }
@@ -185,8 +188,8 @@ bool CMainLoop::BuildCpuMemory()
 	m_material = std::make_unique<CMaterial>();
 	m_material->Build();
 
-	m_dummy->CreateInstanceData(m_material.get(), "things", "skull");
 	m_model = std::make_unique<CModel>(m_resourcePath);
+	ReturnIfFalse(m_model->LoadGeometry(ModelType(CreateType::Generator, "nature", "cube")));
 	ReturnIfFalse(m_model->LoadGeometry(ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")));
 	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
 
@@ -202,28 +205,28 @@ bool CMainLoop::BuildGraphicMemory()
 	return true;
 }
 
-void CMainLoop::BuildRenderItems(const std::string& geoName, const std::string& meshName)
+void CMainLoop::BuildRenderItems(const std::string& geoName, const std::string& meshName, const std::string& matName)
 {
 	auto geo = m_geometry->GetGeometry(geoName);
 
 	auto rItem = std::make_unique<RenderItem>();
-	auto MakeRenderItem = [&, objIdx{ 0 }](const std::string& smName, std::string&& matName,
-		const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
-			auto& sm = geo->drawArgs[smName];
-			rItem->geo = geo;
-			rItem->mat = m_material->GetMaterial(matName);
-			rItem->objCBIndex = objIdx++;
-			rItem->primitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-			XMStoreFloat4x4(&rItem->world, world);
-			XMStoreFloat4x4(&rItem->texTransform, texTransform);
-			rItem->startIndexLocation = sm.startIndexLocation;
-			rItem->baseVertexLocation = sm.baseVertexLocation;
-			rItem->indexCount = sm.indexCount;
-			rItem->boundingBox = sm.boundingBox;
-			rItem->boundingSphere = sm.boundingSphere; };
-	MakeRenderItem(meshName, "tile0", XMMatrixIdentity(), XMMatrixIdentity());
+	auto MakeRenderItem = [&, objIdx{ 0 }](const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
+		auto& sm = geo->drawArgs[meshName];
+		rItem->geo = geo;
+		rItem->mat = m_material->GetMaterial(matName);
+		rItem->objCBIndex = objIdx++;
+		rItem->primitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		XMStoreFloat4x4(&rItem->world, world);
+		XMStoreFloat4x4(&rItem->texTransform, texTransform);
+		rItem->startIndexLocation = sm.startIndexLocation;
+		rItem->baseVertexLocation = sm.baseVertexLocation;
+		rItem->indexCount = sm.indexCount;
+		rItem->boundingBox = sm.boundingBox;
+		rItem->boundingSphere = sm.boundingSphere; };
+	MakeRenderItem(XMMatrixIdentity(), XMMatrixIdentity());
 
-	rItem->instances = m_dummy->GetInstanceDummyData(geoName, meshName);
+	rItem->instances = m_instance->GetInstanceDummyData(geoName, meshName);
+	rItem->cullingFrustum = m_instance->GetCullingFrustum(geoName, meshName);
 
 	m_AllRItems[meshName].emplace_back(std::move(rItem));
 }
@@ -257,26 +260,37 @@ void CMainLoop::UpdateRenderItems()
 	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
 
 	//처리 안할것을 먼저 골라낸다.
-	auto& item = (*m_AllRItems["skull"].begin());
-	std::vector<std::shared_ptr<InstanceData>> insides{};
-	std::copy_if(item->instances.begin(), item->instances.end(), std::back_inserter(insides),
-		[mainLoop = this, &invView, &item](auto& instance) {
-			return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
-		});
-	item->instanceCount = static_cast<UINT>(insides.size());
-	
+	//auto& item = (*m_AllRItems["skull"].begin());
 	int visibleCount{ 0 };
-	for (auto& instanceData : insides)
+	for(auto& e : m_AllRItems)
 	{
-		InstanceBuffer curInsBuf{};
-		XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(instanceData->world));
-		XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(instanceData->texTransform));
-		curInsBuf.materialIndex = instanceData->matIndex;
+		auto& item = (*e.second.begin());
+		
+		std::vector<std::shared_ptr<InstanceData>> insides{};
+		if (item->cullingFrustum)
+		{
+			std::copy_if(item->instances.begin(), item->instances.end(), std::back_inserter(insides),
+				[mainLoop = this, &invView, &item](auto& instance) {
+					return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
+				});
+			item->instanceCount = static_cast<UINT>(insides.size());
+		}
+		else
+		{
+			insides.assign(item->instances.begin(), item->instances.end());
+		}
 
-		instanceBuffer->CopyData(visibleCount++, curInsBuf);
+		for (auto& instanceData : insides)
+		{
+			InstanceBuffer curInsBuf{};
+			XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(instanceData->world));
+			XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(instanceData->texTransform));
+			curInsBuf.materialIndex = instanceData->matIndex;
+
+			instanceBuffer->CopyData(visibleCount++, curInsBuf);
+		}
+		m_windowCaption = SetWindowCaption(insides.size(), item->instances.size());
 	}
-
-	m_windowCaption = SetWindowCaption(insides.size(), item->instances.size());
 }
 
 void CMainLoop::UpdateMaterialBuffer()

@@ -21,7 +21,7 @@
 #include "../SecondPage/RendererData.h"
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/Geometry.h"
-#include "../SecondPage/Dummy.h"
+#include "../SecondPage/Instance.h"
 
 namespace MainLoop
 {

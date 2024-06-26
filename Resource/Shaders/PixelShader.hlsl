@@ -10,8 +10,9 @@
     #define NUM_SPOT_LIGHTS 0
 #endif
 
-#include "GraphicsHeader.hlsli"
 #include "LightingUtil.hlsli"
+#include "GraphicsHeader.hlsli"
+#include "VertexInout.hlsli"
 
 float4 main(VertexOut pin) : SV_Target
 {

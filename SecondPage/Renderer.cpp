@@ -125,11 +125,12 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 	ReturnIfFalse(m_shader->SetPipelineStateDesc(psoType, &psoDesc));
-	MakeOpaqueDesc(&psoDesc);
+	MakeBasicDesc(&psoDesc);
 
 	switch (psoType)
 	{
-	case GraphicsPSO::Opaque:						break;
+	case GraphicsPSO::Sky:				MakeSkyDesc(&psoDesc);				break;
+	case GraphicsPSO::Opaque:		MakeOpaqueDesc(&psoDesc);		break;
 	default: assert(!"wrong type");
 	}
 	
@@ -139,7 +140,7 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	return true;
 }
 
-void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+void CRenderer::MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
 	inoutDesc->NodeMask = 0;
 	inoutDesc->SampleMask = UINT_MAX;
@@ -152,6 +153,15 @@ void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 
 	m_directx3D->SetPipelineStateDesc(inoutDesc);
 }
+
+void CRenderer::MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	inoutDesc->RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+	inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+}
+
+void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{}
 
 bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std::vector<std::unique_ptr<RenderItem>>& renderItem)
 {

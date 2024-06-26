@@ -29,8 +29,8 @@ std::wstring CShader::GetShaderFilename(GraphicsPSO psoType, ShaderType shaderTy
 {
 	static std::wstring shaderFilename[EtoV(GraphicsPSO::Count)][EtoV(ShaderType::Count)] =
 	{
+		{ L"SkyVS.hlsl", L"SkyPS.hlsl"},
 		{ L"VertexShader.hlsl", L"PixelShader.hlsl"},
-		//{ L"SkyVS.hlsl", L"SkyPS.hlsl"},
 	};
 	return m_resPath + m_filePath + shaderFilename[EtoV(psoType)][EtoV(shaderType)];
 }

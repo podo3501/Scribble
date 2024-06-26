@@ -17,7 +17,7 @@ class CFrameResources;
 class CKeyInputManager;
 class CGameTimer;
 class CGeometry;
-class CDummy;
+class CInstance;
 struct RenderItem;
 struct Geometry;
 struct FrameResource;
@@ -43,7 +43,10 @@ private:
 
 	bool BuildCpuMemory();
 	bool BuildGraphicMemory();
-	void BuildRenderItems(const std::string& geoName, const std::string& meshName);
+	void BuildRenderItems(
+		const std::string& geoName,
+		const std::string& meshName,
+		const std::string& matName);
 
 	bool MakeFrameResource();
 	bool IsInsideFrustum(
@@ -79,7 +82,7 @@ private:
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
 	std::unique_ptr<CGeometry> m_geometry{ nullptr };
-	std::unique_ptr<CDummy> m_dummy{ nullptr };
+	std::unique_ptr<CInstance> m_instance{ nullptr };
 
 	//랜더링시 필요한 데이터들
 	std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>> m_AllRItems{};

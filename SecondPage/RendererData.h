@@ -35,6 +35,7 @@ struct RenderItem
 	DirectX::BoundingBox boundingBox{};
 	DirectX::BoundingSphere boundingSphere{};
 	std::vector<std::shared_ptr<InstanceData>> instances{};
+	bool cullingFrustum{ false };
 
 	UINT indexCount{ 0 };
 	UINT startIndexLocation{ 0 };

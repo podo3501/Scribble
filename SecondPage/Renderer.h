@@ -50,6 +50,8 @@ private:
 	bool BuildDescriptorHeaps();
 	bool BuildPSOs();
 	bool MakePSOPipelineState(GraphicsPSO psoType);
+	void MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void DrawRenderItems(CUploadBuffer* instanceBuffer,
 		const std::vector<std::unique_ptr<RenderItem>>& ritems);
