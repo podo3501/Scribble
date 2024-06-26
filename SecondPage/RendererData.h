@@ -10,6 +10,13 @@ struct Material;
 struct Geometry;
 struct InstanceBuffer;
 
+struct InstanceData
+{
+	DirectX::XMMATRIX world{};
+	DirectX::XMMATRIX texTransform{};
+	UINT matIndex{ 0u };
+};
+
 struct RenderItem
 {
 	RenderItem() = default;
@@ -27,7 +34,7 @@ struct RenderItem
 
 	DirectX::BoundingBox boundingBox{};
 	DirectX::BoundingSphere boundingSphere{};
-	std::vector<std::unique_ptr<InstanceBuffer>> instances{};
+	std::vector<std::shared_ptr<InstanceData>> instances{};
 
 	UINT indexCount{ 0 };
 	UINT startIndexLocation{ 0 };

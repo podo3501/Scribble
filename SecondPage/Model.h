@@ -8,15 +8,36 @@
 #include <DirectXCollision.h>
 
 class CGeometry;
+struct InstanceData;
 struct Geometry;
 struct Vertex;
 struct MeshData;
 
-enum class ModelType : int
+enum class CreateType : int
 {
 	None,
 	Generator,
 	ReadFile,
+};
+
+struct ModelType
+{
+	ModelType(CreateType _type, 
+		const std::string& _geoName, 
+		const std::string& _submeshName, 
+		const std::wstring& _filename = L"")
+		: createType{ _type }
+		, geometryName{ _geoName }
+		, submeshName{ _submeshName }
+		, filename{ _filename }
+	{}
+	ModelType(const ModelType&) = delete;
+	ModelType& operator=(const ModelType&) = delete;
+
+	CreateType createType{ CreateType::None };
+	std::string geometryName{};
+	std::string submeshName{};
+	std::wstring filename{};
 };
 
 class CModel
@@ -41,7 +62,7 @@ public:
 	CModel(const CModel&) = delete;
 	CModel& operator=(const CModel&) = delete;
 
-	bool LoadGeometry(ModelType type, std::string&& geoName, std::string&& subName, std::wstring&& filename = L"");
+	bool LoadGeometry(const ModelType& type);
 	bool Convert(CGeometry* geomtry);
 
 private:

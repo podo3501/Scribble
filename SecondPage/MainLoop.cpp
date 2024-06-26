@@ -17,6 +17,7 @@
 #include "./Camera.h"
 #include "./KeyInputManager.h"
 #include "./Geometry.h"
+#include "./Dummy.h"
 
 using namespace DirectX;
 
@@ -128,6 +129,28 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 	return false;
 }
 
+bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
+{
+	m_window = std::make_unique<CWindow>(hInstance);
+	ReturnIfFalse(m_window->Initialize(bShowWindow));
+	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
+
+	AddKeyListener();	//키 리스너 등록
+
+	//local에서 작업할 것들
+	ReturnIfFalse(InitializeClass());	//초기화
+	ReturnIfFalse(OnResize());
+	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
+	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
+	ReturnIfFalse(MakeFrameResource());		//한 프레임에 쓰일 리소스를 만듦
+
+	//view에서 작업할 것들(run은 실시간으로 projection과 관련한다)
+	BuildRenderItems("things", "skull");
+
+	return true;
+}
+
 bool CMainLoop::InitializeClass()
 {
 	m_camera = std::make_unique<CCamera>();
@@ -143,27 +166,7 @@ bool CMainLoop::InitializeClass()
 	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));
 
 	m_geometry = std::make_unique<CGeometry>();
-
-	return true;
-}
-
-bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
-{
-	m_window = std::make_unique<CWindow>(hInstance);
-	ReturnIfFalse(m_window->Initialize(bShowWindow));
-	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
-		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
-
-	ReturnIfFalse(InitializeClass());	//초기화
-	ReturnIfFalse(OnResize());
-
-	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
-	BuildRenderItems("things", "skull");
-	
-	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-	ReturnIfFalse(MakeFrameResource());		//한 프레임에 쓰일 리소스를 만듦
-
-	AddKeyListener();	//키 리스너 등록
+	m_dummy = std::make_unique<CDummy>();
 
 	return true;
 }
@@ -181,8 +184,10 @@ bool CMainLoop::BuildCpuMemory()
 {
 	m_material = std::make_unique<CMaterial>();
 	m_material->Build();
+
+	m_dummy->CreateInstanceData(m_material.get(), "things", "skull");
 	m_model = std::make_unique<CModel>(m_resourcePath);
-	ReturnIfFalse(m_model->LoadGeometry(ModelType::ReadFile, "things", "skull", L"skull.txt"));
+	ReturnIfFalse(m_model->LoadGeometry(ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")));
 	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
 
 	return true;
@@ -217,42 +222,8 @@ void CMainLoop::BuildRenderItems(const std::string& geoName, const std::string& 
 			rItem->boundingBox = sm.boundingBox;
 			rItem->boundingSphere = sm.boundingSphere; };
 	MakeRenderItem(meshName, "tile0", XMMatrixIdentity(), XMMatrixIdentity());
-	
-	const int n = 5;
-	const int matCount = static_cast<int>(m_material->GetCount(TextureType::Texture));
-	const int startIndex = m_material->GetStartIndex(TextureType::Texture);
 
-	float width = 200.0f;
-	float height = 200.0f;
-	float depth = 200.0f;
-
-	float x = -0.5f * width;
-	float y = -0.5f * height;
-	float z = -0.5f * depth;
-	float dx = width / (n - 1);
-	float dy = height / (n - 1);
-	float dz = depth / (n - 1);
-	for (int k = 0; k < n; ++k)
-	{
-		for (int i = 0; i < n; ++i)
-		{
-			for (int j = 0; j < n; ++j)
-			{
-				auto instance = std::make_shared<InstanceData>();
-				const XMFLOAT3 pos(x + j * dx, y + i * dy, z + k * dz);
-				instance->world = XMMATRIX(
-					1.0f, 0.0f, 0.0f, 0.0f,
-					0.0f, 1.0f, 0.0f, 0.0f,
-					0.0f, 0.0f, 1.0f, 0.0f,
-					pos.x, pos.y, pos.z, 1.0f);
-				
-				int index = k * n * n + i * n + j;
-				instance->texTransform = XMMatrixScaling(2.0f, 2.0f, 1.0f);
-				instance->matIndex = WrapAround(index + startIndex, startIndex, matCount + startIndex);
-				m_instances.emplace_back(std::move(instance));
-			}
-		}
-	}
+	rItem->instances = m_dummy->GetInstanceDummyData(geoName, meshName);
 
 	m_AllRItems[meshName].emplace_back(std::move(rItem));
 }
@@ -285,11 +256,10 @@ void CMainLoop::UpdateRenderItems()
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
 
-	std::vector<std::shared_ptr<InstanceData>> insides{};
-
 	//처리 안할것을 먼저 골라낸다.
 	auto& item = (*m_AllRItems["skull"].begin());
-	std::copy_if(m_instances.begin(), m_instances.end(), std::back_inserter(insides),
+	std::vector<std::shared_ptr<InstanceData>> insides{};
+	std::copy_if(item->instances.begin(), item->instances.end(), std::back_inserter(insides),
 		[mainLoop = this, &invView, &item](auto& instance) {
 			return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
 		});
@@ -306,7 +276,7 @@ void CMainLoop::UpdateRenderItems()
 		instanceBuffer->CopyData(visibleCount++, curInsBuf);
 	}
 
-	m_windowCaption = SetWindowCaption(insides.size(), m_instances.size());
+	m_windowCaption = SetWindowCaption(insides.size(), item->instances.size());
 }
 
 void CMainLoop::UpdateMaterialBuffer()

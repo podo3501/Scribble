@@ -17,6 +17,7 @@ class CFrameResources;
 class CKeyInputManager;
 class CGameTimer;
 class CGeometry;
+class CDummy;
 struct RenderItem;
 struct Geometry;
 struct FrameResource;
@@ -66,14 +67,6 @@ private:
 	void OnKeyboardInput();
 
 private:
-	struct InstanceData
-	{
-		DirectX::XMMATRIX world{};
-		DirectX::XMMATRIX texTransform{};
-		UINT matIndex{ 0u };
-	};
-
-private:
 	std::wstring m_resourcePath{};
 	std::unique_ptr<CWindow> m_window{ nullptr };
 	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
@@ -86,9 +79,9 @@ private:
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
 	std::unique_ptr<CGeometry> m_geometry{ nullptr };
+	std::unique_ptr<CDummy> m_dummy{ nullptr };
 
 	//랜더링시 필요한 데이터들
-	std::vector<std::shared_ptr<InstanceData>> m_instances{};
 	std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>> m_AllRItems{};
 
 	DirectX::BoundingFrustum m_camFrustum{};

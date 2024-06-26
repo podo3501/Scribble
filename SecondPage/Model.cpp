@@ -8,21 +8,21 @@
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-bool CModel::LoadGeometry(ModelType type, std::string&& geoName, std::string&& subName, std::wstring&& filename)
+bool CModel::LoadGeometry(const ModelType& type)
 {
 	auto meshData = std::make_unique<MeshData>();
 
 	auto result = true;
-	switch (type)
+	switch (type.createType)
 	{
-	case ModelType::Generator:		Generator(meshData.get());									break;
-	case ModelType::ReadFile:			result = ReadFile(filename, meshData.get());		break;
+	case CreateType::Generator:		Generator(meshData.get());											break;
+	case CreateType::ReadFile:			result = ReadFile(type.filename, meshData.get());		break;
 	default: return false;
 	}
 	if (!result) return result;
 
-	meshData->name = std::move(subName);
-	m_meshDataList[geoName].emplace_back(std::move(meshData));
+	meshData->name = type.submeshName;
+	m_meshDataList[type.geometryName].emplace_back(std::move(meshData));
 
 	return true;
 }
