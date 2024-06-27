@@ -1,6 +1,7 @@
 #include "Geometry.h"
 #include "../Core/d3dUtil.h"
 #include "../Core/Directx3D.h"
+#include "./SubItem.h"
 
 CGeometry::CGeometry()
 {}
@@ -10,16 +11,18 @@ bool CGeometry::Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, G
 	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		device, cmdList,
 		meshGeo->vertexBufferCPU->GetBufferPointer(),
-		meshGeo->vertexBufferByteSize,
+		meshGeo->vertexBufferView.SizeInBytes,
 		meshGeo->vertexBufferUploader,
 		&meshGeo->vertexBufferGPU));
+	meshGeo->vertexBufferView.BufferLocation = meshGeo->vertexBufferGPU->GetGPUVirtualAddress();
 
 	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		device, cmdList,
 		meshGeo->indexBufferCPU->GetBufferPointer(),
-		meshGeo->indexBufferByteSize,
+		meshGeo->indexBufferView.SizeInBytes,
 		meshGeo->indexBufferUploader,
 		&meshGeo->indexBufferGPU));
+	meshGeo->indexBufferView.BufferLocation = meshGeo->indexBufferGPU->GetGPUVirtualAddress();
 
 	return true;
 }

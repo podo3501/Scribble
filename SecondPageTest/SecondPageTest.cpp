@@ -18,10 +18,11 @@
 #include "../SecondPage/FrameResource.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
-#include "../SecondPage/RendererData.h"
+#include "../SecondPage/RenderItem.h"
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/Geometry.h"
 #include "../SecondPage/Instance.h"
+#include "../SecondPage/SubItem.h"
 
 namespace MainLoop
 {
@@ -81,7 +82,12 @@ namespace MainLoop
 		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
 		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
 
-		EXPECT_EQ(model->LoadGeometry(ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")), true);
+		ModelTypeList modelTypeList
+		{
+			ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
+		};
+
+		EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
 
 		//프레임당 쓰이는 데이터 공간을 확보
 		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
@@ -145,13 +151,16 @@ namespace MainLoop
 
 	TEST_F(MainLoopClassTest, ModelTest)
 	{
-		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
 		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
 		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
-		material->Build();
 
-		EXPECT_EQ(model->LoadGeometry(ModelType(CreateType::Generator, "nature", "cube")), true);
-		EXPECT_EQ(model->LoadGeometry(ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")), true);
+		ModelTypeList modelTypeList
+		{
+			ModelType(CreateType::Generator, "nature", "cube"), 
+			ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
+		};
+
+		EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
 		EXPECT_EQ(model->Convert(geometry.get()), true);
 	}
 } //SecondPage

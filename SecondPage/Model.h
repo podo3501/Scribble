@@ -31,7 +31,6 @@ struct ModelType
 		, submeshName{ _submeshName }
 		, filename{ _filename }
 	{}
-	ModelType(const ModelType&) = delete;
 	ModelType& operator=(const ModelType&) = delete;
 
 	CreateType createType{ CreateType::None };
@@ -39,6 +38,8 @@ struct ModelType
 	std::string submeshName{};
 	std::wstring filename{};
 };
+
+using ModelTypeList = std::vector<ModelType>;
 
 class CModel
 {
@@ -62,13 +63,14 @@ public:
 	CModel(const CModel&) = delete;
 	CModel& operator=(const CModel&) = delete;
 
-	bool LoadGeometry(const ModelType& type);
+	bool LoadGeometryList(const ModelTypeList& modelTypeList);
 	bool Convert(CGeometry* geomtry);
 
 private:
 	using Offsets = std::pair<UINT, UINT>;
 
 private:
+	bool LoadGeometry(const ModelType& type);
 	bool ReadFile(const std::wstring& filename, MeshData* outData);
 	void Generator(MeshData* outData);
 	void SetSubmeshList(Geometry* geo, const std::vector<std::unique_ptr<MeshData>>& meshDataList,

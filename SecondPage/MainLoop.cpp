@@ -7,7 +7,7 @@
 #include "../Core/Directx3D.h"
 #include "./UploadBuffer.h"
 #include "./GameTimer.h"
-#include "./RendererData.h"
+#include "./RenderItem.h"
 #include "./Shader.h"
 #include "./Renderer.h"
 #include "./Material.h"
@@ -18,6 +18,7 @@
 #include "./KeyInputManager.h"
 #include "./Geometry.h"
 #include "./Instance.h"
+#include "./SubItem.h"
 
 using namespace DirectX;
 
@@ -148,8 +149,9 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 	//view에서 작업할 것들(run은 실시간으로 projection과 관련한다)
 	m_instance->CreateInstanceData(nullptr, "nature", "cube");
 	m_instance->CreateInstanceData(m_material.get(), "things", "skull");
-	BuildRenderItems("nature", "cube", "sky");
-	BuildRenderItems("things", "skull", "tile0");
+
+	BuildRenderItems("nature", "cube");
+	BuildRenderItems("things", "skull");
 
 	return true;
 }
@@ -169,6 +171,10 @@ bool CMainLoop::InitializeClass()
 	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));
 
 	m_geometry = std::make_unique<CGeometry>();
+
+	m_material = std::make_unique<CMaterial>();
+	m_material->Build();
+
 	m_instance = std::make_unique<CInstance>();
 
 	return true;
@@ -185,12 +191,14 @@ bool CMainLoop::MakeFrameResource()
 
 bool CMainLoop::BuildCpuMemory()
 {
-	m_material = std::make_unique<CMaterial>();
-	m_material->Build();
+	ModelTypeList modelTypeList
+	{
+		ModelType(CreateType::Generator, "nature", "cube"),
+		ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
+	};
 
 	m_model = std::make_unique<CModel>(m_resourcePath);
-	ReturnIfFalse(m_model->LoadGeometry(ModelType(CreateType::Generator, "nature", "cube")));
-	ReturnIfFalse(m_model->LoadGeometry(ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")));
+	ReturnIfFalse(m_model->LoadGeometryList(modelTypeList));
 	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
 
 	return true;
@@ -205,25 +213,21 @@ bool CMainLoop::BuildGraphicMemory()
 	return true;
 }
 
-void CMainLoop::BuildRenderItems(const std::string& geoName, const std::string& meshName, const std::string& matName)
+void CMainLoop::BuildRenderItems(const std::string& geoName, const std::string& meshName)
 {
-	auto geo = m_geometry->GetGeometry(geoName);
-
 	auto rItem = std::make_unique<RenderItem>();
-	auto MakeRenderItem = [&, objIdx{ 0 }](const XMMATRIX& world, const XMMATRIX& texTransform) mutable {
-		auto& sm = geo->drawArgs[meshName];
-		rItem->geo = geo;
-		rItem->mat = m_material->GetMaterial(matName);
-		rItem->objCBIndex = objIdx++;
-		rItem->primitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		XMStoreFloat4x4(&rItem->world, world);
-		XMStoreFloat4x4(&rItem->texTransform, texTransform);
-		rItem->startIndexLocation = sm.startIndexLocation;
-		rItem->baseVertexLocation = sm.baseVertexLocation;
-		rItem->indexCount = sm.indexCount;
-		rItem->boundingBox = sm.boundingBox;
-		rItem->boundingSphere = sm.boundingSphere; };
-	MakeRenderItem(XMMatrixIdentity(), XMMatrixIdentity());
+
+	auto geo = m_geometry->GetGeometry(geoName);
+	auto& sm = geo->drawArgs[meshName];
+	rItem->primitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	rItem->vertexBufferView = geo->vertexBufferView;
+	rItem->indexBufferView = geo->indexBufferView;
+
+	rItem->startIndexLocation = sm->startIndexLocation;
+	rItem->baseVertexLocation = sm->baseVertexLocation;
+	rItem->indexCount = sm->indexCount;
+	rItem->boundingBox = sm->boundingBox;
+	rItem->boundingSphere = sm->boundingSphere;
 
 	rItem->instances = m_instance->GetInstanceDummyData(geoName, meshName);
 	rItem->cullingFrustum = m_instance->GetCullingFrustum(geoName, meshName);

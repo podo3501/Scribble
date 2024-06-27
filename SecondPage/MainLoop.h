@@ -18,10 +18,11 @@ class CKeyInputManager;
 class CGameTimer;
 class CGeometry;
 class CInstance;
-struct InstanceData;
 struct RenderItem;
 struct Geometry;
 struct FrameResource;
+struct InstanceData;
+struct NRenderItem;
 
 class CMainLoop
 {
@@ -46,8 +47,7 @@ private:
 	bool BuildGraphicMemory();
 	void BuildRenderItems(
 		const std::string& geoName,
-		const std::string& meshName,
-		const std::string& matName);
+		const std::string& meshName);
 
 	bool MakeFrameResource();
 	bool IsInsideFrustum(
@@ -88,6 +88,7 @@ private:
 
 	//랜더링시 필요한 데이터들
 	std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>> m_AllRItems{};
+	std::unordered_map<std::string, std::unique_ptr<NRenderItem>> m_AllRenderItems{};
 
 	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };

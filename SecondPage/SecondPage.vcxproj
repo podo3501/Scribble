@@ -160,9 +160,10 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="RendererData.h" />
+    <ClInclude Include="RenderItem.h" />
     <ClInclude Include="RendererDefine.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="SubItem.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>

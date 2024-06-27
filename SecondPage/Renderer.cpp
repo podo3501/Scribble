@@ -7,9 +7,8 @@
 #include "./GameTimer.h"
 #include "./UploadBuffer.h"
 #include "./FrameResource.h"
-#include "./RendererData.h"
+#include "./RenderItem.h"
 #include "./Shader.h"
-#include "./Geometry.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -220,8 +219,8 @@ void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector
 {
 	for (auto& ri : ritems)
 	{
-		m_cmdList->IASetVertexBuffers(0, 1, &RvToLv(ri->geo->VertexBufferView()));
-		m_cmdList->IASetIndexBuffer(&RvToLv(ri->geo->IndexBufferView()));
+		m_cmdList->IASetVertexBuffers(0, 1, &RvToLv(ri->vertexBufferView));
+		m_cmdList->IASetIndexBuffer(&RvToLv(ri->indexBufferView));
 		m_cmdList->IASetPrimitiveTopology(ri->primitiveType);
 
 		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance), 

@@ -1,6 +1,9 @@
 틈나는대로 noexcept, const, constexpr 키워드 쓰기
 
-void CMainLoop::UpdateRenderItems()에서 cube world값을 안 넣어주고 있다.
-instance 버퍼에 인덱스문제가 있다.
+--void CMainLoop::UpdateRenderItems()에서 cube world값을 안 넣어주고 있다.
+--instance 버퍼에 인덱스문제가 있다.
+--cubemap 붙이기
 
-cubemap 붙이기
+파일을 로딩하고 보여주는 부분을 나눌려고 한다.
+geometry와 renderitem이 양분하고 있는데 중간에 몇가지 리팩토링 해야할 부분이 있다.
+renderer에 geometry가 가지 않도록 리팩토링 할 예정이다.

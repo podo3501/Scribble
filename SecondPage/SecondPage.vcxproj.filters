@@ -85,7 +85,7 @@
     <ClInclude Include="MainLoop.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="RendererData.h">
+    <ClInclude Include="RenderItem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RendererDefine.h">
@@ -107,6 +107,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Instance.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SubItem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

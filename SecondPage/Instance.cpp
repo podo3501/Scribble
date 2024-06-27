@@ -1,7 +1,7 @@
 #include "./Instance.h"
 #include "../Core/Utility.h"
 #include "./Material.h"
-#include "./RendererData.h"
+#include "./RenderItem.h"
 
 using namespace DirectX;
 
@@ -51,6 +51,7 @@ InstanceDataList CreateSkullInstanceData(CMaterial* material)
 
 InstanceDataList CreateSkyCubeInstanceData()
 {
+	//하늘맵은 material과 texTransform을 쓰지 않고 return gCubeMap.Sample(gsamLinearWrap, pin.PosL);
 	InstanceDataList instances{};
 	auto instance = std::make_unique<InstanceData>();
 	instance->world = XMMatrixIdentity();

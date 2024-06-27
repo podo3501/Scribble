@@ -1,0 +1,71 @@
+#pragma once
+
+#include "RendererDefine.h"
+#include <d3dcommon.h>
+#include <DirectXCollision.h>
+#include <vector>
+#include <d3d12.h>
+
+struct Material;
+struct Geometry;
+struct InstanceBuffer;
+struct SubmeshGeometry;
+struct SubItem;
+
+struct InstanceData
+{
+	DirectX::XMMATRIX world{};
+	DirectX::XMMATRIX texTransform{};
+	UINT matIndex{ 0u };
+};
+
+struct RenderItem
+{
+	RenderItem() = default;
+
+	DirectX::BoundingBox boundingBox{};
+	DirectX::BoundingSphere boundingSphere{};
+	std::vector<std::shared_ptr<InstanceData>> instances{};
+	bool cullingFrustum{ false };
+
+	int baseVertexLocation{ 0 };
+
+	UINT startIndexLocation{ 0 };
+	UINT indexCount{ 0 };
+	
+	UINT instanceCount{ 0 };
+	int startIndexInstance{ 0 };
+
+
+	D3D12_PRIMITIVE_TOPOLOGY primitiveType{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
+
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+
+	int NumFramesDirty{ gFrameResourceCount };
+};
+
+struct SubRenderItem
+{
+	SubRenderItem() = default;
+
+	std::shared_ptr<SubItem> subItem{ nullptr };
+
+	std::vector<std::shared_ptr<InstanceData>> instances{};
+	bool cullingFrustum{ false };
+	UINT instanceCount{ 0 };
+	int startIndexInstance{ 0 };
+};
+
+struct NRenderItem
+{
+	NRenderItem() = default;
+
+	D3D12_PRIMITIVE_TOPOLOGY primitiveType{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+
+	std::unordered_map<std::string, SubRenderItem> subRenderItems{};
+
+	int NumFramesDirty{ gFrameResourceCount };
+};
