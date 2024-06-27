@@ -163,11 +163,12 @@ void CRenderer::MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {}
 
-bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std::vector<std::unique_ptr<RenderItem>>& renderItem)
+bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, 
+	std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>>& renderItem)
 {
 	auto cmdListAlloc = frameResources->GetCurrCmdListAlloc();
 	ReturnIfFailed(cmdListAlloc->Reset());
-	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[EtoV(GraphicsPSO::Opaque)].Get()));
+	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[EtoV(GraphicsPSO::Sky)].Get()));
 
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
@@ -198,7 +199,10 @@ bool CRenderer::Draw( CGameTimer* gt, CFrameResources* frameResources, const std
 	texDescriptor.Offset(CubeCount, cbvSrvUavDescSize);
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), texDescriptor);
 
-	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem);
+	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem["cube"]);
+	
+	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Opaque)].Get());
+	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem["skull"]);
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
@@ -220,7 +224,8 @@ void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector
 		m_cmdList->IASetIndexBuffer(&RvToLv(ri->geo->IndexBufferView()));
 		m_cmdList->IASetPrimitiveTopology(ri->primitiveType);
 
-		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance), instanceBuffer->Resource()->GetGPUVirtualAddress());
+		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance), 
+			instanceBuffer->Resource()->GetGPUVirtualAddress() + ri->startIndexInstance * sizeof(InstanceBuffer));
 
 		m_cmdList->DrawIndexedInstanced(ri->indexCount, ri->instanceCount,
 			ri->startIndexLocation, ri->baseVertexLocation, 0);

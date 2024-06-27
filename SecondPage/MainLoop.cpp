@@ -257,39 +257,48 @@ void CMainLoop::UpdateRenderItems()
 {
 	XMMATRIX view = m_camera->GetView();
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
-	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
 
 	//처리 안할것을 먼저 골라낸다.
-	//auto& item = (*m_AllRItems["skull"].begin());
-	int visibleCount{ 0 };
+	InstanceDataList visibleInstance{};
+	int instanceStartIndex{ 0 };
 	for(auto& e : m_AllRItems)
 	{
-		auto& item = (*e.second.begin());
+		auto& renderItemList = e.second;
+		auto& item = *renderItemList.begin();
 		
-		std::vector<std::shared_ptr<InstanceData>> insides{};
-		if (item->cullingFrustum)
+		for (auto& item : renderItemList)
 		{
-			std::copy_if(item->instances.begin(), item->instances.end(), std::back_inserter(insides),
-				[mainLoop = this, &invView, &item](auto& instance) {
-					return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
-				});
-			item->instanceCount = static_cast<UINT>(insides.size());
+			if (item->cullingFrustum)
+			{
+				std::copy_if(item->instances.begin(), item->instances.end(), std::back_inserter(visibleInstance),
+					[mainLoop = this, &invView, &item](auto& instance) {
+						return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
+					});
+				m_windowCaption = SetWindowCaption(visibleInstance.size(), item->instances.size());
+			}
+			else
+				std::copy(item->instances.begin(), item->instances.end(), std::back_inserter(visibleInstance));
 		}
-		else
-		{
-			insides.assign(item->instances.begin(), item->instances.end());
-		}
+		item->instanceCount = static_cast<UINT>(visibleInstance.size());
+		item->startIndexInstance = instanceStartIndex;
+		instanceStartIndex += item->instanceCount;
+	}
+	UpdateInstanceBuffer(visibleInstance);
+}
 
-		for (auto& instanceData : insides)
-		{
-			InstanceBuffer curInsBuf{};
-			XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(instanceData->world));
-			XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(instanceData->texTransform));
-			curInsBuf.materialIndex = instanceData->matIndex;
+void CMainLoop::UpdateInstanceBuffer(const InstanceDataList& visibleInstance)
+{
+	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
 
-			instanceBuffer->CopyData(visibleCount++, curInsBuf);
-		}
-		m_windowCaption = SetWindowCaption(insides.size(), item->instances.size());
+	int visibleCount{ 0 };
+	for (auto& instanceData : visibleInstance)
+	{
+		InstanceBuffer curInsBuf{};
+		XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(instanceData->world));
+		XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(instanceData->texTransform));
+		curInsBuf.materialIndex = instanceData->matIndex;
+
+		instanceBuffer->CopyData(visibleCount++, curInsBuf);
 	}
 }
 
@@ -453,7 +462,7 @@ bool CMainLoop::Run()
 			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems["skull"]));
+			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems));
 		}
 	}
 

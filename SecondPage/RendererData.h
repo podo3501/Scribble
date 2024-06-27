@@ -41,4 +41,5 @@ struct RenderItem
 	UINT startIndexLocation{ 0 };
 	int baseVertexLocation{ 0 };
 	UINT instanceCount{ 0 };
+	int startIndexInstance{ 0 };
 };

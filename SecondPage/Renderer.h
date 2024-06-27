@@ -37,8 +37,8 @@ public:
 
 	bool Initialize(CDirectx3D* directx3D);
 	bool OnResize(int wndWidth, int wndHeight);
-	bool Draw(CGameTimer* gt, CFrameResources* pCurrFrameRes,
-		const std::vector<std::unique_ptr<RenderItem>>& renderItem);
+	bool Draw(CGameTimer* gt, CFrameResources* frameResources,
+		std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>>& renderItem);
 
 	inline CDirectx3D* GetDirectx3D() const;
 	inline ID3D12Device* GetDevice() const;

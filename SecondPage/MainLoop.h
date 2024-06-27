@@ -18,6 +18,7 @@ class CKeyInputManager;
 class CGameTimer;
 class CGeometry;
 class CInstance;
+struct InstanceData;
 struct RenderItem;
 struct Geometry;
 struct FrameResource;
@@ -55,6 +56,7 @@ private:
 		const DirectX::XMMATRIX& world);
 
 	void UpdateRenderItems();
+	void UpdateInstanceBuffer(const std::vector<std::shared_ptr<InstanceData>>& visibleInstance);
 	void UpdateMaterialBuffer();
 	void UpdateMainPassCB();
 
