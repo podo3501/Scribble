@@ -1,10 +1,10 @@
 #pragma once
 
+#include "RendererDefine.h"
 #include <DirectXMath.h>
 #include <memory>
 #include <unordered_map>
 #include <string>
-#include "./RendererDefine.h"
 
 class CUploadBuffer;
 struct FrameResource;

@@ -4,6 +4,7 @@
 #include "../Core/Directx3D.h"
 #include "./UploadBuffer.h"
 #include "./RendererDefine.h"
+#include "./FrameResourceData.h"
 
 bool CFrameResources::Resource::CreateUpdateBuffer(
 	ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount)

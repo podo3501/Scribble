@@ -16,6 +16,7 @@
 #include "../SecondPage/Shader.h"
 #include "../SecondPage/Model.h"
 #include "../SecondPage/FrameResource.h"
+#include "../SecondPage/FrameResourceData.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/RenderItem.h"
@@ -146,11 +147,36 @@ namespace MainLoop
 		MainLoopClassTest() {};
 
 	protected:
+		void SetUp() override
+		{
+			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
+			EXPECT_EQ(m_window->Initialize(false), true);
+
+			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
+			EXPECT_EQ(m_directx3D->Initialize(), true);
+		}
+
+		void TearDown() override
+		{
+			m_directx3D.reset();
+			m_window.reset();
+		}
+
+	protected:
 		std::wstring m_resourcePath{ L"../Resource/" };
+		std::unique_ptr<CWindow> m_window{ nullptr };
+		std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
 	};
 
 	TEST_F(MainLoopClassTest, ModelTest)
 	{
+		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
+		material->Build();
+
+		std::unique_ptr<CInstance> instance = std::make_unique<CInstance>();
+		instance->CreateInstanceData(nullptr, "nature", "cube");
+		instance->CreateInstanceData(material.get(), "things", "skull");
+
 		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
 		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
 
@@ -161,7 +187,12 @@ namespace MainLoop
 		};
 
 		EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
-		EXPECT_EQ(model->Convert(geometry.get()), true);
+		//EXPECT_EQ(model->Convert(geometry.get()), true);
+		std::unordered_map<std::string, std::unique_ptr<NRenderItem>> renderItems{};
+		EXPECT_EQ(model->LoadGraphicMemory(m_directx3D.get(), &renderItems), true);
+		EXPECT_EQ(renderItems["things"]->vertexBufferGPU != nullptr, true );
+
+		EXPECT_EQ(instance->FillRenderItems(renderItems), true);
 	}
 } //SecondPage
 

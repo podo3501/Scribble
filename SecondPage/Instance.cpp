@@ -66,11 +66,17 @@ void CInstance::CreateInstanceData(CMaterial* material, const std::string& geoNa
 	{
 		m_instances[geoName][meshName] = CreateSkullInstanceData(material);
 		m_cullingFrustumList[geoName][meshName] = true;
+
+		m_instanceList[geoName][meshName].instanceDataList = CreateSkullInstanceData(material);
+		m_instanceList[geoName][meshName].cullingFrustum = true;
 	}
 	else if (meshName == "cube")
 	{
 		m_instances[geoName][meshName] = CreateSkyCubeInstanceData();
 		m_cullingFrustumList[geoName][meshName] = false;
+
+		m_instanceList[geoName][meshName].instanceDataList = CreateSkyCubeInstanceData();
+		m_instanceList[geoName][meshName].cullingFrustum = false;
 	}
 }
 
@@ -89,4 +95,30 @@ InstanceDataList CInstance::GetInstanceDummyData(const std::string& geoName, con
 bool CInstance::GetCullingFrustum(const std::string& geoName, const std::string& meshName)
 {
 	return m_cullingFrustumList[geoName][meshName];
+}
+
+bool CInstance::FillRenderItems(std::unordered_map<std::string, std::unique_ptr<NRenderItem>>& renderItems)
+{
+	for (auto& instances : m_instanceList)
+	{
+		auto findGeo = renderItems.find(instances.first);
+		if (findGeo == renderItems.end())
+			return false;
+
+		std::unordered_map<std::string, InstanceInfo>& instanceInfos = instances.second;
+		std::unordered_map<std::string, SubRenderItem>& subRenderItems = findGeo->second->subRenderItems;
+		for (auto& iterInstance : instanceInfos)
+		{
+			auto findSubItem = subRenderItems.find(iterInstance.first);
+			if (findSubItem == subRenderItems.end())
+				return false;
+
+			auto& instanceInfo = iterInstance.second;
+			auto& subItem = findSubItem->second;
+			subItem.instances = instanceInfo.instanceDataList;
+			subItem.cullingFrustum = instanceInfo.cullingFrustum;
+		}
+	}
+
+	return true;
 }

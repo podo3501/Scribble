@@ -7,6 +7,7 @@
 #include "./GameTimer.h"
 #include "./UploadBuffer.h"
 #include "./FrameResource.h"
+#include "./FrameResourceData.h"
 #include "./RenderItem.h"
 #include "./Shader.h"
 
@@ -230,5 +231,77 @@ void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, const std::vector
 			ri->startIndexLocation, ri->baseVertexLocation, 0);
 	}
 }
+
+bool CRenderer::Draw(CGameTimer* gt, CFrameResources* frameResources,
+	std::unordered_map<std::string, std::unique_ptr<NRenderItem>>& renderItem)
+{
+	auto cmdListAlloc = frameResources->GetCurrCmdListAlloc();
+	ReturnIfFailed(cmdListAlloc->Reset());
+	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[EtoV(GraphicsPSO::Sky)].Get()));
+
+	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
+	m_cmdList->RSSetViewports(1, &m_screenViewport);
+	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
+
+	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
+
+	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	m_cmdList->ClearDepthStencilView(m_directx3D->DepthStencilView(),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->DepthStencilView()));
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
+	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	auto matBuf = frameResources->GetUploadBuffer(eBufferType::Material);
+	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Material), matBuf->Resource()->GetGPUVirtualAddress());
+
+	auto passCB = frameResources->GetUploadBuffer(eBufferType::PassCB);
+	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), passCB->Resource()->GetGPUVirtualAddress());
+
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Cube), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+
+	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+	texDescriptor.Offset(CubeCount, cbvSrvUavDescSize);
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), texDescriptor);
+
+	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem["nature"].get());
+
+	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Opaque)].Get());
+	DrawRenderItems(frameResources->GetUploadBuffer(eBufferType::Instance), renderItem["things"].get());
+
+	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
+
+	ReturnIfFalse(m_directx3D->ExcuteCommandLists());
+
+	UINT64 curFenceIdx{ 0 };
+	ReturnIfFalse(m_directx3D->ExcuteSwapChain(&curFenceIdx));
+	frameResources->SetFence(curFenceIdx);
+
+	return true;
+}
+
+void CRenderer::DrawRenderItems(CUploadBuffer* instanceBuffer, NRenderItem* renderItem)
+{
+	m_cmdList->IASetVertexBuffers(0, 1, &renderItem->vertexBufferView);
+	m_cmdList->IASetIndexBuffer(&renderItem->indexBufferView);
+	m_cmdList->IASetPrimitiveTopology(renderItem->primitiveType);
+
+	for (auto& ri : renderItem->subRenderItems)
+	{
+		auto& subRenderItem = ri.second;
+		auto& subItem = subRenderItem.subItem;
+		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance),
+			instanceBuffer->Resource()->GetGPUVirtualAddress() + subRenderItem.startIndexInstance * sizeof(InstanceBuffer));
+
+		m_cmdList->DrawIndexedInstanced(subItem.indexCount, subRenderItem.instanceCount,
+			subItem.startIndexLocation, subItem.baseVertexLocation, 0);
+	}
+}
+
 
 

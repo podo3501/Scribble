@@ -8,6 +8,7 @@
 #include <DirectXMath.h>
 
 class CMaterial;
+struct NRenderItem;
 struct InstanceData;
 
 using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
@@ -24,8 +25,21 @@ public:
 	InstanceDataList GetInstanceDummyData(const std::string& geoName, const std::string& meshName);
 	bool GetCullingFrustum(const std::string& geoName, const std::string& meshName);
 
+	bool FillRenderItems(std::unordered_map<std::string, std::unique_ptr<NRenderItem>>& renderItems);
+
+private:
+	struct InstanceInfo
+	{
+		InstanceInfo() = default;
+
+		InstanceDataList instanceDataList{};
+		bool cullingFrustum{ false };
+	};
+
 private:
 	std::unordered_map<std::string, std::unordered_map<std::string, InstanceDataList>> m_instances{};
 	std::unordered_map<std::string, std::unordered_map<std::string, bool>> m_cullingFrustumList{};
+
+	std::unordered_map<std::string, std::unordered_map<std::string, InstanceInfo>> m_instanceList{};
 };
 

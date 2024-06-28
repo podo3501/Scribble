@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "./FrameResourceData.h"
+#include <wrl.h>
 #include <memory>
 #include <vector>
 

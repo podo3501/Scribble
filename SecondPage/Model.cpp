@@ -1,10 +1,12 @@
 #include "Model.h"
 #include <DirectXMath.h>
 #include "../Core/d3dUtil.h"
-#include "./FrameResource.h"
+#include "../Core/Directx3D.h"
+#include "./FrameResourceData.h"
 #include "./Geometry.h"
 #include "./GeometryGenerator.h"
 #include "./SubItem.h"
+#include "./RenderItem.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -129,7 +131,7 @@ CModel::Offsets CModel::SetSubmesh(Geometry* geo, Offsets& offsets, MeshData* da
 		offsets.second + indexCount);
 }
 
-void CModel::SetSubmeshList(Geometry* geo, const std::vector<std::unique_ptr<MeshData>>& meshDataList, 
+void CModel::SetSubmeshList(Geometry* geo, const MeshDataList& meshDataList,
 	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices)
 {
 	Offsets offsets{ 0, 0 };
@@ -141,7 +143,7 @@ void CModel::SetSubmeshList(Geometry* geo, const std::vector<std::unique_ptr<Mes
 		});
 }
 
-bool CModel::ConvertGeometry(Geometry* geo, const std::vector<std::unique_ptr<MeshData>>& meshDataList)
+bool CModel::ConvertGeometry(Geometry* geo, const MeshDataList& meshDataList)
 {
 	std::vector<Vertex> totalVertices{};
 	std::vector<std::int32_t> totalIndices{};
@@ -175,4 +177,101 @@ bool CModel::Convert(CGeometry* geometry)
 			auto geo = geometry->GetGeometry(iter.first);
 			return model->ConvertGeometry(geo, iter.second);
 		});
+}
+
+//////////////////////////////////////////////////////////
+
+CModel::Offsets CModel::SetSubmesh(NRenderItem* renderItem, Offsets& offsets, MeshData* data)
+{
+	UINT indexCount = static_cast<UINT>(data->indices.size());
+
+	SubItem subItem{};
+	subItem.baseVertexLocation = offsets.first;
+	subItem.startIndexLocation = offsets.second;
+	subItem.boundingBox = data->boundingBox;
+	subItem.boundingSphere = data->boundingSphere;
+	subItem.indexCount = indexCount;
+
+	SubRenderItem subRenderItem{};
+	subRenderItem.subItem = subItem;
+
+	renderItem->subRenderItems.insert(std::make_pair(data->name, std::move(subRenderItem)));
+
+	return Offsets(
+		offsets.first + static_cast<UINT>(data->vertices.size()),
+		offsets.second + indexCount);
+}
+
+void CModel::SetSubmeshList(NRenderItem* renderItem, const MeshDataList& meshDataList,
+	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices)
+{
+	Offsets offsets{ 0, 0 };
+	for_each(meshDataList.begin(), meshDataList.end(),
+		[model = this, &offsets, renderItem, &totalVertices, &totalIndices](auto& data) {
+			offsets = model->SetSubmesh(renderItem, offsets, data.get());
+			std::copy(data->vertices.begin(), data->vertices.end(), std::back_inserter(totalVertices));
+			std::copy(data->indices.begin(), data->indices.end(), std::back_inserter(totalIndices));
+		});
+}
+
+bool CModel::Convert(const MeshDataList& meshDataList,
+	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem)
+{
+	SetSubmeshList(renderItem, meshDataList, totalVertices, totalIndices);
+
+	UINT vbByteSize = static_cast<UINT>(totalVertices.size()) * sizeof(Vertex);
+	UINT ibByteSize = static_cast<UINT>(totalIndices.size()) * sizeof(std::int32_t);
+
+	renderItem->vertexBufferView.SizeInBytes = vbByteSize;
+	renderItem->vertexBufferView.StrideInBytes = sizeof(Vertex);
+
+	renderItem->indexBufferView.SizeInBytes = ibByteSize;
+	renderItem->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+
+	return true;
+}
+
+bool CModel::LoadGraphicMemory(CDirectx3D* directx3D,
+	std::unordered_map<std::string, std::unique_ptr<NRenderItem>>* outRenderItems)
+{
+	return std::all_of(m_meshDataList.begin(), m_meshDataList.end(),
+		[&, model = this](auto& iter) {
+			auto renderItem = std::make_unique<NRenderItem>();
+			auto pRenderItem = renderItem.get();
+			(*outRenderItems).insert(std::make_pair(iter.first, std::move(renderItem)));
+
+			//데이터를 채워 넣는다.
+			std::vector<Vertex> totalVertices{};
+			std::vector<std::int32_t> totalIndices{};
+			ReturnIfFalse(model->Convert(iter.second, totalVertices, totalIndices, pRenderItem));
+
+			//그래픽 메모리에 올린다.
+			ReturnIfFalse(directx3D->LoadData(
+				[&, model = this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+					 return model->Load(device, cmdList, totalVertices, totalIndices, pRenderItem);	}));
+
+			return true;
+		}); 	
+}
+
+bool CModel::Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
+	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem)
+{
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
+		device, cmdList,
+		totalVertices.data(),
+		renderItem->vertexBufferView.SizeInBytes,
+		renderItem->vertexBufferUploader,
+		&renderItem->vertexBufferGPU));
+	renderItem->vertexBufferView.BufferLocation = renderItem->vertexBufferGPU->GetGPUVirtualAddress();
+
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
+		device, cmdList,
+		totalIndices.data(),
+		renderItem->indexBufferView.SizeInBytes,
+		renderItem->indexBufferUploader,
+		&renderItem->indexBufferGPU));
+	renderItem->indexBufferView.BufferLocation = renderItem->indexBufferGPU->GetGPUVirtualAddress();
+
+	return true;
 }

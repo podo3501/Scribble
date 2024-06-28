@@ -21,6 +21,7 @@ struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
 struct RenderItem;
+struct NRenderItem;
 enum class GraphicsPSO;
 
 class CRenderer
@@ -39,6 +40,8 @@ public:
 	bool OnResize(int wndWidth, int wndHeight);
 	bool Draw(CGameTimer* gt, CFrameResources* frameResources,
 		std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>>& renderItem);
+	bool Draw(CGameTimer* gt, CFrameResources* frameResources,
+		std::unordered_map<std::string, std::unique_ptr<NRenderItem>>& renderItem);
 
 	inline CDirectx3D* GetDirectx3D() const;
 	inline ID3D12Device* GetDevice() const;
@@ -55,6 +58,7 @@ private:
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void DrawRenderItems(CUploadBuffer* instanceBuffer,
 		const std::vector<std::unique_ptr<RenderItem>>& ritems);
+	void DrawRenderItems(CUploadBuffer* instanceBuffer, NRenderItem* renderItem);
 
 private:
 	std::wstring m_resPath{};

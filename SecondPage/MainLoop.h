@@ -56,6 +56,7 @@ private:
 		const DirectX::XMMATRIX& world);
 
 	void UpdateRenderItems();
+	void NUpdateRenderItems();
 	void UpdateInstanceBuffer(const std::vector<std::shared_ptr<InstanceData>>& visibleInstance);
 	void UpdateMaterialBuffer();
 	void UpdateMainPassCB();

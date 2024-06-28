@@ -8,10 +8,14 @@
 #include <DirectXCollision.h>
 
 class CGeometry;
+class CDirectx3D;
+struct ID3D12Device;
+struct ID3D12GraphicsCommandList;
 struct InstanceData;
 struct Geometry;
 struct Vertex;
 struct MeshData;
+struct NRenderItem;
 
 enum class CreateType : int
 {
@@ -65,23 +69,34 @@ public:
 
 	bool LoadGeometryList(const ModelTypeList& modelTypeList);
 	bool Convert(CGeometry* geomtry);
+	bool LoadGraphicMemory(CDirectx3D* directx3D,
+		std::unordered_map<std::string, std::unique_ptr<NRenderItem>>* outRenderItems);
 
 private:
 	using Offsets = std::pair<UINT, UINT>;
+	using MeshDataList = std::vector<std::unique_ptr<MeshData>>;
 
 private:
 	bool LoadGeometry(const ModelType& type);
 	bool ReadFile(const std::wstring& filename, MeshData* outData);
 	void Generator(MeshData* outData);
-	void SetSubmeshList(Geometry* geo, const std::vector<std::unique_ptr<MeshData>>& meshDataList,
+	void SetSubmeshList(Geometry* geo, const MeshDataList& meshDataList,
 		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices);
-	bool ConvertGeometry(Geometry* geo, const std::vector<std::unique_ptr<MeshData>>& meshDataList);
+	bool ConvertGeometry(Geometry* geo, const MeshDataList& meshDataList);
 	Offsets SetSubmesh(Geometry* geo, Offsets& offsets, MeshData* data);
+
+	CModel::Offsets SetSubmesh(NRenderItem* renderItem, Offsets& offsets, MeshData* data);
+	void SetSubmeshList(NRenderItem* renderItem, const MeshDataList& meshDataList,
+		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices);
+	bool Convert(const MeshDataList& meshDataList,
+		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem);
+	bool Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem);
 
 private:
 	//std::string m_name{};
 	std::wstring m_resPath{};
 	const std::wstring m_filePath{ L"Models/" };
 
-	std::unordered_map<std::string, std::vector<std::unique_ptr<MeshData>>> m_meshDataList;
+	std::unordered_map<std::string, MeshDataList> m_meshDataList;
 };

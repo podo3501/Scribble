@@ -13,6 +13,7 @@
 #include "./Material.h"
 #include "./Model.h"
 #include "./FrameResource.h"
+#include "./FrameResourceData.h"
 #include "./Texture.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
@@ -153,6 +154,8 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 	BuildRenderItems("nature", "cube");
 	BuildRenderItems("things", "skull");
 
+	ReturnIfFalse(m_instance->FillRenderItems(m_AllRenderItems));
+	
 	return true;
 }
 
@@ -207,8 +210,10 @@ bool CMainLoop::BuildCpuMemory()
 bool CMainLoop::BuildGraphicMemory()
 {
 	m_texture = std::make_unique<CTexture>(m_renderer.get(), m_resourcePath);
+	ReturnIfFalse(m_model->LoadGraphicMemory(m_directx3D.get(), &m_AllRenderItems));
 	ReturnIfFalse(m_geometry->LoadGraphicMemory(m_directx3D.get()));
 	ReturnIfFalse(m_texture->LoadGraphicMemory());
+	
 
 	return true;
 }
@@ -286,6 +291,41 @@ void CMainLoop::UpdateRenderItems()
 		item->instanceCount = static_cast<UINT>(visibleInstance.size());
 		item->startIndexInstance = instanceStartIndex;
 		instanceStartIndex += item->instanceCount;
+	}
+	UpdateInstanceBuffer(visibleInstance);
+}
+
+void CMainLoop::NUpdateRenderItems()
+{
+	XMMATRIX view = m_camera->GetView();
+	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
+
+	//처리 안할것을 먼저 골라낸다.
+	InstanceDataList visibleInstance{};
+	int instanceStartIndex{ 0 };
+	for (auto& e : m_AllRenderItems)
+	{
+		auto& subRenderItems = e.second->subRenderItems;
+		
+		for (auto& iterSubItem : subRenderItems)
+		{
+			auto& subRenderItem = iterSubItem.second;
+			if (subRenderItem.cullingFrustum)
+			{
+				std::copy_if(subRenderItem.instances.begin(), subRenderItem.instances.end(), std::back_inserter(visibleInstance),
+					[mainLoop = this, &invView, &subRenderItem](auto& instance) {
+						return mainLoop->IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
+					});
+				m_windowCaption = SetWindowCaption(visibleInstance.size(), subRenderItem.instances.size());
+			}
+			else
+				std::copy(subRenderItem.instances.begin(), subRenderItem.instances.end(), std::back_inserter(visibleInstance));
+
+			
+			subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
+			subRenderItem.startIndexInstance = instanceStartIndex;
+			instanceStartIndex += subRenderItem.instanceCount;
+		}
 	}
 	UpdateInstanceBuffer(visibleInstance);
 }
@@ -462,11 +502,13 @@ bool CMainLoop::Run()
 
 			ReturnIfFalse(m_frameResources->PrepareFrame(m_directx3D.get()));
 
-			UpdateRenderItems();
+			//UpdateRenderItems();
+			NUpdateRenderItems();
 			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems));
+			//ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems));
+			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRenderItems));
 		}
 	}
 

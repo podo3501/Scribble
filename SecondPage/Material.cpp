@@ -2,6 +2,7 @@
 #include "../Core/d3dUtil.h"
 #include "./UploadBuffer.h"
 #include "./FrameResourceData.h"
+#include "./RendererDefine.h"
 
 using namespace DirectX;
 
