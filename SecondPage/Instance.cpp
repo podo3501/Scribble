@@ -1,4 +1,5 @@
 #include "./Instance.h"
+#include <algorithm>
 #include "../Core/Utility.h"
 #include "./Material.h"
 #include "./RenderItem.h"
@@ -64,61 +65,35 @@ void CInstance::CreateInstanceData(CMaterial* material, const std::string& geoNa
 {
 	if (meshName == "skull")
 	{
-		m_instances[geoName][meshName] = CreateSkullInstanceData(material);
-		m_cullingFrustumList[geoName][meshName] = true;
-
-		m_instanceList[geoName][meshName].instanceDataList = CreateSkullInstanceData(material);
-		m_instanceList[geoName][meshName].cullingFrustum = true;
+		m_instances[geoName][meshName].instanceDataList = CreateSkullInstanceData(material);
+		m_instances[geoName][meshName].cullingFrustum = true;
 	}
 	else if (meshName == "cube")
 	{
-		m_instances[geoName][meshName] = CreateSkyCubeInstanceData();
-		m_cullingFrustumList[geoName][meshName] = false;
-
-		m_instanceList[geoName][meshName].instanceDataList = CreateSkyCubeInstanceData();
-		m_instanceList[geoName][meshName].cullingFrustum = false;
+		m_instances[geoName][meshName].instanceDataList = CreateSkyCubeInstanceData();
+		m_instances[geoName][meshName].cullingFrustum = false;
 	}
 }
 
-InstanceDataList CInstance::GetInstanceDummyData(const std::string& geoName, const std::string& meshName)
+bool FillInstanceInfo(SubRenderItems& subRenderItems, std::unordered_map<std::string, InstanceInfo>& instanceInfos)
 {
-	auto findGeo = m_instances.find(geoName);
-	if (findGeo == m_instances.end())
-		return {};
-	auto findmesh = findGeo->second.find(meshName);
-	if (findmesh == findGeo->second.end())
-		return {};
+	return std::all_of(instanceInfos.begin(), instanceInfos.end(), [&subRenderItems](auto& iterInstance) {
+		auto findSubItem = subRenderItems.find(iterInstance.first);
+		if (findSubItem == subRenderItems.end())
+			return false;
 
-	return findmesh->second;
+		auto& instanceInfo = iterInstance.second;
+		auto& subItem = findSubItem->second;
+		subItem.instanceInfo = instanceInfo;
+		return true; });
 }
 
-bool CInstance::GetCullingFrustum(const std::string& geoName, const std::string& meshName)
+bool CInstance::FillRenderItems(AllRenderItems& renderItems)
 {
-	return m_cullingFrustumList[geoName][meshName];
-}
-
-bool CInstance::FillRenderItems(std::unordered_map<std::string, std::unique_ptr<NRenderItem>>& renderItems)
-{
-	for (auto& instances : m_instanceList)
-	{
+	return std::all_of(m_instances.begin(), m_instances.end(), [&renderItems](auto& instances) {
 		auto findGeo = renderItems.find(instances.first);
 		if (findGeo == renderItems.end())
 			return false;
 
-		std::unordered_map<std::string, InstanceInfo>& instanceInfos = instances.second;
-		std::unordered_map<std::string, SubRenderItem>& subRenderItems = findGeo->second->subRenderItems;
-		for (auto& iterInstance : instanceInfos)
-		{
-			auto findSubItem = subRenderItems.find(iterInstance.first);
-			if (findSubItem == subRenderItems.end())
-				return false;
-
-			auto& instanceInfo = iterInstance.second;
-			auto& subItem = findSubItem->second;
-			subItem.instances = instanceInfo.instanceDataList;
-			subItem.cullingFrustum = instanceInfo.cullingFrustum;
-		}
-	}
-
-	return true;
+		return FillInstanceInfo(findGeo->second->subRenderItems, instances.second); });
 }

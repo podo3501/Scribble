@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RendererDefine.h"
-#include "./SubItem.h"
 #include <d3dcommon.h>
 #include <DirectXCollision.h>
 #include <vector>
@@ -19,30 +18,24 @@ struct InstanceData
 	UINT matIndex{ 0u };
 };
 
-struct RenderItem
+using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
+
+struct InstanceInfo
 {
-	RenderItem() = default;
+	InstanceInfo() = default;
+
+	InstanceDataList instanceDataList{};
+	bool cullingFrustum{ false };
+};
+
+struct SubItem
+{
+	UINT indexCount{ 0u };
+	UINT startIndexLocation{ 0u };
+	INT baseVertexLocation{ 0 };
 
 	DirectX::BoundingBox boundingBox{};
 	DirectX::BoundingSphere boundingSphere{};
-	std::vector<std::shared_ptr<InstanceData>> instances{};
-	bool cullingFrustum{ false };
-
-	int baseVertexLocation{ 0 };
-
-	UINT startIndexLocation{ 0 };
-	UINT indexCount{ 0 };
-	
-	UINT instanceCount{ 0 };
-	int startIndexInstance{ 0 };
-
-
-	D3D12_PRIMITIVE_TOPOLOGY primitiveType{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
-
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
-	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
-
-	int NumFramesDirty{ gFrameResourceCount };
 };
 
 struct SubRenderItem
@@ -51,15 +44,16 @@ struct SubRenderItem
 
 	SubItem subItem{};
 
-	std::vector<std::shared_ptr<InstanceData>> instances{};
-	bool cullingFrustum{ false };
+	InstanceInfo instanceInfo{};
 	UINT instanceCount{ 0 };
 	int startIndexInstance{ 0 };
 };
 
-struct NRenderItem
+using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;
+
+struct RenderItem
 {
-	NRenderItem() = default;
+	RenderItem() = default;
 
 	D3D12_PRIMITIVE_TOPOLOGY primitiveType{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
 	
@@ -71,7 +65,7 @@ struct NRenderItem
 	Microsoft::WRL::ComPtr<ID3D12Resource> indexBufferUploader{ nullptr };
 	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
 
-	std::unordered_map<std::string, SubRenderItem> subRenderItems{};
+	SubRenderItems subRenderItems{};
 
 	int NumFramesDirty{ gFrameResourceCount };
 
@@ -82,3 +76,5 @@ struct NRenderItem
 		indexBufferUploader.Reset();
 	}
 };
+
+using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;

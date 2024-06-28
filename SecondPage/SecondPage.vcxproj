@@ -136,7 +136,6 @@
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameTimer.cpp" />
-    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="KeyInputManager.cpp" />
     <ClCompile Include="MainLoop.cpp" />
@@ -153,7 +152,6 @@
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="FrameResourceData.h" />
     <ClInclude Include="GameTimer.h" />
-    <ClInclude Include="Geometry.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="KeyInputManager.h" />
     <ClInclude Include="MainLoop.h" />
@@ -163,7 +161,6 @@
     <ClInclude Include="RenderItem.h" />
     <ClInclude Include="RendererDefine.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="SubItem.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>

@@ -19,13 +19,15 @@ class CGameTimer;
 class CGeometry;
 class CInstance;
 struct RenderItem;
-struct Geometry;
 struct FrameResource;
 struct InstanceData;
-struct NRenderItem;
+struct RenderItem;
 
 class CMainLoop
 {
+	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
+	using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
+
 public:
 	template<typename T>
 	CMainLoop(T&& resourcePath);
@@ -45,9 +47,6 @@ private:
 
 	bool BuildCpuMemory();
 	bool BuildGraphicMemory();
-	void BuildRenderItems(
-		const std::string& geoName,
-		const std::string& meshName);
 
 	bool MakeFrameResource();
 	bool IsInsideFrustum(
@@ -56,8 +55,7 @@ private:
 		const DirectX::XMMATRIX& world);
 
 	void UpdateRenderItems();
-	void NUpdateRenderItems();
-	void UpdateInstanceBuffer(const std::vector<std::shared_ptr<InstanceData>>& visibleInstance);
+	void UpdateInstanceBuffer(const InstanceDataList& visibleInstance);
 	void UpdateMaterialBuffer();
 	void UpdateMainPassCB();
 
@@ -84,12 +82,10 @@ private:
 	std::unique_ptr<CModel> m_model{ nullptr };
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
-	std::unique_ptr<CGeometry> m_geometry{ nullptr };
 	std::unique_ptr<CInstance> m_instance{ nullptr };
 
 	//랜더링시 필요한 데이터들
-	std::unordered_map<std::string, std::vector<std::unique_ptr<RenderItem>>> m_AllRItems{};
-	std::unordered_map<std::string, std::unique_ptr<NRenderItem>> m_AllRenderItems{};
+	AllRenderItems m_AllRenderItems{};
 
 	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };

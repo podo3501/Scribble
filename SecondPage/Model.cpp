@@ -3,9 +3,7 @@
 #include "../Core/d3dUtil.h"
 #include "../Core/Directx3D.h"
 #include "./FrameResourceData.h"
-#include "./Geometry.h"
 #include "./GeometryGenerator.h"
-#include "./SubItem.h"
 #include "./RenderItem.h"
 
 using namespace DirectX;
@@ -31,7 +29,7 @@ bool CModel::LoadGeometry(const ModelType& type)
 	if (!result) return result;
 
 	meshData->name = type.submeshName;
-	m_meshDataList[type.geometryName].emplace_back(std::move(meshData));
+	m_AllMeshDataList[type.geometryName].emplace_back(std::move(meshData));
 
 	return true;
 }
@@ -113,75 +111,7 @@ bool CModel::ReadFile(const std::wstring& filename, MeshData* outData)
 	return true; 
 }
 
-CModel::Offsets CModel::SetSubmesh(Geometry* geo, Offsets& offsets, MeshData* data)
-{
-	UINT indexCount = static_cast<UINT>(data->indices.size());
-	
-	std::shared_ptr<SubItem> subItem = std::make_shared<SubItem>();
-	subItem->baseVertexLocation = offsets.first;
-	subItem->startIndexLocation = offsets.second;
-	subItem->boundingBox = data->boundingBox;
-	subItem->boundingSphere = data->boundingSphere;
-	subItem->indexCount = indexCount;
-
-	geo->drawArgs.insert(std::make_pair(data->name, std::move(subItem)));
-
-	return Offsets(
-		offsets.first + static_cast<UINT>(data->vertices.size()),
-		offsets.second + indexCount);
-}
-
-void CModel::SetSubmeshList(Geometry* geo, const MeshDataList& meshDataList,
-	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices)
-{
-	Offsets offsets{ 0, 0 };
-	for_each(meshDataList.begin(), meshDataList.end(),
-		[model = this, &offsets, geo, &totalVertices, &totalIndices](auto& data) { 
-			offsets = model->SetSubmesh(geo, offsets, data.get());
-			std::copy(data->vertices.begin(), data->vertices.end(), std::back_inserter(totalVertices));
-			std::copy(data->indices.begin(), data->indices.end(), std::back_inserter(totalIndices)); 
-		});
-}
-
-bool CModel::ConvertGeometry(Geometry* geo, const MeshDataList& meshDataList)
-{
-	std::vector<Vertex> totalVertices{};
-	std::vector<std::int32_t> totalIndices{};
-	SetSubmeshList(geo, meshDataList, totalVertices, totalIndices);
-
-	UINT vbByteSize = static_cast<UINT>(totalVertices.size()) * sizeof(Vertex);
-	UINT ibByteSize = static_cast<UINT>(totalIndices.size()) * sizeof(std::int32_t);
-
-	auto& vertexBuffer = geo->vertexBufferCPU;
-	auto& indexBuffer = geo->indexBufferCPU;
-
-	ReturnIfFailed(D3DCreateBlob(vbByteSize, &vertexBuffer));
-	CopyMemory(vertexBuffer->GetBufferPointer(), totalVertices.data(), vbByteSize);
-
-	ReturnIfFailed(D3DCreateBlob(ibByteSize, &indexBuffer));
-	CopyMemory(indexBuffer->GetBufferPointer(), totalIndices.data(), ibByteSize);
-
-	geo->vertexBufferView.SizeInBytes = vbByteSize;
-	geo->vertexBufferView.StrideInBytes = sizeof(Vertex);
-
-	geo->indexBufferView.SizeInBytes = ibByteSize;
-	geo->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-
-	return true;
-}
-
-bool CModel::Convert(CGeometry* geometry)
-{
-	return std::all_of(m_meshDataList.begin(), m_meshDataList.end(),
-		[model = this, geometry](auto& iter) {
-			auto geo = geometry->GetGeometry(iter.first);
-			return model->ConvertGeometry(geo, iter.second);
-		});
-}
-
-//////////////////////////////////////////////////////////
-
-CModel::Offsets CModel::SetSubmesh(NRenderItem* renderItem, Offsets& offsets, MeshData* data)
+CModel::Offsets CModel::SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data)
 {
 	UINT indexCount = static_cast<UINT>(data->indices.size());
 
@@ -202,8 +132,8 @@ CModel::Offsets CModel::SetSubmesh(NRenderItem* renderItem, Offsets& offsets, Me
 		offsets.second + indexCount);
 }
 
-void CModel::SetSubmeshList(NRenderItem* renderItem, const MeshDataList& meshDataList,
-	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices)
+void CModel::SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataList,
+	Vertices& totalVertices, Indices& totalIndices)
 {
 	Offsets offsets{ 0, 0 };
 	for_each(meshDataList.begin(), meshDataList.end(),
@@ -215,7 +145,7 @@ void CModel::SetSubmeshList(NRenderItem* renderItem, const MeshDataList& meshDat
 }
 
 bool CModel::Convert(const MeshDataList& meshDataList,
-	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem)
+	Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
 {
 	SetSubmeshList(renderItem, meshDataList, totalVertices, totalIndices);
 
@@ -231,12 +161,11 @@ bool CModel::Convert(const MeshDataList& meshDataList,
 	return true;
 }
 
-bool CModel::LoadGraphicMemory(CDirectx3D* directx3D,
-	std::unordered_map<std::string, std::unique_ptr<NRenderItem>>* outRenderItems)
+bool CModel::LoadGraphicMemory(CDirectx3D* directx3D, AllRenderItems* outRenderItems)
 {
-	return std::all_of(m_meshDataList.begin(), m_meshDataList.end(),
+	return std::all_of(m_AllMeshDataList.begin(), m_AllMeshDataList.end(),
 		[&, model = this](auto& iter) {
-			auto renderItem = std::make_unique<NRenderItem>();
+			auto renderItem = std::make_unique<RenderItem>();
 			auto pRenderItem = renderItem.get();
 			(*outRenderItems).insert(std::make_pair(iter.first, std::move(renderItem)));
 
@@ -255,7 +184,7 @@ bool CModel::LoadGraphicMemory(CDirectx3D* directx3D,
 }
 
 bool CModel::Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
-	std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem)
+	Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
 {
 	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
 		device, cmdList,

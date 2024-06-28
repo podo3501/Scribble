@@ -17,9 +17,7 @@
 #include "./Texture.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
-#include "./Geometry.h"
 #include "./Instance.h"
-#include "./SubItem.h"
 
 using namespace DirectX;
 
@@ -27,9 +25,6 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 {
 	switch (msg)
 	{
-		// WM_ACTIVATE is sent when the window is activated or deactivated.  
-		// We pause the game when the window is deactivated and unpause it 
-		// when it becomes active.  
 	case WM_ACTIVATE:
 		if (LOWORD(wParam) == WA_INACTIVE)
 		{
@@ -80,14 +75,6 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 				}
 				else if (m_resizing)
 				{
-					// If user is dragging the resize bars, we do not resize 
-					// the buffers here because as the user continuously 
-					// drags the resize bars, a stream of WM_SIZE messages are
-					// sent to the window, and it would be pointless (and slow)
-					// to resize for each WM_SIZE message received from dragging
-					// the resize bars.  So instead, we reset after the user is 
-					// done resizing the window and releases the resize bars, which 
-					// sends a WM_EXITSIZEMOVE message.
 				}
 				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
 				{
@@ -151,9 +138,6 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 	m_instance->CreateInstanceData(nullptr, "nature", "cube");
 	m_instance->CreateInstanceData(m_material.get(), "things", "skull");
 
-	BuildRenderItems("nature", "cube");
-	BuildRenderItems("things", "skull");
-
 	ReturnIfFalse(m_instance->FillRenderItems(m_AllRenderItems));
 	
 	return true;
@@ -172,8 +156,6 @@ bool CMainLoop::InitializeClass()
 
 	m_renderer = std::make_shared<CRenderer>(m_resourcePath);
 	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));
-
-	m_geometry = std::make_unique<CGeometry>();
 
 	m_material = std::make_unique<CMaterial>();
 	m_material->Build();
@@ -202,7 +184,6 @@ bool CMainLoop::BuildCpuMemory()
 
 	m_model = std::make_unique<CModel>(m_resourcePath);
 	ReturnIfFalse(m_model->LoadGeometryList(modelTypeList));
-	ReturnIfFalse(m_model->Convert(m_geometry.get()));		//그래픽 메모리에 올릴 준비단계
 
 	return true;
 }
@@ -211,33 +192,9 @@ bool CMainLoop::BuildGraphicMemory()
 {
 	m_texture = std::make_unique<CTexture>(m_renderer.get(), m_resourcePath);
 	ReturnIfFalse(m_model->LoadGraphicMemory(m_directx3D.get(), &m_AllRenderItems));
-	ReturnIfFalse(m_geometry->LoadGraphicMemory(m_directx3D.get()));
 	ReturnIfFalse(m_texture->LoadGraphicMemory());
 	
-
 	return true;
-}
-
-void CMainLoop::BuildRenderItems(const std::string& geoName, const std::string& meshName)
-{
-	auto rItem = std::make_unique<RenderItem>();
-
-	auto geo = m_geometry->GetGeometry(geoName);
-	auto& sm = geo->drawArgs[meshName];
-	rItem->primitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-	rItem->vertexBufferView = geo->vertexBufferView;
-	rItem->indexBufferView = geo->indexBufferView;
-
-	rItem->startIndexLocation = sm->startIndexLocation;
-	rItem->baseVertexLocation = sm->baseVertexLocation;
-	rItem->indexCount = sm->indexCount;
-	rItem->boundingBox = sm->boundingBox;
-	rItem->boundingSphere = sm->boundingSphere;
-
-	rItem->instances = m_instance->GetInstanceDummyData(geoName, meshName);
-	rItem->cullingFrustum = m_instance->GetCullingFrustum(geoName, meshName);
-
-	m_AllRItems[meshName].emplace_back(std::move(rItem));
 }
 
 bool CMainLoop::IsInsideFrustum(const DirectX::BoundingSphere& bSphere, const XMMATRIX& invView, const XMMATRIX& world)
@@ -270,39 +227,6 @@ void CMainLoop::UpdateRenderItems()
 	//처리 안할것을 먼저 골라낸다.
 	InstanceDataList visibleInstance{};
 	int instanceStartIndex{ 0 };
-	for(auto& e : m_AllRItems)
-	{
-		auto& renderItemList = e.second;
-		auto& item = *renderItemList.begin();
-		
-		for (auto& item : renderItemList)
-		{
-			if (item->cullingFrustum)
-			{
-				std::copy_if(item->instances.begin(), item->instances.end(), std::back_inserter(visibleInstance),
-					[mainLoop = this, &invView, &item](auto& instance) {
-						return mainLoop->IsInsideFrustum(item->boundingSphere, invView, instance->world);
-					});
-				m_windowCaption = SetWindowCaption(visibleInstance.size(), item->instances.size());
-			}
-			else
-				std::copy(item->instances.begin(), item->instances.end(), std::back_inserter(visibleInstance));
-		}
-		item->instanceCount = static_cast<UINT>(visibleInstance.size());
-		item->startIndexInstance = instanceStartIndex;
-		instanceStartIndex += item->instanceCount;
-	}
-	UpdateInstanceBuffer(visibleInstance);
-}
-
-void CMainLoop::NUpdateRenderItems()
-{
-	XMMATRIX view = m_camera->GetView();
-	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
-
-	//처리 안할것을 먼저 골라낸다.
-	InstanceDataList visibleInstance{};
-	int instanceStartIndex{ 0 };
 	for (auto& e : m_AllRenderItems)
 	{
 		auto& subRenderItems = e.second->subRenderItems;
@@ -310,16 +234,18 @@ void CMainLoop::NUpdateRenderItems()
 		for (auto& iterSubItem : subRenderItems)
 		{
 			auto& subRenderItem = iterSubItem.second;
-			if (subRenderItem.cullingFrustum)
+			auto& instanceInfo = subRenderItem.instanceInfo;
+			auto& instanceList = instanceInfo.instanceDataList;
+			if (instanceInfo.cullingFrustum)
 			{
-				std::copy_if(subRenderItem.instances.begin(), subRenderItem.instances.end(), std::back_inserter(visibleInstance),
+				std::copy_if(instanceList.begin(), instanceList.end(), std::back_inserter(visibleInstance),
 					[mainLoop = this, &invView, &subRenderItem](auto& instance) {
 						return mainLoop->IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
 					});
-				m_windowCaption = SetWindowCaption(visibleInstance.size(), subRenderItem.instances.size());
+				m_windowCaption = SetWindowCaption(visibleInstance.size(), instanceList.size());
 			}
 			else
-				std::copy(subRenderItem.instances.begin(), subRenderItem.instances.end(), std::back_inserter(visibleInstance));
+				std::copy(instanceList.begin(), instanceList.end(), std::back_inserter(visibleInstance));
 
 			
 			subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
@@ -467,13 +393,9 @@ void CMainLoop::OnKeyboardInput()
 	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
 	m_keyInputManager->PressedKeyList([]() {
 		std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
-		std::vector<int> pressedKeyList;
-		for_each(keyList.begin(), keyList.end(), [&pressedKeyList](int vKey)
-			{
-				bool bPressed = GetAsyncKeyState(vKey) & 0x8000;
-				if (bPressed)
-					pressedKeyList.emplace_back(vKey);
-			});
+		std::vector<int> pressedKeyList{};
+		std::copy_if(keyList.begin(), keyList.end(), std::back_inserter(pressedKeyList),
+			[](int vKey) { return GetAsyncKeyState(vKey) & 0x8000; });
 		return pressedKeyList; });
 }
 
@@ -502,12 +424,10 @@ bool CMainLoop::Run()
 
 			ReturnIfFalse(m_frameResources->PrepareFrame(m_directx3D.get()));
 
-			//UpdateRenderItems();
-			NUpdateRenderItems();
+			UpdateRenderItems();
 			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			//ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRItems));
 			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRenderItems));
 		}
 	}

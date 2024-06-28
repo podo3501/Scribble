@@ -41,9 +41,6 @@
     <ClCompile Include="KeyInputManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Geometry.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="GameTimer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -94,9 +91,6 @@
     <ClInclude Include="KeyInputManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Geometry.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="GameTimer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -107,9 +101,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Instance.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="SubItem.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

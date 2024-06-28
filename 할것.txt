@@ -4,27 +4,15 @@
 --instance 버퍼에 인덱스문제가 있다.
 --cubemap 붙이기
 
+--renderitem과 geometry구조가 맞지 않다.
+
+--일단  renderItem을 NRenderItem으로 계층구조가 있는 스트럭쳐로 바꾼다
+--그다음 gpu에 올릴 버퍼를 NRenderItem쪽으로 이동한다. 
+--그리고 geometry와 renderitem을 삭제한다.
+
+--데이터들 + instance정보 => renderItem 해서 renderer에 renderItem으로 랜더링 하게끔 한다.
+
 파일을 로딩하고 보여주는 부분을 나눌려고 한다.
 geometry와 renderitem이 양분하고 있는데 중간에 몇가지 리팩토링 해야할 부분이 있다.
 renderer에 geometry가 가지 않도록 리팩토링 할 예정이다.
-
-renderitem과 geometry구조가 맞지 않다.
-
-일단  renderItem을 NRenderItem으로 계층구조가 있는 스트럭쳐로 바꾼다
-그다음 gpu에 올릴 버퍼를 NRenderItem쪽으로 이동한다. 
-그리고 geometry와 renderitem을 삭제한다.
-
-데이터들 + instance정보 => renderItem 해서 renderer에 renderItem으로 랜더링 하게끔 한다.
-
-for (auto& iterInstance : instanceInfos)
-{
-	auto findSubItem = subRenderItems.find(iterInstance.first);
-	if (findSubItem == subRenderItems.end())
-		return false;
-
-	auto& instanceInfo = iterInstance.second;
-	auto& subItem = findSubItem->second;
-	subItem.instances = instanceInfo.instanceDataList;
-	subItem.cullingFrustum = instanceInfo.cullingFrustum;
-}
-이 문구 transform으로 바꾸자 그전에 데이터를 스트럭쳐로 맞출 필요가 있다.
+mainloop클래스에 클래스들을 나누어야 한다.

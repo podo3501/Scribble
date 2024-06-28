@@ -12,10 +12,8 @@ class CDirectx3D;
 struct ID3D12Device;
 struct ID3D12GraphicsCommandList;
 struct InstanceData;
-struct Geometry;
 struct Vertex;
-struct MeshData;
-struct NRenderItem;
+struct RenderItem;
 
 enum class CreateType : int
 {
@@ -47,16 +45,24 @@ using ModelTypeList = std::vector<ModelType>;
 
 class CModel
 {
+	using Vertices = std::vector<Vertex>;
+	using Indices = std::vector<std::int32_t>;
+
 	struct MeshData
 	{
 		std::string name{};
 
-		std::vector<Vertex> vertices{};
-		std::vector<std::int32_t> indices{};
+		Vertices vertices{};
+		Indices indices{};
 
 		DirectX::BoundingBox boundingBox{};
 		DirectX::BoundingSphere boundingSphere{};
 	};
+
+	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
+	using Offsets = std::pair<UINT, UINT>;
+	using MeshDataList = std::vector<std::unique_ptr<MeshData>>;
+	using AllMeshDataList = std::unordered_map<std::string, MeshDataList>;
 
 public:
 	template<typename T>
@@ -68,35 +74,24 @@ public:
 	CModel& operator=(const CModel&) = delete;
 
 	bool LoadGeometryList(const ModelTypeList& modelTypeList);
-	bool Convert(CGeometry* geomtry);
-	bool LoadGraphicMemory(CDirectx3D* directx3D,
-		std::unordered_map<std::string, std::unique_ptr<NRenderItem>>* outRenderItems);
-
-private:
-	using Offsets = std::pair<UINT, UINT>;
-	using MeshDataList = std::vector<std::unique_ptr<MeshData>>;
+	bool LoadGraphicMemory(CDirectx3D* directx3D, AllRenderItems* outRenderItems);
 
 private:
 	bool LoadGeometry(const ModelType& type);
 	bool ReadFile(const std::wstring& filename, MeshData* outData);
 	void Generator(MeshData* outData);
-	void SetSubmeshList(Geometry* geo, const MeshDataList& meshDataList,
-		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices);
-	bool ConvertGeometry(Geometry* geo, const MeshDataList& meshDataList);
-	Offsets SetSubmesh(Geometry* geo, Offsets& offsets, MeshData* data);
 
-	CModel::Offsets SetSubmesh(NRenderItem* renderItem, Offsets& offsets, MeshData* data);
-	void SetSubmeshList(NRenderItem* renderItem, const MeshDataList& meshDataList,
-		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices);
-	bool Convert(const MeshDataList& meshDataList,
-		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem);
-	bool Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
-		std::vector<Vertex>& totalVertices, std::vector<std::int32_t>& totalIndices, NRenderItem* renderItem);
+	CModel::Offsets SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data);
+	void SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataList,
+		Vertices& totalVertices, Indices& totalIndices);
+	bool Convert(const MeshDataList& meshDataList, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
+	bool Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
+		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
 
 private:
 	//std::string m_name{};
 	std::wstring m_resPath{};
 	const std::wstring m_filePath{ L"Models/" };
 
-	std::unordered_map<std::string, MeshDataList> m_meshDataList;
+	AllMeshDataList m_AllMeshDataList{};
 };

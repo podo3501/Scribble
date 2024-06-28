@@ -8,13 +8,17 @@
 #include <DirectXMath.h>
 
 class CMaterial;
-struct NRenderItem;
+struct RenderItem;
 struct InstanceData;
+struct InstanceInfo;
 
 using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
 
 class CInstance
 {
+	using InstanceInfos = std::unordered_map<std::string, InstanceInfo>;
+	using AllInstances = std::unordered_map<std::string, InstanceInfos>;
+
 public:
 	CInstance() = default;
 
@@ -22,24 +26,9 @@ public:
 	CInstance& operator=(const CInstance&) = delete;
 
 	void CreateInstanceData(CMaterial* material, const std::string& geoName, const std::string& meshName);
-	InstanceDataList GetInstanceDummyData(const std::string& geoName, const std::string& meshName);
-	bool GetCullingFrustum(const std::string& geoName, const std::string& meshName);
-
-	bool FillRenderItems(std::unordered_map<std::string, std::unique_ptr<NRenderItem>>& renderItems);
+	bool FillRenderItems(std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItems);
 
 private:
-	struct InstanceInfo
-	{
-		InstanceInfo() = default;
-
-		InstanceDataList instanceDataList{};
-		bool cullingFrustum{ false };
-	};
-
-private:
-	std::unordered_map<std::string, std::unordered_map<std::string, InstanceDataList>> m_instances{};
-	std::unordered_map<std::string, std::unordered_map<std::string, bool>> m_cullingFrustumList{};
-
-	std::unordered_map<std::string, std::unordered_map<std::string, InstanceInfo>> m_instanceList{};
+	AllInstances m_instances{};
 };
 

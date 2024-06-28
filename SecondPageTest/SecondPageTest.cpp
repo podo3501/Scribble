@@ -21,9 +21,7 @@
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/RenderItem.h"
 #include "../SecondPage/KeyInputManager.h"
-#include "../SecondPage/Geometry.h"
 #include "../SecondPage/Instance.h"
-#include "../SecondPage/SubItem.h"
 
 namespace MainLoop
 {
@@ -74,34 +72,6 @@ namespace MainLoop
 			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))), true);
 		EXPECT_EQ(frameResources->PrepareFrame(m_directx3D.get()), true);
 		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
-	}
-
-	TEST_F(MainLoopTest, Initialize)
-	{
-		//데이터를 시스템 메모리에 올리기
-		std::unique_ptr<CTexture> texture = std::make_unique<CTexture>(m_renderer.get(), m_resourcePath);
-		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
-		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
-
-		ModelTypeList modelTypeList
-		{
-			ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
-		};
-
-		EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
-
-		//프레임당 쓰이는 데이터 공간을 확보
-		std::unique_ptr<CFrameResources> m_frameResources = std::make_unique<CFrameResources>();
-		EXPECT_EQ(m_frameResources->BuildFrameResources(
-			m_directx3D->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))), true);
-
-		EXPECT_EQ(model->Convert(geometry.get()), true);
-		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-		EXPECT_EQ(geometry->LoadGraphicMemory(m_directx3D.get()), true);
-		EXPECT_EQ(texture->LoadGraphicMemory(), true);
-
-		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
-		camera->SetPosition(0.0f, 2.0f, -15.0f);
 	}
 
 	TEST_F(MainLoopTest, WindowMessage)
@@ -177,7 +147,6 @@ namespace MainLoop
 		instance->CreateInstanceData(nullptr, "nature", "cube");
 		instance->CreateInstanceData(material.get(), "things", "skull");
 
-		std::unique_ptr<CGeometry> geometry = std::make_unique<CGeometry>();
 		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
 
 		ModelTypeList modelTypeList
@@ -186,9 +155,8 @@ namespace MainLoop
 			ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
 		};
 
+		std::unordered_map<std::string, std::unique_ptr<RenderItem>> renderItems{};
 		EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
-		//EXPECT_EQ(model->Convert(geometry.get()), true);
-		std::unordered_map<std::string, std::unique_ptr<NRenderItem>> renderItems{};
 		EXPECT_EQ(model->LoadGraphicMemory(m_directx3D.get(), &renderItems), true);
 		EXPECT_EQ(renderItems["things"]->vertexBufferGPU != nullptr, true );
 
