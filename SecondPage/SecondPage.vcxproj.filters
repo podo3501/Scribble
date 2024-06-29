@@ -103,6 +103,9 @@
     <ClInclude Include="Instance.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Interface.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Resource\Shaders\Common.hlsli">

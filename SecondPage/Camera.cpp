@@ -2,6 +2,7 @@
 #include <ranges>
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
+#include "../Core/headerUtility.h"
 #include "../SecondPage/FrameResourceData.h"
 
 using namespace DirectX;
@@ -21,31 +22,20 @@ CCamera::CCamera()
 }
 
 CCamera::~CCamera()
-{
-	/*std::views::
-	auto count = std::ranges::count(usableKey, 'W');*/
-}
-
-bool TransformToeMove(int nKey, eMove* outMove)
-{
-	switch (nKey)
-	{
-	case 'W':		(*outMove) = eMove::Forward;		break;
-	case 'S':		(*outMove) = eMove::Back;			break;
-	case 'D':		(*outMove) = eMove::Right;			break;
-	case 'A':		(*outMove) = eMove::Left;				break;
-	default:		return false;
-	}
-	return true;
-}
+{}
 
 void CCamera::PressedKey(std::vector<int> keyList)
 {
-	std::ranges::for_each(keyList, [this](auto nKey) {
-		eMove curMove{};
-		auto result = TransformToeMove(nKey, &curMove);
-		if (!result) return;
-		m_moveDirection.emplace_back(curMove); });
+	std::map<int, eMove> usableKeyList{ 
+		{'W', eMove::Forward}, {'S', eMove::Back}, {'D', eMove::Right}, {'A', eMove::Left} };
+
+	std::vector<int> moveKeyList{};
+	std::ranges::copy_if(keyList, std::back_inserter(moveKeyList), 
+		[&usableKeyList](auto key) { return usableKeyList.find(key) != usableKeyList.end(); });
+	if (moveKeyList.empty()) return;
+
+	std::ranges::transform(keyList, std::back_inserter(m_moveDirection),
+		[&usableKeyList](auto key) { return usableKeyList[key]; });
 }
 
 void CCamera::SetPosition(float x, float y, float z)
@@ -176,7 +166,7 @@ void CCamera::RotateY(float angle)
 //방향에 따라 이동하는 것은 나중에 객체에서도 쓰일 예정이지만 일단 여기에 놔 두고 나중에 떼내자
 void CCamera::SetSpeed(float speed)
 {
-	for (auto move{ 0 }; move <= static_cast<int>(eMove::RotateY); ++move)
+	for (auto move{ EtoV(eMove::None) }; move < EtoV(eMove::Count); ++move)
 	{
 		SetSpeed(static_cast<eMove>(move), speed);
 	}

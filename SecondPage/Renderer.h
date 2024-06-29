@@ -7,24 +7,20 @@
 #include <array>
 #include <vector>
 #include <string>
+#include "Interface.h"
 
 class CDirectx3D;
 class CShader;
 class CCamera;
-class CGameTimer;
 class CUploadBuffer;
 class CFrameResources;
-struct ID3D12Device;
-struct ID3D12GraphicsCommandList;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
-struct RenderItem;
-struct RenderItem;
 enum class GraphicsPSO;
 
-class CRenderer
+class CRenderer : public IRenderer
 {
 public:
 	template<typename T>
@@ -36,15 +32,18 @@ public:
 	CRenderer(const CRenderer&) = delete;
 	CRenderer& operator=(const CRenderer&) = delete;
 
-	bool Initialize(CDirectx3D* directx3D);
-	bool OnResize(int wndWidth, int wndHeight);
-	bool Draw(CGameTimer* gt, CFrameResources* frameResources,
-		std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem);
+	virtual bool Initialize(CWindow* window) override;
+	virtual bool OnResize(int wndWidth, int wndHeight) override;
+	virtual bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory) override;
+	virtual bool Draw(CGameTimer* gt, CFrameResources* frameResources,
+		std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) override;
+	virtual bool WaitUntilGpuFinished(UINT64 fenceCount) override;
+
+	virtual inline ID3D12Device* GetDevice() const override;
+	virtual inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const override;
 
 	inline CDirectx3D* GetDirectx3D() const;
-	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
-	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 
 private:
 	bool BuildRootSignature();
@@ -59,7 +58,7 @@ private:
 private:
 	std::wstring m_resPath{};
 
-	CDirectx3D* m_directx3D{ nullptr };
+	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
 	std::unique_ptr<CShader> m_shader{ nullptr };
 
 	ID3D12Device* m_device{ nullptr };
@@ -74,7 +73,6 @@ private:
 	D3D12_RECT m_scissorRect{};
 };
 
-inline CDirectx3D* CRenderer::GetDirectx3D() const											{ return m_directx3D; }
 inline ID3D12Device* CRenderer::GetDevice() const											{	return m_device;		}
 inline ID3D12GraphicsCommandList* CRenderer::GetCommandList() const		{	return m_cmdList;	}
 inline ID3D12DescriptorHeap* CRenderer::GetSrvDescriptorHeap() const		{	return m_srvDescHeap.Get();		}

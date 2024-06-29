@@ -12,7 +12,7 @@
 #include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Texture.h"
-#include "../SecondPage/Renderer.h"
+#include "../SecondPage/interface.h"
 #include "../SecondPage/Shader.h"
 #include "../SecondPage/Model.h"
 #include "../SecondPage/FrameResource.h"
@@ -38,11 +38,8 @@ namespace MainLoop
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(false), true);
 
-			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-			EXPECT_EQ(m_directx3D->Initialize(), true);
-
-			m_renderer = std::make_unique<CRenderer>(m_resourcePath);
-			EXPECT_EQ(m_renderer->Initialize(m_directx3D.get()), true);
+			m_renderer = CreateRenderer(m_resourcePath);
+			EXPECT_EQ(m_renderer->Initialize(m_window.get()), true);
 
 			m_material = std::make_unique<CMaterial>();
 			m_material->Build();
@@ -52,7 +49,6 @@ namespace MainLoop
 		{
 			m_material.reset();
 			m_renderer.reset();
-			m_directx3D.reset();
 			m_window.reset();
 		}
 
@@ -60,8 +56,7 @@ namespace MainLoop
 		const std::wstring m_resourcePath = L"../Resource/";
 
 		std::unique_ptr<CWindow> m_window{ nullptr };
-		std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
-		std::unique_ptr<CRenderer> m_renderer{ nullptr };
+		std::unique_ptr<IRenderer> m_renderer{ nullptr };
 		std::unique_ptr<CMaterial> m_material{ nullptr };
 	};
 
@@ -70,7 +65,7 @@ namespace MainLoop
 		std::unique_ptr<CFrameResources> frameResources = std::make_unique<CFrameResources>();
 		EXPECT_EQ(frameResources->BuildFrameResources(
 			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))), true);
-		EXPECT_EQ(frameResources->PrepareFrame(m_directx3D.get()), true);
+		EXPECT_EQ(frameResources->PrepareFrame(m_renderer.get()), true);
 		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
 	}
 
@@ -122,20 +117,20 @@ namespace MainLoop
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(false), true);
 
-			m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-			EXPECT_EQ(m_directx3D->Initialize(), true);
+			m_renderer = CreateRenderer(m_resourcePath);
+			EXPECT_EQ(m_renderer->Initialize(m_window.get()), true);
 		}
 
 		void TearDown() override
 		{
-			m_directx3D.reset();
 			m_window.reset();
+			m_renderer.reset();
 		}
 
 	protected:
 		std::wstring m_resourcePath{ L"../Resource/" };
 		std::unique_ptr<CWindow> m_window{ nullptr };
-		std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
+		std::unique_ptr<IRenderer> m_renderer{ nullptr };
 	};
 
 	TEST_F(MainLoopClassTest, ModelTest)
@@ -157,7 +152,7 @@ namespace MainLoop
 
 		std::unordered_map<std::string, std::unique_ptr<RenderItem>> renderItems{};
 		EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
-		EXPECT_EQ(model->LoadGraphicMemory(m_directx3D.get(), &renderItems), true);
+		EXPECT_EQ(model->LoadGraphicMemory(m_renderer.get(), &renderItems), true);
 		EXPECT_EQ(renderItems["things"]->vertexBufferGPU != nullptr, true );
 
 		EXPECT_EQ(instance->FillRenderItems(renderItems), true);

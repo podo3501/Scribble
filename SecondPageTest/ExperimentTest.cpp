@@ -8,40 +8,67 @@ namespace Experiment
 	class TestRenderer
 	{
 	public:
-		virtual void Excute(int a, int b) = 0;
+		virtual int Load() = 0;
+		virtual void Excute(int a) = 0;
+	};
+
+	class CRenderer : public TestRenderer
+	{
+		int Load() override
+		{
+			return 10;
+		}
+
+		void Excute(int a) override
+		{
+			//a를 화면에 뿌린다.
+			return;
+		}
 	};
 
 	class GTestRenderer : public TestRenderer
 	{
 	public:
-		void Excute(int a, int b) override
+		virtual int Load() override
+		{
+			return 0;
+		}
+
+		void Excute(int a) override
 		{
 			EXPECT_EQ(a, 10);
-			EXPECT_EQ(b, 20);
 		}
 	};
 
 	class UITest
 	{
 	public:
-		UITest(int a, int b)
-			: _a(a), _b(b)
+		UITest(int a)
+			: _a(a)
 		{}
+
+		void Load(TestRenderer& renderer)
+		{
+			_a = renderer.Load();
+		}
 
 		void Draw(TestRenderer& renderer)
 		{
-			renderer.Excute(_a, _b);
+			renderer.Excute(_a);
 		}
 
 	private:
 		int _a = 0;
-		int _b = 0;
 	};
 
 	TEST(RendererTest, Excute)
 	{
-		UITest uiTest(10, 20);
+		UITest uiTest(5);
+		//자료는 CRenderer가 다 처리하고
+		CRenderer UI;
+		uiTest.Load(UI);
 
+		//Draw 함수 테스트는 가짜 GTestRenderer가 가로채서 테스트한다.
 		GTestRenderer testUI;
 		uiTest.Draw(testUI);
 	}

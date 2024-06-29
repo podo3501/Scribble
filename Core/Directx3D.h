@@ -57,7 +57,6 @@ public:
 	bool FlushCommandQueue();
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
 	bool OnResize();
-	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;
 

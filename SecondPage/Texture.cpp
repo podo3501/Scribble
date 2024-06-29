@@ -2,7 +2,7 @@
 #include "../Core/DDSTextureLoader.h"
 #include "../Core/d3dUtil.h"
 #include "../Core/Directx3D.h"
-#include "../SecondPage/Renderer.h"
+#include "./Interface.h"
 
 using namespace DirectX;
 
@@ -73,7 +73,7 @@ bool CTexture::LoadGraphicMemory()
 
 bool CTexture::LoadTexture(eType type, std::vector<std::wstring>& filenames)
 {
-	ReturnIfFalse(m_renderer->GetDirectx3D()->LoadData(
+	ReturnIfFalse(m_renderer->LoadData(
 		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 			ReturnIfFalse(Upload(device, cmdList, type, filenames));
 			return true; }));

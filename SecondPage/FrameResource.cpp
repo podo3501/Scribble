@@ -1,7 +1,7 @@
 ﻿#include "FrameResource.h"
 #include <d3d12.h>
 #include "../Core/d3dUtil.h"
-#include "../Core/Directx3D.h"
+#include "./Interface.h"
 #include "./UploadBuffer.h"
 #include "./RendererDefine.h"
 #include "./FrameResourceData.h"
@@ -33,12 +33,12 @@ bool CFrameResources::BuildFrameResources(ID3D12Device* device,
 	return true;
 }
 
-bool CFrameResources::PrepareFrame(CDirectx3D* directx3D)
+bool CFrameResources::PrepareFrame(IRenderer* renderer)
 {
 	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
 	if (m_fenceCount == 0)
 		return true;
-	ReturnIfFalse(directx3D->WaitUntilGpuFinished(m_fenceCount));
+	ReturnIfFalse(renderer->WaitUntilGpuFinished(m_fenceCount));
 
 	return true;
 }

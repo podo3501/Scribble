@@ -7,8 +7,8 @@
 #include <string>
 #include <DirectXCollision.h>
 
+interface IRenderer;
 class CGeometry;
-class CDirectx3D;
 struct ID3D12Device;
 struct ID3D12GraphicsCommandList;
 struct InstanceData;
@@ -74,7 +74,7 @@ public:
 	CModel& operator=(const CModel&) = delete;
 
 	bool LoadGeometryList(const ModelTypeList& modelTypeList);
-	bool LoadGraphicMemory(CDirectx3D* directx3D, AllRenderItems* outRenderItems);
+	bool LoadGraphicMemory(IRenderer* renderer, AllRenderItems* outRenderItems);
 
 private:
 	bool LoadGeometry(const ModelType& type);

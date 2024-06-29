@@ -13,18 +13,36 @@
 
 using Microsoft::WRL::ComPtr;
 
-bool CRenderer::Initialize(CDirectx3D* directx3D)
+std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath)
 {
-	m_psoList.resize(EtoV(GraphicsPSO::Count));
+	return std::move(std::make_unique<CRenderer>(resPath));
+}
 
-	m_directx3D = directx3D;
-	m_device = directx3D->GetDevice();
-	m_cmdList = directx3D->GetCommandList();
+bool CRenderer::Initialize(CWindow* window)
+{
 	m_shader = std::make_unique<CShader>(m_resPath);
+	m_directx3D = std::make_unique<CDirectx3D>(window);
+	ReturnIfFalse(m_directx3D->Initialize());
 
+	m_device = m_directx3D->GetDevice();
+	m_cmdList = m_directx3D->GetCommandList();
+
+	m_psoList.resize(EtoV(GraphicsPSO::Count));
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
 	ReturnIfFalse(BuildPSOs());
+
+	return true;
+}
+
+bool CRenderer::LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
+{
+	ReturnIfFalse(m_directx3D->ResetCommandLists());
+
+	ReturnIfFalse(loadGraphicMemory(m_device, m_cmdList));
+
+	ReturnIfFalse(m_directx3D->ExcuteCommandLists());
+	ReturnIfFalse(m_directx3D->FlushCommandQueue());
 
 	return true;
 }
@@ -44,6 +62,13 @@ bool CRenderer::OnResize(int wndWidth, int wndHeight)
 
 	return true;
 }
+
+bool CRenderer::WaitUntilGpuFinished(UINT64 fenceCount)
+{
+	//fence를 renderer로 올린다.
+	return m_directx3D->WaitUntilGpuFinished(fenceCount);
+}
+
 
 enum class ParamType : int
 {

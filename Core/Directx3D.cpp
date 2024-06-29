@@ -409,18 +409,6 @@ bool CDirectx3D::Set4xMsaaState(bool value)
 	return true;
 }
 
-bool CDirectx3D::LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
-{
-	ReturnIfFalse(ResetCommandLists());
-
-	ReturnIfFalse(loadGraphicMemory(m_device.Get(), m_commandList.Get()));
-
-	ReturnIfFalse(ExcuteCommandLists());
-	ReturnIfFalse(FlushCommandQueue());
-
-	return true;
-}
-
 inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
 {
 	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();

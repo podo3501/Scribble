@@ -153,6 +153,7 @@
     <ClInclude Include="FrameResourceData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
+    <ClInclude Include="Interface.h" />
     <ClInclude Include="KeyInputManager.h" />
     <ClInclude Include="MainLoop.h" />
     <ClInclude Include="Material.h" />

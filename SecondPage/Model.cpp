@@ -1,7 +1,7 @@
 #include "Model.h"
 #include <DirectXMath.h>
 #include "../Core/d3dUtil.h"
-#include "../Core/Directx3D.h"
+#include "./Interface.h"
 #include "./FrameResourceData.h"
 #include "./GeometryGenerator.h"
 #include "./RenderItem.h"
@@ -160,9 +160,9 @@ bool CModel::Convert(const MeshDataList& meshDataList,
 	return true;
 }
 
-bool CModel::LoadGraphicMemory(CDirectx3D* directx3D, AllRenderItems* outRenderItems)
+bool CModel::LoadGraphicMemory(IRenderer* renderer, AllRenderItems* outRenderItems)
 {
-	return std::ranges::all_of(m_AllMeshDataList, [&outRenderItems, directx3D, this](auto& iter) {
+	return std::ranges::all_of(m_AllMeshDataList, [&outRenderItems, renderer, this](auto& iter) {
 			auto renderItem = std::make_unique<RenderItem>();
 			auto pRenderItem = renderItem.get();
 			(*outRenderItems).insert(std::make_pair(iter.first, std::move(renderItem)));
@@ -173,7 +173,7 @@ bool CModel::LoadGraphicMemory(CDirectx3D* directx3D, AllRenderItems* outRenderI
 			ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
 
 			//그래픽 메모리에 올린다.
-			ReturnIfFalse(directx3D->LoadData(
+			ReturnIfFalse(renderer->LoadData(
 				[&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 					 return Load(device, cmdList, totalVertices, totalIndices, pRenderItem);	}));
 

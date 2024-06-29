@@ -6,7 +6,7 @@
 #include <wrl.h>
 #include <memory>
 
-class CRenderer;
+interface IRenderer;
 struct ID3D12Device;
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
@@ -17,7 +17,7 @@ class CTexture
 {
 public:
 	template<typename T>
-	CTexture(CRenderer* renderer, T&& resPath)
+	CTexture(IRenderer* renderer, T&& resPath)
 		: m_renderer(renderer)
 		, m_resPath(std::forward<T>(resPath))
 	{}
@@ -44,7 +44,7 @@ private:
 	};
 
 private:
-	CRenderer* m_renderer{ nullptr };
+	IRenderer* m_renderer{ nullptr };
 	std::wstring m_resPath{};
 	const std::wstring m_filePath{ L"Textures/" };
 

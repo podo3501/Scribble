@@ -6,9 +6,8 @@
 #include <Windows.h>
 #include <DirectXCollision.h>
 
+interface IRenderer;
 class CWindow;
-class CRenderer;
-class CDirectx3D;
 class CCamera;
 class CMaterial;
 class CTexture;
@@ -22,11 +21,13 @@ struct RenderItem;
 struct FrameResource;
 struct InstanceData;
 struct RenderItem;
+struct SubRenderItem;
 
 class CMainLoop
 {
 	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
 	using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
+	using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;
 
 public:
 	template<typename T>
@@ -58,6 +59,8 @@ private:
 	void UpdateInstanceBuffer(const InstanceDataList& visibleInstance);
 	void UpdateMaterialBuffer();
 	void UpdateMainPassCB();
+	void FindVisibleSubRenderItems(
+		SubRenderItems& subRenderItems, int* instanceStartIndex, InstanceDataList& visibleInstance);
 
 	bool OnResize();
 
@@ -73,8 +76,8 @@ private:
 private:
 	std::wstring m_resourcePath{};
 	std::unique_ptr<CWindow> m_window{ nullptr };
-	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
-	std::shared_ptr<CRenderer> m_renderer{ nullptr };
+	std::shared_ptr<IRenderer> m_iRenderer{ nullptr };
+
 	std::unique_ptr<CCamera> m_camera{ nullptr };
 	std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };

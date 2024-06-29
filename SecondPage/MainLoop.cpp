@@ -4,12 +4,11 @@
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
 #include "../Core/Window.h"
-#include "../Core/Directx3D.h"
 #include "./UploadBuffer.h"
 #include "./GameTimer.h"
 #include "./RenderItem.h"
 #include "./Shader.h"
-#include "./Renderer.h"
+#include "./interface.h"
 #include "./Material.h"
 #include "./Model.h"
 #include "./FrameResource.h"
@@ -40,7 +39,7 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 
 		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
-		if (m_renderer->GetDevice())
+		if (m_iRenderer->GetDevice())
 		{
 			if (wParam == SIZE_MINIMIZED)
 			{
@@ -151,11 +150,15 @@ bool CMainLoop::InitializeClass()
 
 	m_timer = std::make_unique<CGameTimer>();
 
-	m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-	ReturnIfFalse(m_directx3D->Initialize());
+	//m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
+	//ReturnIfFalse(m_directx3D->Initialize());
 
-	m_renderer = std::make_shared<CRenderer>(m_resourcePath);
-	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));
+	/*m_renderer = std::make_shared<CRenderer>(m_resourcePath);
+	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));*/
+
+	m_iRenderer = CreateRenderer(m_resourcePath);
+	m_iRenderer->Initialize(m_window.get());
+	//m_iRenderer = m_renderer; 
 
 	m_material = std::make_unique<CMaterial>();
 	m_material->Build();
@@ -168,7 +171,7 @@ bool CMainLoop::InitializeClass()
 bool CMainLoop::MakeFrameResource()
 {
 	m_frameResources = std::make_unique<CFrameResources>();
-	ReturnIfFalse(m_frameResources->BuildFrameResources(m_renderer->GetDevice(),
+	ReturnIfFalse(m_frameResources->BuildFrameResources(m_iRenderer->GetDevice(),
 		1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))));
 
 	return true;
@@ -190,8 +193,8 @@ bool CMainLoop::BuildCpuMemory()
 
 bool CMainLoop::BuildGraphicMemory()
 {
-	m_texture = std::make_unique<CTexture>(m_renderer.get(), m_resourcePath);
-	ReturnIfFalse(m_model->LoadGraphicMemory(m_directx3D.get(), &m_AllRenderItems));
+	ReturnIfFalse(m_model->LoadGraphicMemory(m_iRenderer.get(), &m_AllRenderItems));
+	m_texture = std::make_unique<CTexture>(m_iRenderer.get(), m_resourcePath);
 	ReturnIfFalse(m_texture->LoadGraphicMemory());
 	
 	return true;
@@ -219,39 +222,45 @@ std::wstring SetWindowCaption(std::size_t visibleCount, std::size_t totalCount)
 	return outs.str();
 }
 
-void CMainLoop::UpdateRenderItems()
+void CMainLoop::FindVisibleSubRenderItems(
+	SubRenderItems& subRenderItems, int* instanceStartIndex, InstanceDataList& visibleInstance)
 {
 	XMMATRIX view = m_camera->GetView();
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 
+	for (auto& iterSubItem : subRenderItems)
+	{
+		auto& subRenderItem = iterSubItem.second;
+		auto& instanceInfo = subRenderItem.instanceInfo;
+		auto& instanceList = instanceInfo.instanceDataList;
+		if (instanceInfo.cullingFrustum)
+		{
+			std::ranges::copy_if(instanceList, std::back_inserter(visibleInstance),
+				[this, &invView, &subRenderItem](auto& instance) {
+					return IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
+				});
+			m_windowCaption = SetWindowCaption(visibleInstance.size(), instanceList.size());
+		}
+		else
+			std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
+
+		subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
+		subRenderItem.startIndexInstance = (*instanceStartIndex);
+		(*instanceStartIndex) += subRenderItem.instanceCount;
+	}
+}
+
+void CMainLoop::UpdateRenderItems()
+{
 	//처리 안할것을 먼저 골라낸다.
 	InstanceDataList visibleInstance{};
 	int instanceStartIndex{ 0 };
 	for (auto& e : m_AllRenderItems)
 	{
 		auto& subRenderItems = e.second->subRenderItems;
-		
-		for (auto& iterSubItem : subRenderItems)
-		{
-			auto& subRenderItem = iterSubItem.second;
-			auto& instanceInfo = subRenderItem.instanceInfo;
-			auto& instanceList = instanceInfo.instanceDataList;
-			if (instanceInfo.cullingFrustum)
-			{
-				std::ranges::copy_if(instanceList, std::back_inserter(visibleInstance),
-					[this, &invView, &subRenderItem](auto& instance) {
-						return IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
-					});
-				m_windowCaption = SetWindowCaption(visibleInstance.size(), instanceList.size());
-			}
-			else
-				std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
-
-			
-			subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
-			subRenderItem.startIndexInstance = instanceStartIndex;
-			instanceStartIndex += subRenderItem.instanceCount;
-		}
+	
+		//보여지는 서브 아이템을 찾아낸다.
+		FindVisibleSubRenderItems(subRenderItems, &instanceStartIndex, visibleInstance);
 	}
 	UpdateInstanceBuffer(visibleInstance);
 }
@@ -309,7 +318,7 @@ bool CMainLoop::OnResize()
 {
 	int width = m_window->GetWidth();
 	int height = m_window->GetHeight();
-	ReturnIfFalse(m_renderer->OnResize(width, height));
+	ReturnIfFalse(m_iRenderer->OnResize(width, height));
 	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
 
@@ -391,7 +400,7 @@ void CMainLoop::CalculateFrameStats()
 void CMainLoop::OnKeyboardInput()
 {
 	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
-	m_keyInputManager->PressedKeyList([]() {
+	m_keyInputManager->PressedKeyList([]()->std::vector<int> {
 		std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
 		std::vector<int> pressedKeyList{};
 		std::ranges::copy_if(keyList, std::back_inserter(pressedKeyList),
@@ -422,13 +431,13 @@ bool CMainLoop::Run()
 
 			m_camera->Update(m_timer->DeltaTime());
 
-			ReturnIfFalse(m_frameResources->PrepareFrame(m_directx3D.get()));
+			ReturnIfFalse(m_frameResources->PrepareFrame(m_iRenderer.get()));
 
 			UpdateRenderItems();
 			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			ReturnIfFalse(m_renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRenderItems));
+			ReturnIfFalse(m_iRenderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRenderItems));
 		}
 	}
 

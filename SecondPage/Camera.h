@@ -6,15 +6,17 @@
 
 struct PassConstants;
 
-enum class eMove
+enum class eMove : int
 {
-	Forward = 1,
+	None,
+	Forward,
 	Back,
 	Right,
 	Left,
 	Roll,
 	Pitch,
 	RotateY,
+	Count,
 };
 
 class CCamera

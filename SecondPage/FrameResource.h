@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 
+interface IRenderer;
 class CUploadBuffer;
 class CDirectx3D;
 struct ID3D12Device;
@@ -38,7 +39,7 @@ public:
 
 	bool BuildFrameResources(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
-	bool PrepareFrame(CDirectx3D* directx3D);
+	bool PrepareFrame(IRenderer* renderer);
 
 	CUploadBuffer* GetUploadBuffer(eBufferType bufferType);
 	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_resources[m_frameResIdx]->cmdListAlloc.Get();	}
