@@ -1,4 +1,5 @@
 ﻿#include "Camera.h"
+#include <ranges>
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
 #include "../SecondPage/FrameResourceData.h"
@@ -21,6 +22,8 @@ CCamera::CCamera()
 
 CCamera::~CCamera()
 {
+	/*std::views::
+	auto count = std::ranges::count(usableKey, 'W');*/
 }
 
 bool TransformToeMove(int nKey, eMove* outMove)
@@ -38,11 +41,11 @@ bool TransformToeMove(int nKey, eMove* outMove)
 
 void CCamera::PressedKey(std::vector<int> keyList)
 {
-	std::for_each(keyList.begin(), keyList.end(), [camera = this](auto nKey) {
+	std::ranges::for_each(keyList, [this](auto nKey) {
 		eMove curMove{};
 		auto result = TransformToeMove(nKey, &curMove);
 		if (!result) return;
-		camera->m_moveDirection.emplace_back(curMove); });
+		m_moveDirection.emplace_back(curMove); });
 }
 
 void CCamera::SetPosition(float x, float y, float z)

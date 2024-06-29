@@ -13,6 +13,4 @@
 --데이터들 + instance정보 => renderItem 해서 renderer에 renderItem으로 랜더링 하게끔 한다.
 
 파일을 로딩하고 보여주는 부분을 나눌려고 한다.
-geometry와 renderitem이 양분하고 있는데 중간에 몇가지 리팩토링 해야할 부분이 있다.
-renderer에 geometry가 가지 않도록 리팩토링 할 예정이다.
 mainloop클래스에 클래스들을 나누어야 한다.

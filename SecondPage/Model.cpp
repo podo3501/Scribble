@@ -11,8 +11,8 @@ using namespace DirectX::PackedVector;
 
 bool CModel::LoadGeometryList(const ModelTypeList& modelTypeList)
 {
-	return std::all_of(modelTypeList.begin(), modelTypeList.end(), [model = this](auto& modelType) {
-		return model->LoadGeometry(modelType); });
+	return std::ranges::all_of(modelTypeList, [this](auto& modelType) {
+		return LoadGeometry(modelType); });
 }
 
 bool CModel::LoadGeometry(const ModelType& type)
@@ -39,7 +39,7 @@ void CModel::Generator(MeshData* outData)
 	CGeometryGenerator geoGen{};
 	CGeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	
-	std::transform(box.Vertices.begin(), box.Vertices.end(), std::back_inserter(outData->vertices),
+	std::ranges::transform(box.Vertices, std::back_inserter(outData->vertices),
 		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC); });
 	outData->indices.insert(outData->indices.end(), box.Indices32.begin(), box.Indices32.end());
 }
@@ -136,11 +136,10 @@ void CModel::SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshData
 	Vertices& totalVertices, Indices& totalIndices)
 {
 	Offsets offsets{ 0, 0 };
-	for_each(meshDataList.begin(), meshDataList.end(),
-		[model = this, &offsets, renderItem, &totalVertices, &totalIndices](auto& data) {
-			offsets = model->SetSubmesh(renderItem, offsets, data.get());
-			std::copy(data->vertices.begin(), data->vertices.end(), std::back_inserter(totalVertices));
-			std::copy(data->indices.begin(), data->indices.end(), std::back_inserter(totalIndices));
+	std::ranges::for_each(meshDataList,[this, &offsets, renderItem, &totalVertices, &totalIndices](auto& data) {
+			offsets = SetSubmesh(renderItem, offsets, data.get());
+			std::ranges::copy(data->vertices, std::back_inserter(totalVertices));
+			std::ranges::copy(data->indices, std::back_inserter(totalIndices));
 		});
 }
 
@@ -163,8 +162,7 @@ bool CModel::Convert(const MeshDataList& meshDataList,
 
 bool CModel::LoadGraphicMemory(CDirectx3D* directx3D, AllRenderItems* outRenderItems)
 {
-	return std::all_of(m_AllMeshDataList.begin(), m_AllMeshDataList.end(),
-		[&, model = this](auto& iter) {
+	return std::ranges::all_of(m_AllMeshDataList, [&outRenderItems, directx3D, this](auto& iter) {
 			auto renderItem = std::make_unique<RenderItem>();
 			auto pRenderItem = renderItem.get();
 			(*outRenderItems).insert(std::make_pair(iter.first, std::move(renderItem)));
@@ -172,12 +170,12 @@ bool CModel::LoadGraphicMemory(CDirectx3D* directx3D, AllRenderItems* outRenderI
 			//데이터를 채워 넣는다.
 			std::vector<Vertex> totalVertices{};
 			std::vector<std::int32_t> totalIndices{};
-			ReturnIfFalse(model->Convert(iter.second, totalVertices, totalIndices, pRenderItem));
+			ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
 
 			//그래픽 메모리에 올린다.
 			ReturnIfFalse(directx3D->LoadData(
-				[&, model = this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-					 return model->Load(device, cmdList, totalVertices, totalIndices, pRenderItem);	}));
+				[&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+					 return Load(device, cmdList, totalVertices, totalIndices, pRenderItem);	}));
 
 			return true;
 		}); 	

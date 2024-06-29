@@ -115,10 +115,7 @@ bool CRenderer::BuildDescriptorHeaps()
 
 bool CRenderer::BuildPSOs()
 {
-	return std::all_of(GraphicsPSO_ALL.begin(), GraphicsPSO_ALL.end(), 
-		[renderer = this](auto pso) {
-			return renderer->MakePSOPipelineState(pso); 
-		});
+	return std::ranges::all_of(GraphicsPSO_ALL, [this](auto pso) { return MakePSOPipelineState(pso); });
 }
 
 bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)

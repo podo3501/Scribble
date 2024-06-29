@@ -64,7 +64,7 @@ void CMaterial::MakeMaterialBuffer(CUploadBuffer** outMatBuffer)
 
 Material* CMaterial::GetMaterial(const std::string& matName)
 {
-	auto findIter = std::find_if(m_materials.begin(), m_materials.end(), [&matName](auto& mat) {
+	auto findIter = std::ranges::find_if(m_materials, [&matName](auto& mat) {
 		return mat->name == matName; });
 	if (findIter == m_materials.end())
 		return nullptr;
@@ -78,8 +78,7 @@ size_t CMaterial::GetCount(TextureType type)
 	{
 	case TextureType::CubeTexture:
 	case TextureType::Texture:
-		return std::count_if(m_materials.begin(), m_materials.end(),
-			[type](auto& iter) { return iter->type == type; });
+		return std::ranges::count_if(m_materials, [type](auto& iter) { return iter->type == type; });
 	case TextureType::Total:
 		return m_materials.size();
 	}
@@ -89,13 +88,8 @@ size_t CMaterial::GetCount(TextureType type)
 
 int CMaterial::GetStartIndex(TextureType type)
 {
-	int startIdx{ 0 };
-	for (auto& mat : m_materials)
-	{
-		if (mat->type == type)
-			return startIdx;
-		++startIdx;
-	}
+	auto find = std::ranges::find_if(m_materials, [type](auto& mat) { return mat->type == type; });
+	if (find == m_materials.end()) return -1;
 
-	return -1;
+	return static_cast<int>(std::distance(m_materials.begin(), find));
 }

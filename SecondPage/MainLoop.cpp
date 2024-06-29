@@ -122,8 +122,8 @@ bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
 {
 	m_window = std::make_unique<CWindow>(hInstance);
 	ReturnIfFalse(m_window->Initialize(bShowWindow));
-	m_window->AddWndProcListener([mainLoop = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
-		return mainLoop->MsgProc(wnd, msg, wp, lp, lr); });
+	m_window->AddWndProcListener([this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return MsgProc(wnd, msg, wp, lp, lr); });
 
 	AddKeyListener();	//키 리스너 등록
 
@@ -238,14 +238,14 @@ void CMainLoop::UpdateRenderItems()
 			auto& instanceList = instanceInfo.instanceDataList;
 			if (instanceInfo.cullingFrustum)
 			{
-				std::copy_if(instanceList.begin(), instanceList.end(), std::back_inserter(visibleInstance),
-					[mainLoop = this, &invView, &subRenderItem](auto& instance) {
-						return mainLoop->IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
+				std::ranges::copy_if(instanceList, std::back_inserter(visibleInstance),
+					[this, &invView, &subRenderItem](auto& instance) {
+						return IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
 					});
 				m_windowCaption = SetWindowCaption(visibleInstance.size(), instanceList.size());
 			}
 			else
-				std::copy(instanceList.begin(), instanceList.end(), std::back_inserter(visibleInstance));
+				std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
 
 			
 			subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
@@ -323,8 +323,8 @@ void CMainLoop::AddKeyListener()
 	m_keyInputManager = std::make_unique<CKeyInputManager>();
 	m_keyInputManager->AddListener([&cam = m_camera](std::vector<int> keyList) {
 		cam->PressedKey(keyList); });
-	m_keyInputManager->AddListener([mainLoop = this](std::vector<int> keyList) {
-		mainLoop->PressedKey(keyList); });
+	m_keyInputManager->AddListener([this](std::vector<int> keyList) {
+		PressedKey(keyList); });
 }
 
 void CMainLoop::PressedKey(std::vector<int> keyList)
@@ -394,7 +394,7 @@ void CMainLoop::OnKeyboardInput()
 	m_keyInputManager->PressedKeyList([]() {
 		std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
 		std::vector<int> pressedKeyList{};
-		std::copy_if(keyList.begin(), keyList.end(), std::back_inserter(pressedKeyList),
+		std::ranges::copy_if(keyList, std::back_inserter(pressedKeyList),
 			[](int vKey) { return GetAsyncKeyState(vKey) & 0x8000; });
 		return pressedKeyList; });
 }

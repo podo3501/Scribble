@@ -77,7 +77,7 @@ void CInstance::CreateInstanceData(CMaterial* material, const std::string& geoNa
 
 bool FillInstanceInfo(SubRenderItems& subRenderItems, std::unordered_map<std::string, InstanceInfo>& instanceInfos)
 {
-	return std::all_of(instanceInfos.begin(), instanceInfos.end(), [&subRenderItems](auto& iterInstance) {
+	return std::ranges::all_of(instanceInfos, [&subRenderItems](auto& iterInstance) {
 		auto findSubItem = subRenderItems.find(iterInstance.first);
 		if (findSubItem == subRenderItems.end())
 			return false;
@@ -90,7 +90,7 @@ bool FillInstanceInfo(SubRenderItems& subRenderItems, std::unordered_map<std::st
 
 bool CInstance::FillRenderItems(AllRenderItems& renderItems)
 {
-	return std::all_of(m_instances.begin(), m_instances.end(), [&renderItems](auto& instances) {
+	return std::ranges::all_of(m_instances, [&renderItems](auto& instances) {
 		auto findGeo = renderItems.find(instances.first);
 		if (findGeo == renderItems.end())
 			return false;

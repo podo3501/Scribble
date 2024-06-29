@@ -14,13 +14,12 @@ enum class eType : int
 
 bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eType type, std::vector<std::wstring>& filenames)
 {
-	auto result = std::all_of(filenames.begin(), filenames.end(),
-		[texture = this, device, cmdList, type](auto& curFilename) {
+	auto result = std::ranges::all_of(filenames, [this, device, cmdList, type](auto& curFilename) {
 			auto texMemory = std::make_unique<TextureMemory>();
-			texMemory->filename = texture->m_resPath + texture->m_filePath + curFilename;
+			texMemory->filename = m_resPath + m_filePath + curFilename;
 			ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
 				texMemory->filename.c_str(), texMemory->resource, texMemory->uploadHeap));
-			texture->m_texMemories[type].emplace_back(std::move(texMemory));
+			m_texMemories[type].emplace_back(std::move(texMemory));
 			return true; });
 
 	if (!result) return result;
@@ -33,8 +32,8 @@ void CTexture::CreateShaderResourceView(eType type)
 	auto device = m_renderer->GetDevice();
 	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	auto srvDescHeap = m_renderer->GetSrvDescriptorHeap();
-	for_each(m_texMemories[type].begin(), m_texMemories[type].end(),
-		[texture = this, srvDescHeap, cbvSrvUavDescSize, device, type](auto& curTex) mutable {
+	std::ranges::for_each(m_texMemories[type],
+		[this, srvDescHeap, cbvSrvUavDescSize, device, type](auto& curTex) mutable {
 			auto& curTexRes = curTex->resource;
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 			srvDesc.Format = curTexRes->GetDesc().Format;
@@ -51,11 +50,11 @@ void CTexture::CreateShaderResourceView(eType type)
 				srvDesc.TextureCube.MipLevels = curTexRes->GetDesc().MipLevels;
 				srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 				srvDesc.Format = curTexRes->GetDesc().Format;
-				texture->m_skyTexHeapIndex = texture->m_offsetIndex;
+				m_skyTexHeapIndex = m_offsetIndex;
 			}
 
 			CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-			hCpuDesc.Offset(texture->m_offsetIndex++, cbvSrvUavDescSize);
+			hCpuDesc.Offset(m_offsetIndex++, cbvSrvUavDescSize);
 			device->CreateShaderResourceView(curTex->resource.Get(), &srvDesc, hCpuDesc);
 		});
 }
@@ -75,8 +74,8 @@ bool CTexture::LoadGraphicMemory()
 bool CTexture::LoadTexture(eType type, std::vector<std::wstring>& filenames)
 {
 	ReturnIfFalse(m_renderer->GetDirectx3D()->LoadData(
-		[texture = this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-			ReturnIfFalse(texture->Upload(device, cmdList, type, filenames));
+		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+			ReturnIfFalse(Upload(device, cmdList, type, filenames));
 			return true; }));
 
 	CreateShaderResourceView(type);

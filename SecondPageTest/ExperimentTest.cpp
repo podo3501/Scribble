@@ -1,4 +1,7 @@
 #include "pch.h"
+#include <algorithm>
+#include <ranges>
+#include <numeric>
 
 namespace Experiment
 {
@@ -68,5 +71,33 @@ namespace STDTest
 		for_each(intMap.begin(), intMap.end(), [](auto& iter) {
 			int test = iter.second;
 			});
+	}
+
+	TEST(STD20, ranges)
+	{
+		std::vector<int> items = { 0, 7, 8, 9, 10 };
+		auto find = std::ranges::find_if(items, [](int i) { return i == 8; });
+		auto idx = std::distance(items.begin(), find);
+		EXPECT_EQ(idx, 2);
+	}
+
+	TEST(STD20, views)
+	{
+		std::map<int, int> mItems = { {1, 1}, {2, 2} };
+		auto tmItems = std::views::all(mItems) | std::views::filter([](auto& iter) { return iter.first == 1; });
+
+		std::vector<int> vItems = { 1, 2, 3, 4, 5, 6 };
+		auto tvItems = vItems | std::ranges::views::filter([](auto n) 
+			{ 
+				return n % 2 == 0; 
+			});
+
+		std::vector<int> v = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+		auto rng = std::ranges::views::all(v)
+			| std::ranges::views::filter([](int a) {
+			return a % 2 == 0; }); // 짝수만 필터링
+
+		auto view{ std::views::transform(v, [](int i) { return i * i; }) };
+		auto sumsq {std::accumulate(view.begin(), view.end(), 0)};
 	}
 }
