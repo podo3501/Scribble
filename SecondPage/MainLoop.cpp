@@ -6,6 +6,7 @@
 #include "../Core/Window.h"
 #include "./UploadBuffer.h"
 #include "./GameTimer.h"
+#include "./RendererDefine.h"
 #include "./RenderItem.h"
 #include "./Shader.h"
 #include "./interface.h"
@@ -19,6 +20,17 @@
 #include "./Instance.h"
 
 using namespace DirectX;
+
+RenderItem::RenderItem()
+	: NumFramesDirty{ gFrameResourceCount }
+{}
+
+CMainLoop::~CMainLoop() = default;
+
+CMainLoop::CMainLoop(std::wstring resourcePath)
+{
+	m_resourcePath = resourcePath;
+}
 
 bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
 {
@@ -117,10 +129,11 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 	return false;
 }
 
-bool CMainLoop::Initialize(HINSTANCE hInstance, bool bShowWindow)
+bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 {
-	m_window = std::make_unique<CWindow>(hInstance);
-	ReturnIfFalse(m_window->Initialize(bShowWindow));
+	m_window = window;
+	m_iRenderer = renderer;
+
 	m_window->AddWndProcListener([this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return MsgProc(wnd, msg, wp, lp, lr); });
 
@@ -150,16 +163,6 @@ bool CMainLoop::InitializeClass()
 
 	m_timer = std::make_unique<CGameTimer>();
 
-	//m_directx3D = std::make_unique<CDirectx3D>(m_window.get());
-	//ReturnIfFalse(m_directx3D->Initialize());
-
-	/*m_renderer = std::make_shared<CRenderer>(m_resourcePath);
-	ReturnIfFalse(m_renderer->Initialize(m_directx3D.get()));*/
-
-	m_iRenderer = CreateRenderer(m_resourcePath);
-	m_iRenderer->Initialize(m_window.get());
-	//m_iRenderer = m_renderer; 
-
 	m_material = std::make_unique<CMaterial>();
 	m_material->Build();
 
@@ -172,7 +175,7 @@ bool CMainLoop::MakeFrameResource()
 {
 	m_frameResources = std::make_unique<CFrameResources>();
 	ReturnIfFalse(m_frameResources->BuildFrameResources(m_iRenderer->GetDevice(),
-		1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))));
+		gPassCBCount, gInstanceBufferCount, gMaterialBufferCount));
 
 	return true;
 }
@@ -193,8 +196,8 @@ bool CMainLoop::BuildCpuMemory()
 
 bool CMainLoop::BuildGraphicMemory()
 {
-	ReturnIfFalse(m_model->LoadGraphicMemory(m_iRenderer.get(), &m_AllRenderItems));
-	m_texture = std::make_unique<CTexture>(m_iRenderer.get(), m_resourcePath);
+	ReturnIfFalse(m_model->LoadGraphicMemory(m_iRenderer, &m_AllRenderItems));
+	m_texture = std::make_unique<CTexture>(m_iRenderer, m_resourcePath);
 	ReturnIfFalse(m_texture->LoadGraphicMemory());
 	
 	return true;
@@ -408,7 +411,7 @@ void CMainLoop::OnKeyboardInput()
 		return pressedKeyList; });
 }
 
-bool CMainLoop::Run()
+bool CMainLoop::Run(IRenderer* renderer)
 {
 	m_timer->Reset();
 	MSG msg = { 0 };
@@ -431,13 +434,13 @@ bool CMainLoop::Run()
 
 			m_camera->Update(m_timer->DeltaTime());
 
-			ReturnIfFalse(m_frameResources->PrepareFrame(m_iRenderer.get()));
+			ReturnIfFalse(m_frameResources->PrepareFrame(m_iRenderer));
 
 			UpdateRenderItems();
 			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			ReturnIfFalse(m_iRenderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRenderItems));
+			ReturnIfFalse(renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRenderItems));
 		}
 	}
 

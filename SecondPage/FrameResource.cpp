@@ -6,6 +6,9 @@
 #include "./RendererDefine.h"
 #include "./FrameResourceData.h"
 
+CFrameResources::CFrameResources() = default;
+CFrameResources::~CFrameResources() = default;
+
 bool CFrameResources::Resource::CreateUpdateBuffer(
 	ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount)
 {
@@ -14,8 +17,8 @@ bool CFrameResources::Resource::CreateUpdateBuffer(
 		IID_PPV_ARGS(cmdListAlloc.GetAddressOf())));
 
 	passCB = std::make_unique<CUploadBuffer>(device, sizeof(PassConstants), passCount, true);
-	materialBuffer = std::make_unique<CUploadBuffer>(device, sizeof(MaterialBuffer), materialCount, false);
 	instanceBuffer = std::make_unique<CUploadBuffer>(device, sizeof(InstanceBuffer), maxInstanceCount, false);
+	materialBuffer = std::make_unique<CUploadBuffer>(device, sizeof(MaterialBuffer), materialCount, false);
 
 	return true;
 }
@@ -51,8 +54,8 @@ CUploadBuffer* CFrameResources::GetUploadBuffer(eBufferType bufferType)
 	switch (bufferType)
 	{
 	case eBufferType::PassCB:			return resource->passCB.get();
-	case eBufferType::Material:		return resource->materialBuffer.get();
 	case eBufferType::Instance:		return resource->instanceBuffer.get();
+	case eBufferType::Material:		return resource->materialBuffer.get();
 	}
 
 	return nullptr;

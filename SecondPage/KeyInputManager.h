@@ -9,6 +9,8 @@ public:
 	using KeyListener = std::function<void(std::vector<int>)>;
 
 	CKeyInputManager();
+	~CKeyInputManager();
+
 	CKeyInputManager(const CKeyInputManager&) = delete;
 	CKeyInputManager& operator=(const CKeyInputManager&) = delete;
 

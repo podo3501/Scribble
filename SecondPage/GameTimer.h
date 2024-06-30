@@ -10,6 +10,7 @@ class CGameTimer
 {
 public:
 	CGameTimer();
+	~CGameTimer();
 
 	CGameTimer(const CGameTimer&) = delete;
 	CGameTimer& operator=(const CGameTimer&) = delete;

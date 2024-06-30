@@ -6,8 +6,12 @@
 
 using namespace DirectX;
 
-CMaterial::CMaterial()
+Material::Material()
+	: numFramesDirty{ gFrameResourceCount }
 {}
+
+CMaterial::CMaterial() = default;
+CMaterial::~CMaterial() = default;
 
 void CMaterial::Build()
 {

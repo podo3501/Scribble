@@ -12,6 +12,12 @@ enum class eType : int
 	Cube,
 };
 
+CTexture::CTexture(IRenderer* renderer, std::wstring resPath)
+	: m_renderer(renderer)
+	, m_resPath(std::move(resPath))
+{}
+CTexture::~CTexture() = default;
+
 bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eType type, std::vector<std::wstring>& filenames)
 {
 	auto result = std::ranges::all_of(filenames, [this, device, cmdList, type](auto& curFilename) {

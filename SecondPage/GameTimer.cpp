@@ -12,6 +12,7 @@ CGameTimer::CGameTimer()
 	QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSec);
 	mSecondsPerCount = 1.0 / (double)countsPerSec;
 }
+CGameTimer::~CGameTimer() = default;
 
 // Returns the total time elapsed since Reset() was called, NOT counting any
 // time when the clock is stopped.

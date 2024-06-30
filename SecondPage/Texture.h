@@ -16,11 +16,8 @@ enum class eType : int;
 class CTexture
 {
 public:
-	template<typename T>
-	CTexture(IRenderer* renderer, T&& resPath)
-		: m_renderer(renderer)
-		, m_resPath(std::forward<T>(resPath))
-	{}
+	CTexture(IRenderer* renderer, std::wstring resPath);
+	~CTexture();
 
 	bool LoadGraphicMemory();
 

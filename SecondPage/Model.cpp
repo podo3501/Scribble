@@ -9,6 +9,12 @@
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+CModel::CModel(std::wstring resPath)
+	: m_resPath(std::move(resPath))
+{}
+
+CModel::~CModel() = default;
+
 bool CModel::LoadGeometryList(const ModelTypeList& modelTypeList)
 {
 	return std::ranges::all_of(modelTypeList, [this](auto& modelType) {
@@ -48,7 +54,7 @@ bool CModel::ReadFile(const std::wstring& filename, MeshData* outData)
 {
 	std::wstring fullFilename = m_resPath + m_filePath + filename;
 	std::ifstream fin(fullFilename);
-	if (fin.bad())
+	if (fin.fail())
 		return false;
 
 	UINT vCount = 0;

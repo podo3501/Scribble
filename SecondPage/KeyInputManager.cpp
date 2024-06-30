@@ -1,7 +1,7 @@
 #include "KeyInputManager.h"
 
-CKeyInputManager::CKeyInputManager()
-{}
+CKeyInputManager::CKeyInputManager() = default;
+CKeyInputManager::~CKeyInputManager() = default;
 
 void CKeyInputManager::PressedKeyList(std::function<std::vector<int>()> keyList)
 {

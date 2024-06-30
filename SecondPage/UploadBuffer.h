@@ -9,11 +9,11 @@ class CUploadBuffer
 {
 public:
     CUploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCount, bool isConstantBuffer);
+    ~CUploadBuffer();
 
     CUploadBuffer(const CUploadBuffer& rhs) = delete;
     CUploadBuffer& operator=(const CUploadBuffer& rhs) = delete;
 
-    ~CUploadBuffer();
     ID3D12Resource* Resource()const;
 
     template<typename T>

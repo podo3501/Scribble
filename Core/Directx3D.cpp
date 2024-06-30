@@ -377,14 +377,16 @@ bool CDirectx3D::FlushCommandQueue()
 
 bool CDirectx3D::WaitUntilGpuFinished(UINT64 fenceCount)
 {
-	if (m_fence->GetCompletedValue() < fenceCount)
-	{
-		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+	if (m_fence->GetCompletedValue() >= fenceCount)
+		return true;
+	
+	HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+	if (eventHandle == nullptr) 
+		return false;
 
-		ReturnIfFailed(m_fence->SetEventOnCompletion(m_currentFence, eventHandle));
-		WaitForSingleObject(eventHandle, INFINITE);
-		CloseHandle(eventHandle);
-	}
+	ReturnIfFailed(m_fence->SetEventOnCompletion(m_currentFence, eventHandle));
+	WaitForSingleObject(eventHandle, INFINITE);
+	CloseHandle(eventHandle);
 
 	return true;
 }

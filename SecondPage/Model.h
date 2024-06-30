@@ -65,10 +65,8 @@ class CModel
 	using AllMeshDataList = std::unordered_map<std::string, MeshDataList>;
 
 public:
-	template<typename T>
-	CModel(T&& resPath)
-		: m_resPath(std::forward<T>(resPath))
-	{}
+	CModel(std::wstring resPath);
+	~CModel();
 
 	CModel(const CModel&) = delete;
 	CModel& operator=(const CModel&) = delete;

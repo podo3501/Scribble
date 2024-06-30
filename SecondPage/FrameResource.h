@@ -14,8 +14,8 @@ enum class eBufferType : int
 {
 	NoType = 0,
 	PassCB,
-	Material,
 	Instance,
+	Material,
 	Count,
 };
 
@@ -26,14 +26,16 @@ class CFrameResources
 		bool CreateUpdateBuffer(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
 
 		std::unique_ptr<CUploadBuffer> passCB{ nullptr };
-		std::unique_ptr<CUploadBuffer> materialBuffer{ nullptr };
 		std::unique_ptr<CUploadBuffer> instanceBuffer{ nullptr };
+		std::unique_ptr<CUploadBuffer> materialBuffer{ nullptr };
 
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdListAlloc{ nullptr };
 	};
 
 public:
-	CFrameResources() = default;
+	CFrameResources();
+	~CFrameResources();
+
 	CFrameResources(const CFrameResources&) = delete;
 	CFrameResources& operator=(const CFrameResources&) = delete;
 

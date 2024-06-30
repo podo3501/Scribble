@@ -4,11 +4,12 @@
 
 using Microsoft::WRL::ComPtr;
 
-CShader::CShader(std::wstring& resPath)
+CShader::CShader(std::wstring resPath)
 	: m_resPath(std::move(resPath))
 {
 	m_shaderList.resize(EtoV(GraphicsPSO::Count));
 }
+CShader::~CShader() = default;
 
 bool CShader::InsertShaderList(GraphicsPSO psoType, ShaderType shaderType, std::wstring&& filename)
 {

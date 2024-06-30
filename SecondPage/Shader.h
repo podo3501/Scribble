@@ -28,8 +28,9 @@ class CShader
 	};
 
 public:
-	CShader(std::wstring& resPath);
-	
+	CShader(std::wstring resPath);
+	~CShader();
+
 	CShader() = delete;
 	CShader(const CShader&) = delete;
 	CShader& operator=(const CShader&) = delete;

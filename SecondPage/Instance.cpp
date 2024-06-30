@@ -6,6 +6,9 @@
 
 using namespace DirectX;
 
+CInstance::CInstance() = default;
+CInstance::~CInstance() = default;
+
 InstanceDataList CreateSkullInstanceData(CMaterial* material)
 {
 	InstanceDataList instances{};

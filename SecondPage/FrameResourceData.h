@@ -24,13 +24,13 @@ struct PassConstants
     DirectX::XMFLOAT4X4 viewProj{};
     DirectX::XMFLOAT4X4 invViewProj{};
     DirectX::XMFLOAT3 eyePosW = { 0.0f, 0.0f, 0.0f };
-    float cbPerObjectPad1 = 0.0f;
+    float cbPerObjectPad1{ 0.0f };
     DirectX::XMFLOAT2 renderTargetSize = { 0.0f, 0.0f };
     DirectX::XMFLOAT2 invRenderTargetSize = { 0.0f, 0.0f };
-    float nearZ = 0.0f;
-    float farZ = 0.0f;
-    float totalTime = 0.0f;
-    float deltaTime = 0.0f;
+    float nearZ{ 0.0f };
+    float farZ{ 0.0f };
+    float totalTime{ 0.0f };
+    float deltaTime{ 0.0f };
 
     DirectX::XMFLOAT4 ambientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -55,10 +55,10 @@ struct MaterialBuffer
 
     DirectX::XMFLOAT4X4 matTransform{};
 
-    UINT diffuseMapIndex = 0;
-    UINT materialPad0;
-    UINT materialPad1;
-    UINT materialPad2;
+    UINT diffuseMapIndex{ 0u };
+    UINT materialPad0{ 0u };
+    UINT materialPad1{ 0u };
+    UINT materialPad2{ 0u };
 };
 
 //geometry ฐüทร struct

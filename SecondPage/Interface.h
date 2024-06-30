@@ -11,13 +11,13 @@ class CGameTimer;
 class CFrameResources;
 struct ID3D12Device;
 struct ID3D12GraphicsCommandList;
+struct ID3D12DescriptorHeap;
 struct RenderItem;
 
 interface IRenderer
 {
 	virtual ~IRenderer() {};
 
-	virtual bool Initialize(CWindow* window) { return true; };
 	virtual bool OnResize(int wndWidth, int wndHeight) { return true; };
 	virtual bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
 	{ return true; };
@@ -29,4 +29,4 @@ interface IRenderer
 	virtual inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const { return nullptr;	};
 };
 
-std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath);
+std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath, CWindow* window);

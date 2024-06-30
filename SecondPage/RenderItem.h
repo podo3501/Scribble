@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RendererDefine.h"
 #include <d3dcommon.h>
 #include <DirectXCollision.h>
 #include <vector>
@@ -53,7 +52,7 @@ using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;
 
 struct RenderItem
 {
-	RenderItem() = default;
+	RenderItem();
 
 	D3D12_PRIMITIVE_TOPOLOGY primitiveType{ D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST };
 	
@@ -67,7 +66,7 @@ struct RenderItem
 
 	SubRenderItems subRenderItems{};
 
-	int NumFramesDirty{ gFrameResourceCount };
+	int NumFramesDirty{ 0 };
 
 	// We can free this memory after we finish upload to the GPU.
 	void DisposeUploaders()

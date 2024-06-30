@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "./RendererDefine.h"
 #include <DirectXColors.h>
 #include "../Core/Directx3D.h"
 #include "../Core/d3dx12.h"
@@ -13,10 +14,20 @@
 
 using Microsoft::WRL::ComPtr;
 
-std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath)
+std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath, CWindow* window)
 {
-	return std::move(std::make_unique<CRenderer>(resPath));
+	std::unique_ptr<CRenderer> renderer = std::make_unique<CRenderer>(resPath);
+	bool bResult = renderer->Initialize(window);
+	if (bResult != true)
+		return nullptr;
+
+	return std::move(renderer);
 }
+
+CRenderer::CRenderer(std::wstring resPath)
+	: m_resPath(std::move(resPath))
+{}
+CRenderer::~CRenderer() = default;
 
 bool CRenderer::Initialize(CWindow* window)
 {

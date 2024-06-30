@@ -11,14 +11,18 @@
 --그리고 geometry와 renderitem을 삭제한다.
 
 --데이터들 + instance정보 => renderItem 해서 renderer에 renderItem으로 랜더링 하게끔 한다.
+--랜더링에 의존적이지 않게 interface 를 만들어서 연결한다.
+--추후에 draw함수 테스트 할때 가짜 interface 클래스를 생성해서 연결하면 Draw함수도 테스트 가능하다.
+
+--directx3d를 외부에서 안 보이게 하는중
+--draw호출을 반대로 한다.
 
 파일을 로딩하고 보여주는 부분을 나눌려고 한다.
 mainloop클래스에 클래스들을 나누어야 한다.
 
-랜더링에 의존적이지 않게 interface 를 만들어서 연결한다.
-추후에 draw함수 테스트 할때 가짜 interface 클래스를 생성해서 연결하면 Draw함수도 테스트 가능하다.
-
-directx3d를 외부에서 안 보이게 하는중
 fence를 renderer로 올린다.
 
-draw호출을 반대로 한다.
+Renderer를 코어로 옮긴다.
+model, m_texture, m_instance 이 세개를 밖으로 뺀다
+
+

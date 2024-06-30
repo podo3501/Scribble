@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RendererDefine.h"
+//#include "RendererDefine.h"
 #include <DirectXMath.h>
 #include <memory>
 #include <unordered_map>
@@ -19,11 +19,13 @@ enum class TextureType : int
 
 struct Material
 {
+	Material();
+
 	std::string name{};
 	TextureType type{ TextureType::None };
 	int normalSrvHeapIndex{ -1 };	//normal map
 
-	int numFramesDirty{ gFrameResourceCount };
+	int numFramesDirty{ 0 };
 
 	DirectX::XMFLOAT4 diffuseAlbedo{ 1.0f, 1.0f, 1.0f, 1.0f };
 	DirectX::XMFLOAT3 fresnelR0{ 0.01f, 0.01f, 0.01f };
@@ -36,7 +38,7 @@ class CMaterial
 {
 public:
 	CMaterial();
-	~CMaterial() = default;
+	~CMaterial();
 
 	CMaterial(const CMaterial&) = delete;
 	CMaterial& operator=(const CMaterial&) = delete;

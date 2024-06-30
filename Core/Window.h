@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include <utility>
+#include <vector>
 #include "CoreInterface.h"
 
 class CWindow

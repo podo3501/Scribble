@@ -60,6 +60,7 @@ CWindow::CWindow(HINSTANCE hInstance)
 
 CWindow::~CWindow()
 {
+	m_wndProcListeners.clear();
 	DestroyWindow(m_wnd);
 	UnregisterClass(m_className.c_str(), m_appInst);
 }

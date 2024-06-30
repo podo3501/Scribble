@@ -5,6 +5,7 @@
 #include <string>
 #include <Windows.h>
 #include <DirectXCollision.h>
+#include <unordered_map>
 
 interface IRenderer;
 class CWindow;
@@ -30,16 +31,15 @@ class CMainLoop
 	using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;
 
 public:
-	template<typename T>
-	CMainLoop(T&& resourcePath);
-	~CMainLoop() = default;
+	CMainLoop(std::wstring resourcePath);
+	~CMainLoop();
 
 	CMainLoop() = delete;
 	CMainLoop(const CMainLoop&) = delete;
 	CMainLoop& operator=(const CMainLoop&) = delete;
 
-	bool Initialize(HINSTANCE hInstance, bool bShowWindow = true);
-	bool Run();
+	bool Initialize(CWindow* window, IRenderer* renderer);
+	bool Run(IRenderer* renderer = nullptr);
 
 private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
@@ -75,15 +75,15 @@ private:
 
 private:
 	std::wstring m_resourcePath{};
-	std::unique_ptr<CWindow> m_window{ nullptr };
-	std::shared_ptr<IRenderer> m_iRenderer{ nullptr };
+	CWindow* m_window{ nullptr };
+	IRenderer* m_iRenderer{ nullptr };
 
 	std::unique_ptr<CCamera> m_camera{ nullptr };
+	std::unique_ptr<CMaterial> m_material{ nullptr };
 	std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
-
-	std::unique_ptr<CMaterial> m_material{ nullptr };
+	
 	std::unique_ptr<CTexture> m_texture{ nullptr };
 	std::unique_ptr<CModel> m_model{ nullptr };
 	std::unique_ptr<CInstance> m_instance{ nullptr };
@@ -102,9 +102,3 @@ private:
 	POINT m_lastMousePos{};
 	std::wstring m_windowCaption{};
 };
-
-template<typename T>
-CMainLoop::CMainLoop(T&& resourcePath)
-{
-	m_resourcePath = std::forward<T>(resourcePath);
-}

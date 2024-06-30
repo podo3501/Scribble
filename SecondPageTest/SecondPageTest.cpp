@@ -13,7 +13,6 @@
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Texture.h"
 #include "../SecondPage/interface.h"
-#include "../SecondPage/Shader.h"
 #include "../SecondPage/Model.h"
 #include "../SecondPage/FrameResource.h"
 #include "../SecondPage/FrameResourceData.h"
@@ -38,8 +37,8 @@ namespace MainLoop
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(false), true);
 
-			m_renderer = CreateRenderer(m_resourcePath);
-			EXPECT_EQ(m_renderer->Initialize(m_window.get()), true);
+			m_renderer = CreateRenderer(m_resourcePath, m_window.get());
+			EXPECT_EQ(m_renderer != nullptr, true);
 
 			m_material = std::make_unique<CMaterial>();
 			m_material->Build();
@@ -100,12 +99,6 @@ namespace MainLoop
 		EXPECT_EQ(pos.z, 1.0f);
 	}
 
-	TEST(MainLoop, Initialize)
-	{
-		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
-		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr), false), true);
-	}
-
 	class MainLoopClassTest : public ::testing::Test
 	{
 	public:
@@ -117,8 +110,8 @@ namespace MainLoop
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(false), true);
 
-			m_renderer = CreateRenderer(m_resourcePath);
-			EXPECT_EQ(m_renderer->Initialize(m_window.get()), true);
+			m_renderer = CreateRenderer(m_resourcePath, m_window.get());
+			EXPECT_EQ(m_renderer != nullptr, true);
 		}
 
 		void TearDown() override
@@ -159,12 +152,31 @@ namespace MainLoop
 	}
 } //SecondPage
 
+class GTestRenderer : public IRenderer
+{
+	virtual bool Draw(CGameTimer* gt, CFrameResources* frameResources,
+		std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) override
+	{
+		EXPECT_EQ(renderItem.empty(), false);
+		PostQuitMessage(0);
+		return true;
+	};
+};
+
 namespace A_SecondPage
 {
 	TEST(MainLoop, RunTest)
 	{
-		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(L"../Resource/");
-		EXPECT_EQ(mainLoop->Initialize(GetModuleHandle(nullptr)), true);
-		EXPECT_EQ(mainLoop->Run(), true);
+		std::wstring resPath = L"../Resource/";
+
+		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
+		window->Initialize(true);
+		auto renderer = CreateRenderer(resPath, window.get());
+
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(resPath);
+		EXPECT_EQ(mainLoop->Initialize(window.get(), renderer.get()), true);
+
+		GTestRenderer testRenderer;
+		EXPECT_EQ(mainLoop->Run(&testRenderer), true);
 	}
 }

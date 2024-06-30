@@ -23,16 +23,14 @@ enum class GraphicsPSO;
 class CRenderer : public IRenderer
 {
 public:
-	template<typename T>
-	CRenderer(T&& resPath)
-		: m_resPath(std::forward<T>(resPath))
-	{}
+	CRenderer(std::wstring resPath);
+	~CRenderer();
 
 	CRenderer() = delete;
 	CRenderer(const CRenderer&) = delete;
 	CRenderer& operator=(const CRenderer&) = delete;
 
-	virtual bool Initialize(CWindow* window) override;
+	bool Initialize(CWindow* window);
 	virtual bool OnResize(int wndWidth, int wndHeight) override;
 	virtual bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory) override;
 	virtual bool Draw(CGameTimer* gt, CFrameResources* frameResources,

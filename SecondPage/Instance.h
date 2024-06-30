@@ -20,7 +20,8 @@ class CInstance
 	using AllInstances = std::unordered_map<std::string, InstanceInfos>;
 
 public:
-	CInstance() = default;
+	CInstance();
+	~CInstance();
 
 	CInstance(const CInstance&) = delete;
 	CInstance& operator=(const CInstance&) = delete;
