@@ -173,10 +173,10 @@ bool CMainLoop::BuildCpuMemory()
 
 bool CMainLoop::BuildGraphicMemory()
 {
-	ReturnIfFalse(m_model->LoadGraphicMemory(m_iRenderer, &m_AllRenderItems));
+	ReturnIfFalse(m_model->LoadModelIntoVRAM(m_iRenderer, &m_AllRenderItems));
 
-	m_texture = std::make_unique<CTexture>(m_iRenderer, m_resourcePath);
-	ReturnIfFalse(m_texture->LoadGraphicMemory());
+	m_texture = std::make_unique<CTexture>(m_resourcePath);
+	ReturnIfFalse(m_instance->LoadTextureIntoVRAM(m_iRenderer, m_texture.get()));
 	
 	return true;
 }

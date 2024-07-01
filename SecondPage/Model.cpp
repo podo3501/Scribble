@@ -189,7 +189,7 @@ bool CModel::Convert(const MeshDataList& meshDataList,
 	return true;
 }
 
-bool CModel::LoadGraphicMemory(IRenderer* renderer, AllRenderItems* outRenderItems)
+bool CModel::LoadModelIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems)
 {
 	return std::ranges::all_of(m_AllMeshDataList, [&outRenderItems, renderer, this](auto& iter) {
 			auto renderItem = std::make_unique<RenderItem>();

@@ -49,31 +49,6 @@ namespace MainLoop
 		std::unique_ptr<IRenderer> m_renderer{ nullptr };
 	};
 
-	TEST_F(MainLoopClassTest, ModelTest)
-	{
-		//std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
-		//material->Build();
-
-		//std::unique_ptr<CInstance> instance = std::make_unique<CInstance>();
-		//instance->CreateInstanceData(nullptr, "nature", "cube");
-		//instance->CreateInstanceData(material.get(), "things", "skull");
-
-		//std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
-
-		//ModelTypeList modelTypeList
-		//{
-		//	ModelType(CreateType::Generator, "nature", "cube"), 
-		//	ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
-		//};
-
-		//std::unordered_map<std::string, std::unique_ptr<RenderItem>> renderItems{};
-		//EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
-		//EXPECT_EQ(model->LoadGraphicMemory(m_renderer.get(), &renderItems), true);
-		//EXPECT_EQ(renderItems["things"]->vertexBufferGPU != nullptr, true );
-
-		//EXPECT_EQ(instance->FillRenderItems(renderItems), true);
-	}
-
 	TEST_F(MainLoopClassTest, CameraUpdate)
 	{
 		auto deltaTime = 0.1f;
@@ -113,7 +88,7 @@ namespace MainLoop
 		EXPECT_EQ(m_instance->CreateMockData(), true);
 		EXPECT_EQ(m_instance->LoadModel(model.get()), true);
 		
-		EXPECT_EQ(model->LoadGraphicMemory(m_renderer.get(), &renderItems), true);
+		EXPECT_EQ(model->LoadModelIntoVRAM(m_renderer.get(), &renderItems), true);
 		EXPECT_EQ(m_instance->FillRenderItems(renderItems), true);
 		EXPECT_EQ(renderItems.empty(), false);
 	}

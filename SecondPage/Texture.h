@@ -11,24 +11,28 @@ struct ID3D12Device;
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
 struct ID3D12DescriptorHeap;
-enum class eType : int;
+
+enum class eTextureType : int
+{
+	Cube = 0,
+	Common,
+};
 
 class CTexture
 {
 public:
-	CTexture(IRenderer* renderer, std::wstring resPath);
+	CTexture(std::wstring resPath);
 	~CTexture();
 
-	bool LoadGraphicMemory();
+	bool LoadTexture(IRenderer* renderer, eTextureType type, std::vector<std::wstring>& filenames);
 
 	CTexture() = delete;
 	CTexture(const CTexture&) = delete;
 	CTexture& operator=(const CTexture&) = delete;
 
 private:
-	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eType type, std::vector<std::wstring>& filenames);
-	bool LoadTexture(eType type, std::vector<std::wstring>& filenames);
-	void CreateShaderResourceView(eType type);
+	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::vector<std::wstring>& filenames);
+	void CreateShaderResourceView(IRenderer* renderer, eTextureType type);
 
 private:
 	struct TextureMemory
@@ -41,11 +45,10 @@ private:
 	};
 
 private:
-	IRenderer* m_renderer{ nullptr };
 	std::wstring m_resPath{};
 	const std::wstring m_filePath{ L"Textures/" };
 
-	std::map<eType, std::vector<std::unique_ptr<TextureMemory>>> m_texMemories{};
+	std::map<eTextureType, std::vector<std::unique_ptr<TextureMemory>>> m_texMemories{};
 	int m_skyTexHeapIndex{ 0 };
 	int m_offsetIndex{ 0 };
 };

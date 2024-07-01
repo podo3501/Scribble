@@ -3,23 +3,25 @@
 #include <ranges>
 #include "../Core/Utility.h"
 #include "../Core/d3dUtil.h"
-#include "./Material.h"
-#include "./Model.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
+#include "./Material.h"
+#include "./Model.h"
+#include "./Texture.h"
+
 
 using namespace DirectX;
 
 CInstance::CInstance() {}
 CInstance::~CInstance() = default;
 
-InstanceDataList CreateSkullInstanceData(CMaterial* material)
+InstanceDataList CInstance::CreateSkullInstanceData()
 {
 	InstanceDataList instances{};
 
 	const int n = 5;
-	int matCount = 7; 
-	int startIndex = 1; 
+	int matCount = GetTextureCount(eTextureType::Common);
+	int startIndex = GetTextureCount(eTextureType::Cube);
 
 	float width = 200.0f;
 	float height = 200.0f;
@@ -69,7 +71,7 @@ InstanceDataList CreateSkyCubeInstanceData()
 	return instances;
 }
 
-bool CInstance::CreateMockData()
+bool CInstance::CreateModelMock()
 {
 	ModelProperty cube{};
 	cube.createType = ModelProperty::CreateType::Generator;
@@ -82,12 +84,33 @@ bool CInstance::CreateMockData()
 	skull.createType = ModelProperty::CreateType::ReadFile;
 	skull.cullingFrustum = true;
 	skull.filename = L"skull.txt";
-	skull.instanceDataList = CreateSkullInstanceData(nullptr);
+	skull.instanceDataList = CreateSkullInstanceData();
 	ReturnIfFalse(Insert("things", "skull", skull));
 
 	return true;
 }
 
+bool CInstance::CreateTextureMock()
+{
+	TypeTextures cubeTextures(eTextureType::Cube, { L"grasscube1024.dds" });
+	TypeTextures skullTextures(eTextureType::Common,
+		{ L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds", L"ice.dds", L"grass.dds", L"white1x1.dds" });
+
+	m_textureList.emplace_back(std::move(cubeTextures));
+	m_textureList.emplace_back(std::move(skullTextures));
+
+	return true;
+}
+
+bool CInstance::CreateMockData()
+{
+	ReturnIfFalse(CreateTextureMock());
+	ReturnIfFalse(CreateModelMock());
+
+	return true;
+}
+
+using MeshProperty = std::unordered_map<std::string, ModelProperty>;
 bool FillInstanceInfo(SubRenderItems& subRenderItems, const MeshProperty& meshProperties)
 {
 	return std::ranges::all_of(meshProperties, [&subRenderItems](auto& mProp) {
@@ -135,4 +158,16 @@ bool CInstance::LoadModel(CModel* model)
 	return std::ranges::all_of(m_allModelProperty, [this, model](auto& geoProp) {
 		auto& geoName = geoProp.first;
 		return LoadMesh(model, geoName, geoProp.second); });
+}
+
+bool CInstance::LoadTextureIntoVRAM(IRenderer* renderer, CTexture* texture)
+{
+	return std::ranges::all_of(m_textureList, [renderer, texture](auto& typeTex) {
+		return texture->LoadTexture(renderer, typeTex.first, typeTex.second); });
+}
+
+int CInstance::GetTextureCount(eTextureType texType)
+{
+	auto find = std::ranges::find_if(m_textureList, [texType](auto& typeTex) { return typeTex.first == texType; });
+	return static_cast<int>(find->second.size());
 }

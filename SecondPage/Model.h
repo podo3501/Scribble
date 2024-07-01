@@ -75,7 +75,7 @@ public:
 
 	bool LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty);
 	bool LoadGeometryList(const ModelTypeList& modelTypeList);
-	bool LoadGraphicMemory(IRenderer* renderer, AllRenderItems* outRenderItems);
+	bool LoadModelIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems);
 
 private:
 	bool LoadGeometry(const ModelType& type);

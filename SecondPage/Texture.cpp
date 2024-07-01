@@ -6,19 +6,12 @@
 
 using namespace DirectX;
 
-enum class eType : int
-{
-	Common = 0,
-	Cube,
-};
-
-CTexture::CTexture(IRenderer* renderer, std::wstring resPath)
-	: m_renderer(renderer)
-	, m_resPath(std::move(resPath))
+CTexture::CTexture(std::wstring resPath)
+	: m_resPath(std::move(resPath))
 {}
 CTexture::~CTexture() = default;
 
-bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eType type, std::vector<std::wstring>& filenames)
+bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::vector<std::wstring>& filenames)
 {
 	auto result = std::ranges::all_of(filenames, [this, device, cmdList, type](auto& curFilename) {
 			auto texMemory = std::make_unique<TextureMemory>();
@@ -33,11 +26,11 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
 	return true;
 }
 
-void CTexture::CreateShaderResourceView(eType type)
+void CTexture::CreateShaderResourceView(IRenderer* renderer, eTextureType type)
 {
-	auto device = m_renderer->GetDevice();
+	auto device = renderer->GetDevice();
 	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	auto srvDescHeap = m_renderer->GetSrvDescriptorHeap();
+	auto srvDescHeap = renderer->GetSrvDescriptorHeap();
 	std::ranges::for_each(m_texMemories[type],
 		[this, srvDescHeap, cbvSrvUavDescSize, device, type](auto& curTex) mutable {
 			auto& curTexRes = curTex->resource;
@@ -49,7 +42,7 @@ void CTexture::CreateShaderResourceView(eType type)
 			srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
-			if (type == eType::Cube)
+			if (type == eTextureType::Cube)
 			{
 				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 				srvDesc.TextureCube.MostDetailedMip = 0;
@@ -65,26 +58,14 @@ void CTexture::CreateShaderResourceView(eType type)
 		});
 }
 
-bool CTexture::LoadGraphicMemory()
+bool CTexture::LoadTexture(IRenderer* renderer, eTextureType type, std::vector<std::wstring>& filenames)
 {
-	std::vector<std::wstring> cubeFilenames = { L"grasscube1024.dds" };
-	std::vector<std::wstring> commonFilenames = { L"bricks.dds", L"stone.dds", L"tile.dds", L"WoodCrate01.dds",
-		L"ice.dds", L"grass.dds", L"white1x1.dds" };
-
-	ReturnIfFalse(LoadTexture(eType::Cube, cubeFilenames));
-	ReturnIfFalse(LoadTexture(eType::Common, commonFilenames));
-	
-	return true;
-}
-
-bool CTexture::LoadTexture(eType type, std::vector<std::wstring>& filenames)
-{
-	ReturnIfFalse(m_renderer->LoadData(
+	ReturnIfFalse(renderer->LoadData(
 		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 			ReturnIfFalse(Upload(device, cmdList, type, filenames));
 			return true; }));
 
-	CreateShaderResourceView(type);
+	CreateShaderResourceView(renderer, type);
 
 	return true;
 }

@@ -2,9 +2,9 @@
 #include <ranges>
 #include <algorithm>
 #include "../Core/d3dUtil.h"
-#include "./FrameResourceData.h"
-#include "./RendererDefine.h"
-#include "./Interface.h"
+#include "../Include/FrameResourceData.h"
+#include "../Include/RendererDefine.h"
+#include "../Include/Interface.h"
 
 using namespace DirectX;
 
