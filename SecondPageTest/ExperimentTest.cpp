@@ -113,6 +113,7 @@ namespace STDTest
 		std::map<int, int> mItems = { {1, 1}, {2, 2} };
 		auto tmItems = std::views::all(mItems) | std::views::filter([](auto& iter) { return iter.first == 1; });
 
+		//filter는 참인것만 담는다.
 		std::vector<int> vItems = { 1, 2, 3, 4, 5, 6 };
 		auto tvItems = vItems | std::ranges::views::filter([](auto n) 
 			{ 

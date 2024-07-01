@@ -49,7 +49,6 @@ private:
 	bool BuildCpuMemory();
 	bool BuildGraphicMemory();
 
-	bool MakeFrameResource();
 	bool IsInsideFrustum(
 		const DirectX::BoundingSphere& bSphere, 
 		const DirectX::XMMATRIX& invView, 
@@ -57,10 +56,8 @@ private:
 
 	void UpdateRenderItems();
 	void UpdateInstanceBuffer(const InstanceDataList& visibleInstance);
-	void UpdateMaterialBuffer();
 	void UpdateMainPassCB();
-	void FindVisibleSubRenderItems(
-		SubRenderItems& subRenderItems, int* instanceStartIndex, InstanceDataList& visibleInstance);
+	void FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance);
 
 	bool OnResize();
 
@@ -80,7 +77,6 @@ private:
 
 	std::unique_ptr<CCamera> m_camera{ nullptr };
 	std::unique_ptr<CMaterial> m_material{ nullptr };
-	std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
 	

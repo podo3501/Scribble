@@ -9,20 +9,14 @@ class CUploadBuffer;
 class CDirectx3D;
 struct ID3D12Device;
 struct ID3D12CommandAllocator;
-
-enum class eBufferType : int
-{
-	NoType = 0,
-	PassCB,
-	Instance,
-	Material,
-	Count,
-};
+struct ID3D12Resource;
+enum class eBufferType;
 
 class CFrameResources
 {
 	struct Resource
 	{
+		~Resource();
 		bool CreateUpdateBuffer(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
 
 		std::unique_ptr<CUploadBuffer> passCB{ nullptr };
@@ -42,13 +36,18 @@ public:
 	bool BuildFrameResources(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
 	bool PrepareFrame(IRenderer* renderer);
+	bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize);
 
-	CUploadBuffer* GetUploadBuffer(eBufferType bufferType);
 	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_resources[m_frameResIdx]->cmdListAlloc.Get();	}
 	inline void SetFence(UINT64 fenceIdx)	{ m_fenceCount = fenceIdx; }
+	ID3D12Resource* GetResource(eBufferType bufferType);
+
+private:
+	CUploadBuffer* GetUploadBuffer(eBufferType bufferType);
 
 private:
 	std::vector<std::unique_ptr<Resource>> m_resources{};
 	UINT m_frameResIdx{ 0 };
 	UINT64 m_fenceCount{ 0 };
 };
+

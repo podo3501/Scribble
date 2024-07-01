@@ -15,6 +15,15 @@ struct Light
     static constexpr int MaxLights = 16;
 };
 
+enum class eBufferType : int
+{
+    NoType = 0,
+    PassCB,
+    Instance,
+    Material,
+    Count,
+};
+
 struct PassConstants
 {
     DirectX::XMFLOAT4X4 view{};

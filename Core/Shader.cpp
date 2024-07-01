@@ -1,6 +1,6 @@
 #include "Shader.h"
 #include "../Core/d3dUtil.h"
-#include "./RendererDefine.h"
+#include "../Include/RendererDefine.h"
 
 using Microsoft::WRL::ComPtr;
 

@@ -4,16 +4,13 @@
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
 #include "../Core/Window.h"
-#include "./UploadBuffer.h"
+#include "../Include/RendererDefine.h"
+#include "../Include/RenderItem.h"
+#include "../Include/interface.h"
+#include "../Include/FrameResourceData.h"
 #include "./GameTimer.h"
-#include "./RendererDefine.h"
-#include "./RenderItem.h"
-#include "./Shader.h"
-#include "./interface.h"
 #include "./Material.h"
 #include "./Model.h"
-#include "./FrameResource.h"
-#include "./FrameResourceData.h"
 #include "./Texture.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
@@ -144,7 +141,6 @@ bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 	ReturnIfFalse(OnResize());
 	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
 	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-	ReturnIfFalse(MakeFrameResource());		//한 프레임에 쓰일 리소스를 만듦
 
 	//view에서 작업할 것들(run은 실시간으로 projection과 관련한다)
 	m_instance->CreateInstanceData(nullptr, "nature", "cube");
@@ -167,15 +163,6 @@ bool CMainLoop::InitializeClass()
 	m_material->Build();
 
 	m_instance = std::make_unique<CInstance>();
-
-	return true;
-}
-
-bool CMainLoop::MakeFrameResource()
-{
-	m_frameResources = std::make_unique<CFrameResources>();
-	ReturnIfFalse(m_frameResources->BuildFrameResources(m_iRenderer->GetDevice(),
-		gPassCBCount, gInstanceBufferCount, gMaterialBufferCount));
 
 	return true;
 }
@@ -225,8 +212,7 @@ std::wstring SetWindowCaption(std::size_t visibleCount, std::size_t totalCount)
 	return outs.str();
 }
 
-void CMainLoop::FindVisibleSubRenderItems(
-	SubRenderItems& subRenderItems, int* instanceStartIndex, InstanceDataList& visibleInstance)
+void CMainLoop::FindVisibleSubRenderItems( SubRenderItems& subRenderItems, InstanceDataList& visibleInstance)
 {
 	XMMATRIX view = m_camera->GetView();
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
@@ -248,8 +234,6 @@ void CMainLoop::FindVisibleSubRenderItems(
 			std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
 
 		subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
-		subRenderItem.startIndexInstance = (*instanceStartIndex);
-		(*instanceStartIndex) += subRenderItem.instanceCount;
 	}
 }
 
@@ -260,40 +244,30 @@ void CMainLoop::UpdateRenderItems()
 	int instanceStartIndex{ 0 };
 	for (auto& e : m_AllRenderItems)
 	{
-		auto& subRenderItems = e.second->subRenderItems;
-	
+		auto renderItem = e.second.get();
+		renderItem->startIndexInstance = instanceStartIndex;
 		//보여지는 서브 아이템을 찾아낸다.
-		FindVisibleSubRenderItems(subRenderItems, &instanceStartIndex, visibleInstance);
+		FindVisibleSubRenderItems(renderItem->subRenderItems, visibleInstance);
+		instanceStartIndex += static_cast<int>(visibleInstance.size());
 	}
 	UpdateInstanceBuffer(visibleInstance);
 }
 
 void CMainLoop::UpdateInstanceBuffer(const InstanceDataList& visibleInstance)
 {
-	auto instanceBuffer = m_frameResources->GetUploadBuffer(eBufferType::Instance);
-
-	int visibleCount{ 0 };
-	for (auto& instanceData : visibleInstance)
-	{
+	std::vector<InstanceBuffer> instanceBufferDatas{};
+	std::ranges::transform(visibleInstance, std::back_inserter(instanceBufferDatas), [](auto& visibleData) {
 		InstanceBuffer curInsBuf{};
-		XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(instanceData->world));
-		XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(instanceData->texTransform));
-		curInsBuf.materialIndex = instanceData->matIndex;
+		XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(visibleData->world));
+		XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(visibleData->texTransform));
+		curInsBuf.materialIndex = visibleData->matIndex;
+		return std::move(curInsBuf); });
 
-		instanceBuffer->CopyData(visibleCount++, curInsBuf);
-	}
-}
-
-void CMainLoop::UpdateMaterialBuffer()
-{
-	auto materialBuffer = m_frameResources->GetUploadBuffer(eBufferType::Material);
-	m_material->MakeMaterialBuffer(&materialBuffer);
+	m_iRenderer->SetUploadBuffer(eBufferType::Instance, instanceBufferDatas.data(), instanceBufferDatas.size());
 }
 
 void CMainLoop::UpdateMainPassCB()
-{
-	auto passCB = m_frameResources->GetUploadBuffer(eBufferType::PassCB);
-	
+{	
 	PassConstants pc;
 	m_camera->GetPassCB(&pc);
 	m_timer->GetPassCB(&pc);
@@ -313,9 +287,8 @@ void CMainLoop::UpdateMainPassCB()
 	pc.lights[2].direction = { 0.0f, -0.707f, -0.707f };
 	pc.lights[2].strength = { 0.2f, 0.2f, 0.2f };
 
-	passCB->CopyData(0, pc);
+	m_iRenderer->SetUploadBuffer(eBufferType::PassCB, &pc, 1);
 }
-
 
 bool CMainLoop::OnResize()
 {
@@ -434,13 +407,13 @@ bool CMainLoop::Run(IRenderer* renderer)
 
 			m_camera->Update(m_timer->DeltaTime());
 
-			ReturnIfFalse(m_frameResources->PrepareFrame(m_iRenderer));
+			ReturnIfFalse(m_iRenderer->PrepareFrame());
 
+			m_material->MakeMaterialBuffer(m_iRenderer);
 			UpdateRenderItems();
-			UpdateMaterialBuffer();
 			UpdateMainPassCB();
 
-			ReturnIfFalse(renderer->Draw(m_timer.get(), m_frameResources.get(), m_AllRenderItems));
+			ReturnIfFalse(renderer->Draw(m_AllRenderItems));
 		}
 	}
 

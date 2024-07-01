@@ -134,36 +134,28 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Instance.cpp" />
-    <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="KeyInputManager.cpp" />
     <ClCompile Include="MainLoop.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="UploadBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Include\FrameResourceData.h" />
+    <ClInclude Include="..\Include\Interface.h" />
+    <ClInclude Include="..\Include\RendererDefine.h" />
+    <ClInclude Include="..\Include\RenderItem.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Instance.h" />
-    <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="FrameResourceData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
-    <ClInclude Include="Interface.h" />
     <ClInclude Include="KeyInputManager.h" />
     <ClInclude Include="MainLoop.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="RenderItem.h" />
-    <ClInclude Include="RendererDefine.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
-    <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">

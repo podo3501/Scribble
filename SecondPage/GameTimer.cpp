@@ -4,7 +4,7 @@
 
 #include <windows.h>
 #include "GameTimer.h"
-#include "./FrameResourceData.h"
+#include "../Include/FrameResourceData.h"
 
 CGameTimer::CGameTimer()
 {

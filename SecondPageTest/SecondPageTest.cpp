@@ -8,17 +8,15 @@
 #include "../Core/Directx3D.h"
 #include "../Core/Window.h"
 #include "../Core/d3dUtil.h"
-#include "../SecondPage/UploadBuffer.h"
+#include "../Include/interface.h"
+#include "../Include/RenderItem.h"
+#include "../Include/FrameResourceData.h"
 #include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Texture.h"
-#include "../SecondPage/interface.h"
 #include "../SecondPage/Model.h"
-#include "../SecondPage/FrameResource.h"
-#include "../SecondPage/FrameResourceData.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
-#include "../SecondPage/RenderItem.h"
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/Instance.h"
 
@@ -58,15 +56,6 @@ namespace MainLoop
 		std::unique_ptr<IRenderer> m_renderer{ nullptr };
 		std::unique_ptr<CMaterial> m_material{ nullptr };
 	};
-
-	TEST_F(MainLoopTest, FrameResourceTest)
-	{
-		std::unique_ptr<CFrameResources> frameResources = std::make_unique<CFrameResources>();
-		EXPECT_EQ(frameResources->BuildFrameResources(
-			m_renderer->GetDevice(), 1, 125, static_cast<UINT>(m_material->GetCount(TextureType::Total))), true);
-		EXPECT_EQ(frameResources->PrepareFrame(m_renderer.get()), true);
-		EXPECT_EQ(frameResources->GetUploadBuffer(eBufferType::PassCB) != nullptr, true);
-	}
 
 	TEST_F(MainLoopTest, WindowMessage)
 	{
@@ -119,7 +108,7 @@ namespace MainLoop
 			m_window.reset();
 			m_renderer.reset();
 		}
-
+		
 	protected:
 		std::wstring m_resourcePath{ L"../Resource/" };
 		std::unique_ptr<CWindow> m_window{ nullptr };
@@ -154,8 +143,7 @@ namespace MainLoop
 
 class GTestRenderer : public IRenderer
 {
-	virtual bool Draw(CGameTimer* gt, CFrameResources* frameResources,
-		std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) override
+	virtual bool Draw(std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) override
 	{
 		EXPECT_EQ(renderItem.empty(), false);
 		PostQuitMessage(0);

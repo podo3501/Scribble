@@ -1,8 +1,10 @@
 #include "./Material.h"
+#include <ranges>
+#include <algorithm>
 #include "../Core/d3dUtil.h"
-#include "./UploadBuffer.h"
 #include "./FrameResourceData.h"
 #include "./RendererDefine.h"
+#include "./Interface.h"
 
 using namespace DirectX;
 
@@ -36,34 +38,38 @@ void CMaterial::Build()
 	MakeMaterial("skullMat", TextureType::Texture, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
 }
 
-void CMaterial::MakeMaterialBuffer(CUploadBuffer** outMatBuffer)
+MaterialBuffer ConvertUploadBuffer(UINT diffuseIndex, Material* material)
 {
-	int matCBIndex = { 0 };
-	TextureType curType{ TextureType::None };
-	int diffuseIndex = { 0 };
-	for (auto& e : m_materials)
-	{
-		Material* m = e.get();
-		if (m->numFramesDirty <= 0)
-			continue;
+	MaterialBuffer matData;
+	matData.diffuseMapIndex = diffuseIndex;
+	matData.diffuseAlbedo = material->diffuseAlbedo;
+	matData.fresnelR0 = material->fresnelR0;
+	matData.roughness = material->roughness;
+	XMStoreFloat4x4(&matData.matTransform, XMMatrixTranspose(material->transform));
 
-		if (curType != m->type)
-		{
-			curType = m->type;
-			diffuseIndex = 0;
-		}
+	return matData;
+}
 
-		MaterialBuffer matData;
-		matData.diffuseMapIndex = diffuseIndex++;
-		matData.diffuseAlbedo = m->diffuseAlbedo;
-		matData.fresnelR0 = m->fresnelR0;
-		matData.roughness = m->roughness;
-		XMStoreFloat4x4(&matData.matTransform, XMMatrixTranspose(m->transform));
+void CMaterial::MakeMaterialBuffer(IRenderer* renderer)
+{
+	auto updateMaterials = m_materials | std::ranges::views::filter([](auto& iter) { return iter.get()->numFramesDirty > 0; });
 
-		(*outMatBuffer)->CopyData(matCBIndex++, matData);
+	std::vector<MaterialBuffer> materialBufferDatas{};
+	std::ranges::transform(updateMaterials, std::back_inserter(materialBufferDatas), 
+		[diffuseIndex{ 0u }, curType{ TextureType::None }](auto& m) mutable {
+			Material* mat = m.get();
+			if (curType != mat->type)
+			{
+				curType = mat->type;
+				diffuseIndex = 0;
+			}
+			mat->numFramesDirty--;
 
-		m->numFramesDirty--;
-	}
+			return ConvertUploadBuffer(diffuseIndex++, mat); });
+	if (materialBufferDatas.empty())
+		return; 
+
+	renderer->SetUploadBuffer(eBufferType::Material, materialBufferDatas.data(), materialBufferDatas.size());
 }
 
 Material* CMaterial::GetMaterial(const std::string& matName)

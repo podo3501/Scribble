@@ -1,13 +1,12 @@
 #pragma once
 
-//#include "RendererDefine.h"
 #include <DirectXMath.h>
 #include <memory>
 #include <unordered_map>
 #include <string>
+#include <combaseapi.h>
 
-class CUploadBuffer;
-struct FrameResource;
+interface IRenderer;
 
 enum class TextureType : int
 {
@@ -44,7 +43,7 @@ public:
 	CMaterial& operator=(const CMaterial&) = delete;
 
 	void Build();
-	void MakeMaterialBuffer(CUploadBuffer** outMatBuffer);
+	void MakeMaterialBuffer(IRenderer* renderer);
 
 	Material* GetMaterial(const std::string& matName);
 	size_t GetCount(TextureType type);

@@ -2,7 +2,7 @@
 #include "../Core/DDSTextureLoader.h"
 #include "../Core/d3dUtil.h"
 #include "../Core/Directx3D.h"
-#include "./Interface.h"
+#include "../Include/Interface.h"
 
 using namespace DirectX;
 

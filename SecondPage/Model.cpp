@@ -1,10 +1,10 @@
 #include "Model.h"
 #include <DirectXMath.h>
 #include "../Core/d3dUtil.h"
-#include "./Interface.h"
-#include "./FrameResourceData.h"
+#include "../Include/Interface.h"
+#include "../Include/FrameResourceData.h"
+#include "../Include/RenderItem.h"
 #include "./GeometryGenerator.h"
-#include "./RenderItem.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;

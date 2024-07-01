@@ -13,6 +13,9 @@ struct ID3D12Device;
 struct ID3D12GraphicsCommandList;
 struct ID3D12DescriptorHeap;
 struct RenderItem;
+enum class eBufferType;
+
+using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
 
 interface IRenderer
 {
@@ -21,8 +24,9 @@ interface IRenderer
 	virtual bool OnResize(int wndWidth, int wndHeight) { return true; };
 	virtual bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
 	{ return true; };
-	virtual bool Draw(CGameTimer* gt, CFrameResources* frameResources,
-		std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) { return true; };
+	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) { return true; };
+	virtual bool PrepareFrame() { return true; };
+	virtual bool Draw(AllRenderItems& renderItem) { return true; };
 	virtual bool WaitUntilGpuFinished(UINT64 fenceCount) { return true; };
 
 	virtual inline ID3D12Device* GetDevice() const { return nullptr; };

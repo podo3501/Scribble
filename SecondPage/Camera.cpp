@@ -3,7 +3,7 @@
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
 #include "../Core/headerUtility.h"
-#include "../SecondPage/FrameResourceData.h"
+#include "../Include/FrameResourceData.h"
 
 using namespace DirectX;
 

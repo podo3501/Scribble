@@ -3,8 +3,8 @@
 #include <memory>
 #include "../Core/d3dUtil.h"
 #include "../Core/Window.h"
+#include "../Include/Interface.h"
 #include "../SecondPage/MainLoop.h"
-#include "../SecondPage/Interface.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,

@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 #include <string>
-#include "Interface.h"
+#include "../Include/Interface.h"
 
 class CDirectx3D;
 class CShader;
@@ -18,7 +18,9 @@ struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
+struct ID3D12Resource;
 enum class GraphicsPSO;
+enum class eBufferType;
 
 class CRenderer : public IRenderer
 {
@@ -33,25 +35,24 @@ public:
 	bool Initialize(CWindow* window);
 	virtual bool OnResize(int wndWidth, int wndHeight) override;
 	virtual bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory) override;
-	virtual bool Draw(CGameTimer* gt, CFrameResources* frameResources,
-		std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) override;
+	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
+	virtual bool PrepareFrame() override;
+	virtual bool Draw(AllRenderItems& renderItem) override;
 	virtual bool WaitUntilGpuFinished(UINT64 fenceCount) override;
 
 	virtual inline ID3D12Device* GetDevice() const override;
 	virtual inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const override;
 
-	inline CDirectx3D* GetDirectx3D() const;
-	inline ID3D12GraphicsCommandList* GetCommandList() const;
-
 private:
 	bool BuildRootSignature();
 	bool BuildDescriptorHeaps();
 	bool BuildPSOs();
+	bool MakeFrameResource();
 	bool MakePSOPipelineState(GraphicsPSO psoType);
 	void MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void DrawRenderItems(CUploadBuffer* instanceBuffer, RenderItem* renderItem);
+	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 
 private:
 	std::wstring m_resPath{};
@@ -65,6 +66,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature{ nullptr };
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap{ nullptr };
 
+	std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList{};
 
 	D3D12_VIEWPORT m_screenViewport{};
@@ -72,5 +74,4 @@ private:
 };
 
 inline ID3D12Device* CRenderer::GetDevice() const											{	return m_device;		}
-inline ID3D12GraphicsCommandList* CRenderer::GetCommandList() const		{	return m_cmdList;	}
 inline ID3D12DescriptorHeap* CRenderer::GetSrvDescriptorHeap() const		{	return m_srvDescHeap.Get();		}

@@ -45,7 +45,7 @@ struct SubRenderItem
 
 	InstanceInfo instanceInfo{};
 	UINT instanceCount{ 0 };
-	int startIndexInstance{ 0 };
+	/*int startIndexInstance{ 0 };*/
 };
 
 using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;
@@ -63,6 +63,8 @@ struct RenderItem
 	Microsoft::WRL::ComPtr<ID3D12Resource> indexBufferGPU{ nullptr };
 	Microsoft::WRL::ComPtr<ID3D12Resource> indexBufferUploader{ nullptr };
 	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+
+	int startIndexInstance{ 0 };
 
 	SubRenderItems subRenderItems{};
 

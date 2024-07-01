@@ -1,10 +1,12 @@
-﻿#include "FrameResource.h"
+﻿#include "./FrameResources.h"
 #include <d3d12.h>
-#include "../Core/d3dUtil.h"
-#include "./Interface.h"
+#include "./d3dUtil.h"
 #include "./UploadBuffer.h"
-#include "./RendererDefine.h"
-#include "./FrameResourceData.h"
+#include "../Include/Interface.h"
+#include "../Include/RendererDefine.h"
+#include "../Include/FrameResourceData.h"
+
+CFrameResources::Resource::~Resource() = default;
 
 CFrameResources::CFrameResources() = default;
 CFrameResources::~CFrameResources() = default;
@@ -36,6 +38,17 @@ bool CFrameResources::BuildFrameResources(ID3D12Device* device,
 	return true;
 }
 
+bool CFrameResources::SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize)
+{
+	if (dataSize == 0)
+		return false;
+
+	CUploadBuffer* uploadBuffer = GetUploadBuffer(bufferType);
+	uploadBuffer->CopyDataList(bufferData, dataSize);
+
+	return true;
+}
+
 bool CFrameResources::PrepareFrame(IRenderer* renderer)
 {
 	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
@@ -44,6 +57,11 @@ bool CFrameResources::PrepareFrame(IRenderer* renderer)
 	ReturnIfFalse(renderer->WaitUntilGpuFinished(m_fenceCount));
 
 	return true;
+}
+
+ID3D12Resource* CFrameResources::GetResource(eBufferType bufferType)
+{
+	return GetUploadBuffer(bufferType)->Resource();
 }
 
 CUploadBuffer* CFrameResources::GetUploadBuffer(eBufferType bufferType)

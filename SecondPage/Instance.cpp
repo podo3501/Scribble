@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "../Core/Utility.h"
 #include "./Material.h"
-#include "./RenderItem.h"
+#include "../Include/RenderItem.h"
 
 using namespace DirectX;
 
