@@ -19,14 +19,6 @@ struct InstanceData
 
 using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
 
-struct InstanceInfo
-{
-	InstanceInfo() = default;
-
-	InstanceDataList instanceDataList{};
-	bool cullingFrustum{ false };
-};
-
 struct SubItem
 {
 	UINT indexCount{ 0u };
@@ -43,9 +35,9 @@ struct SubRenderItem
 
 	SubItem subItem{};
 
-	InstanceInfo instanceInfo{};
+	InstanceDataList instanceDataList{};
+	bool cullingFrustum{ false };
 	UINT instanceCount{ 0 };
-	/*int startIndexInstance{ 0 };*/
 };
 
 using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;

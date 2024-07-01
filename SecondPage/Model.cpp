@@ -5,9 +5,12 @@
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
 #include "./GeometryGenerator.h"
+#include "./Instance.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
+
+CModel::CModel() = default;
 
 CModel::CModel(std::wstring resPath)
 	: m_resPath(std::move(resPath))
@@ -39,6 +42,26 @@ bool CModel::LoadGeometry(const ModelType& type)
 
 	return true;
 }
+
+bool CModel::LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty)
+{
+	auto meshData = std::make_unique<MeshData>();
+
+	auto result = true;
+	switch (mProperty->createType)
+	{
+	case ModelProperty::CreateType::Generator:	Generator(meshData.get());														break;
+	case ModelProperty::CreateType::ReadFile:		result = ReadFile(mProperty->filename, meshData.get());		break;
+	default: return false;
+	}
+	if (!result) return result;
+
+	meshData->name = meshName;
+	m_AllMeshDataList[geoName].emplace_back(std::move(meshData));
+
+	return true;
+}
+
 
 void CModel::Generator(MeshData* outData)
 {

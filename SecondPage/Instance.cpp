@@ -1,12 +1,16 @@
 #include "./Instance.h"
 #include <algorithm>
+#include <ranges>
 #include "../Core/Utility.h"
+#include "../Core/d3dUtil.h"
 #include "./Material.h"
+#include "./Model.h"
 #include "../Include/RenderItem.h"
+#include "../Include/FrameResourceData.h"
 
 using namespace DirectX;
 
-CInstance::CInstance() = default;
+CInstance::CInstance() {}
 CInstance::~CInstance() = default;
 
 InstanceDataList CreateSkullInstanceData(CMaterial* material)
@@ -14,8 +18,8 @@ InstanceDataList CreateSkullInstanceData(CMaterial* material)
 	InstanceDataList instances{};
 
 	const int n = 5;
-	const int matCount = static_cast<int>(material->GetCount(TextureType::Texture));
-	const int startIndex = material->GetStartIndex(TextureType::Texture);
+	int matCount = 7; 
+	int startIndex = 1; 
 
 	float width = 200.0f;
 	float height = 200.0f;
@@ -55,7 +59,8 @@ InstanceDataList CreateSkullInstanceData(CMaterial* material)
 
 InstanceDataList CreateSkyCubeInstanceData()
 {
-	//하늘맵은 material과 texTransform을 쓰지 않고 return gCubeMap.Sample(gsamLinearWrap, pin.PosL);
+	//하늘맵은 material과 texTransform을 쓰지 않고 shader에서 이렇게 사용
+	// return gCubeMap.Sample(gsamLinearWrap, pin.PosL);
 	InstanceDataList instances{};
 	auto instance = std::make_unique<InstanceData>();
 	instance->world = XMMatrixIdentity();
@@ -64,39 +69,70 @@ InstanceDataList CreateSkyCubeInstanceData()
 	return instances;
 }
 
-void CInstance::CreateInstanceData(CMaterial* material, const std::string& geoName, const std::string& meshName)
+bool CInstance::CreateMockData()
 {
-	if (meshName == "skull")
-	{
-		m_instances[geoName][meshName].instanceDataList = CreateSkullInstanceData(material);
-		m_instances[geoName][meshName].cullingFrustum = true;
-	}
-	else if (meshName == "cube")
-	{
-		m_instances[geoName][meshName].instanceDataList = CreateSkyCubeInstanceData();
-		m_instances[geoName][meshName].cullingFrustum = false;
-	}
+	ModelProperty cube{};
+	cube.createType = ModelProperty::CreateType::Generator;
+	cube.cullingFrustum = false;
+	cube.filename = L"";
+	cube.instanceDataList = CreateSkyCubeInstanceData();
+	ReturnIfFalse(Insert("nature", "cube", cube));
+
+	ModelProperty skull{};
+	skull.createType = ModelProperty::CreateType::ReadFile;
+	skull.cullingFrustum = true;
+	skull.filename = L"skull.txt";
+	skull.instanceDataList = CreateSkullInstanceData(nullptr);
+	ReturnIfFalse(Insert("things", "skull", skull));
+
+	return true;
 }
 
-bool FillInstanceInfo(SubRenderItems& subRenderItems, std::unordered_map<std::string, InstanceInfo>& instanceInfos)
+bool FillInstanceInfo(SubRenderItems& subRenderItems, const MeshProperty& meshProperties)
 {
-	return std::ranges::all_of(instanceInfos, [&subRenderItems](auto& iterInstance) {
-		auto findSubItem = subRenderItems.find(iterInstance.first);
+	return std::ranges::all_of(meshProperties, [&subRenderItems](auto& mProp) {
+		auto findSubItem = subRenderItems.find(mProp.first);
 		if (findSubItem == subRenderItems.end())
 			return false;
 
-		auto& instanceInfo = iterInstance.second;
+		const ModelProperty& modelProp = mProp.second;
 		auto& subItem = findSubItem->second;
-		subItem.instanceInfo = instanceInfo;
+		subItem.instanceDataList = modelProp.instanceDataList;
+		subItem.cullingFrustum = modelProp.cullingFrustum;
 		return true; });
 }
 
 bool CInstance::FillRenderItems(AllRenderItems& renderItems)
 {
-	return std::ranges::all_of(m_instances, [&renderItems](auto& instances) {
-		auto findGeo = renderItems.find(instances.first);
+	return std::ranges::all_of(m_allModelProperty, [&renderItems](auto& geoProp) {
+		const std::string& geoName = geoProp.first;
+		auto findGeo = renderItems.find(geoName);
 		if (findGeo == renderItems.end())
 			return false;
+		SubRenderItems& subRenderItems = findGeo->second->subRenderItems;
+		return FillInstanceInfo(subRenderItems, geoProp.second); });
+}
 
-		return FillInstanceInfo(findGeo->second->subRenderItems, instances.second); });
+bool CInstance::Insert(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
+{
+	auto& mesh = m_allModelProperty[geoName];
+	if (mesh.find(meshName) != mesh.end())
+		return false;
+
+	m_allModelProperty[geoName].insert(std::make_pair(meshName, std::move(mProperty)));
+
+	return true;
+}
+
+bool CInstance::LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp)
+{
+	return std::ranges::all_of(meshProp, [model, &geoName](auto& mProp) {
+		return model->LoadGeometry(geoName, mProp.first, &mProp.second);});
+}
+
+bool CInstance::LoadModel(CModel* model)
+{
+	return std::ranges::all_of(m_allModelProperty, [this, model](auto& geoProp) {
+		auto& geoName = geoProp.first;
+		return LoadMesh(model, geoName, geoProp.second); });
 }

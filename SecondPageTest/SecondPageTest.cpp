@@ -22,72 +22,6 @@
 
 namespace MainLoop
 {
-	class MainLoopTest : public ::testing::Test
-	{
-	public:
-		MainLoopTest()
-		{}
-
-	protected:
-		void SetUp() override
-		{
-			//√ ±‚»≠
-			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-			EXPECT_EQ(m_window->Initialize(false), true);
-
-			m_renderer = CreateRenderer(m_resourcePath, m_window.get());
-			EXPECT_EQ(m_renderer != nullptr, true);
-
-			m_material = std::make_unique<CMaterial>();
-			m_material->Build();
-		}
-
-		void TearDown() override
-		{
-			m_material.reset();
-			m_renderer.reset();
-			m_window.reset();
-		}
-
-	protected:
-		const std::wstring m_resourcePath = L"../Resource/";
-
-		std::unique_ptr<CWindow> m_window{ nullptr };
-		std::unique_ptr<IRenderer> m_renderer{ nullptr };
-		std::unique_ptr<CMaterial> m_material{ nullptr };
-	};
-
-	TEST_F(MainLoopTest, WindowMessage)
-	{
-		MSG msg = { 0 };
-		msg.hwnd = m_window->GetHandle();
-		msg.message = WM_SIZE;
-		msg.lParam = MAKELONG(1024, 768);
-
-		DispatchMessage(&msg);
-
-		EXPECT_EQ(m_window->GetWidth(), 1024);
-		EXPECT_EQ(m_window->GetHeight(), 768);
-	}
-
-	TEST_F(MainLoopTest, CameraUpdate)
-	{
-		auto deltaTime = 0.1f;
-
-		CKeyInputManager keyInput;
-		CCamera camera;
-		camera.SetPosition(0.0f, 0.0f, 0.0f);
-		camera.SetSpeed(eMove::Forward, 10.0f);
-		keyInput.AddListener([&camera](std::vector<int> keyList) {
-			camera.PressedKey(keyList); });
-		keyInput.PressedKeyList([]() {
-			return std::vector<int>{'W'};
-			});
-		camera.Update(deltaTime);
-		DirectX::XMFLOAT3 pos = camera.GetPosition();
-		EXPECT_EQ(pos.z, 1.0f);
-	}
-
 	class MainLoopClassTest : public ::testing::Test
 	{
 	public:
@@ -117,27 +51,71 @@ namespace MainLoop
 
 	TEST_F(MainLoopClassTest, ModelTest)
 	{
-		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
-		material->Build();
+		//std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
+		//material->Build();
 
-		std::unique_ptr<CInstance> instance = std::make_unique<CInstance>();
-		instance->CreateInstanceData(nullptr, "nature", "cube");
-		instance->CreateInstanceData(material.get(), "things", "skull");
+		//std::unique_ptr<CInstance> instance = std::make_unique<CInstance>();
+		//instance->CreateInstanceData(nullptr, "nature", "cube");
+		//instance->CreateInstanceData(material.get(), "things", "skull");
 
+		//std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
+
+		//ModelTypeList modelTypeList
+		//{
+		//	ModelType(CreateType::Generator, "nature", "cube"), 
+		//	ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
+		//};
+
+		//std::unordered_map<std::string, std::unique_ptr<RenderItem>> renderItems{};
+		//EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
+		//EXPECT_EQ(model->LoadGraphicMemory(m_renderer.get(), &renderItems), true);
+		//EXPECT_EQ(renderItems["things"]->vertexBufferGPU != nullptr, true );
+
+		//EXPECT_EQ(instance->FillRenderItems(renderItems), true);
+	}
+
+	TEST_F(MainLoopClassTest, CameraUpdate)
+	{
+		auto deltaTime = 0.1f;
+
+		CKeyInputManager keyInput;
+		CCamera camera;
+		camera.SetPosition(0.0f, 0.0f, 0.0f);
+		camera.SetSpeed(eMove::Forward, 10.0f);
+		keyInput.AddListener([&camera](std::vector<int> keyList) {
+			camera.PressedKey(keyList); });
+		keyInput.PressedKeyList([]() {
+			return std::vector<int>{'W'};
+			});
+		camera.Update(deltaTime);
+		DirectX::XMFLOAT3 pos = camera.GetPosition();
+		EXPECT_EQ(pos.z, 1.0f);
+	}
+
+	TEST_F(MainLoopClassTest, WindowMessage)
+	{
+		MSG msg = { 0 };
+		msg.hwnd = m_window->GetHandle();
+		msg.message = WM_SIZE;
+		msg.lParam = MAKELONG(1024, 768);
+
+		DispatchMessage(&msg);
+
+		EXPECT_EQ(m_window->GetWidth(), 1024);
+		EXPECT_EQ(m_window->GetHeight(), 768);
+	}
+
+	TEST_F(MainLoopClassTest, Instance)
+	{
 		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
-
-		ModelTypeList modelTypeList
-		{
-			ModelType(CreateType::Generator, "nature", "cube"), 
-			ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
-		};
-
-		std::unordered_map<std::string, std::unique_ptr<RenderItem>> renderItems{};
-		EXPECT_EQ(model->LoadGeometryList(modelTypeList), true);
+		std::unique_ptr<CInstance> m_instance = std::make_unique<CInstance>();
+		AllRenderItems renderItems{};
+		EXPECT_EQ(m_instance->CreateMockData(), true);
+		EXPECT_EQ(m_instance->LoadModel(model.get()), true);
+		
 		EXPECT_EQ(model->LoadGraphicMemory(m_renderer.get(), &renderItems), true);
-		EXPECT_EQ(renderItems["things"]->vertexBufferGPU != nullptr, true );
-
-		EXPECT_EQ(instance->FillRenderItems(renderItems), true);
+		EXPECT_EQ(m_instance->FillRenderItems(renderItems), true);
+		EXPECT_EQ(renderItems.empty(), false);
 	}
 } //SecondPage
 

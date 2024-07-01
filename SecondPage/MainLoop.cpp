@@ -141,13 +141,8 @@ bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 	ReturnIfFalse(OnResize());
 	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
 	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
+	ReturnIfFalse(m_instance->FillRenderItems(m_AllRenderItems)); //instance 나 frustum 컬링 데이터를 넣는다.
 
-	//view에서 작업할 것들(run은 실시간으로 projection과 관련한다)
-	m_instance->CreateInstanceData(nullptr, "nature", "cube");
-	m_instance->CreateInstanceData(m_material.get(), "things", "skull");
-
-	ReturnIfFalse(m_instance->FillRenderItems(m_AllRenderItems));
-	
 	return true;
 }
 
@@ -163,20 +158,15 @@ bool CMainLoop::InitializeClass()
 	m_material->Build();
 
 	m_instance = std::make_unique<CInstance>();
+	ReturnIfFalse(m_instance->CreateMockData());
 
 	return true;
 }
 
 bool CMainLoop::BuildCpuMemory()
 {
-	ModelTypeList modelTypeList
-	{
-		ModelType(CreateType::Generator, "nature", "cube"),
-		ModelType(CreateType::ReadFile, "things", "skull", L"skull.txt")
-	};
-
 	m_model = std::make_unique<CModel>(m_resourcePath);
-	ReturnIfFalse(m_model->LoadGeometryList(modelTypeList));
+	ReturnIfFalse(m_instance->LoadModel(m_model.get()));
 
 	return true;
 }
@@ -184,6 +174,7 @@ bool CMainLoop::BuildCpuMemory()
 bool CMainLoop::BuildGraphicMemory()
 {
 	ReturnIfFalse(m_model->LoadGraphicMemory(m_iRenderer, &m_AllRenderItems));
+
 	m_texture = std::make_unique<CTexture>(m_iRenderer, m_resourcePath);
 	ReturnIfFalse(m_texture->LoadGraphicMemory());
 	
@@ -220,9 +211,8 @@ void CMainLoop::FindVisibleSubRenderItems( SubRenderItems& subRenderItems, Insta
 	for (auto& iterSubItem : subRenderItems)
 	{
 		auto& subRenderItem = iterSubItem.second;
-		auto& instanceInfo = subRenderItem.instanceInfo;
-		auto& instanceList = instanceInfo.instanceDataList;
-		if (instanceInfo.cullingFrustum)
+		auto& instanceList = subRenderItem.instanceDataList;
+		if (subRenderItem.cullingFrustum)
 		{
 			std::ranges::copy_if(instanceList, std::back_inserter(visibleInstance),
 				[this, &invView, &subRenderItem](auto& instance) {

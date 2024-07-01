@@ -19,6 +19,7 @@
 
 --Renderer를 코어로 옮긴다.
 --SetUploadBuffer로 수정하고 frameResource를 renderer로 넣는다.
+--ModelTypeList와 instance클래스를 합친다.
 
 파일을 로딩하고 보여주는 부분을 나눌려고 한다.
 mainloop클래스에 클래스들을 나누어야 한다.
@@ -29,7 +30,6 @@ frameResource로 넣으면 fence 문제가 어떻게 될지 다시 분석해 보
 model, m_texture, m_instance 이 세개를 밖으로 뺀다
 
 instance 클래스에 texture 파일 목록을 넣는다.
-ModelTypeList와 instance클래스를 합친다.
 texture 클래스를 renderer에 넣는다.
 
 

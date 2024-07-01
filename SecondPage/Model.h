@@ -14,6 +14,7 @@ struct ID3D12GraphicsCommandList;
 struct InstanceData;
 struct Vertex;
 struct RenderItem;
+struct ModelProperty;
 
 enum class CreateType : int
 {
@@ -68,9 +69,11 @@ public:
 	CModel(std::wstring resPath);
 	~CModel();
 
+	CModel();
 	CModel(const CModel&) = delete;
 	CModel& operator=(const CModel&) = delete;
 
+	bool LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty);
 	bool LoadGeometryList(const ModelTypeList& modelTypeList);
 	bool LoadGraphicMemory(IRenderer* renderer, AllRenderItems* outRenderItems);
 
