@@ -19,6 +19,8 @@ CCamera::CCamera()
 	, mProj{ MathHelper::Identity4x4() }
 {
 	SetLens(0.25f*MathHelper::Pi, 1.0f, 1.0f, 1000.0f);
+	SetPosition(0.0f, 2.0f, -15.0f);
+	SetSpeed(10.0f);
 }
 
 CCamera::~CCamera()

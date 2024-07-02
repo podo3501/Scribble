@@ -14,6 +14,7 @@ class CShader;
 class CCamera;
 class CUploadBuffer;
 class CFrameResources;
+class CTexture;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
@@ -33,15 +34,17 @@ public:
 	CRenderer& operator=(const CRenderer&) = delete;
 
 	bool Initialize(CWindow* window);
+	virtual bool IsInitialize() { return m_isInitialize; };
 	virtual bool OnResize(int wndWidth, int wndHeight) override;
 	virtual bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory) override;
+	virtual bool LoadTexture(eTextureType type, std::vector<std::wstring>& filenames) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
 	virtual bool PrepareFrame() override;
 	virtual bool Draw(AllRenderItems& renderItem) override;
 	virtual bool WaitUntilGpuFinished(UINT64 fenceCount) override;
 
-	virtual inline ID3D12Device* GetDevice() const override;
-	virtual inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const override;
+	inline ID3D12Device* GetDevice() const;
+	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 
 private:
 	bool BuildRootSignature();
@@ -60,6 +63,7 @@ private:
 	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
 	std::unique_ptr<CShader> m_shader{ nullptr };
 
+	bool m_isInitialize{ false };
 	ID3D12Device* m_device{ nullptr };
 	ID3D12GraphicsCommandList* m_cmdList{ nullptr };
 
@@ -68,6 +72,8 @@ private:
 
 	std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
 	std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList{};
+
+	std::unique_ptr<CTexture> m_texture{ nullptr };
 
 	D3D12_VIEWPORT m_screenViewport{};
 	D3D12_RECT m_scissorRect{};

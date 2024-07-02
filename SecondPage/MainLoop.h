@@ -11,7 +11,6 @@ interface IRenderer;
 class CWindow;
 class CCamera;
 class CMaterial;
-class CTexture;
 class CModel;
 class CFrameResources;
 class CKeyInputManager;
@@ -45,9 +44,7 @@ private:
 	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 
 	bool InitializeClass();
-
-	bool BuildCpuMemory();
-	bool BuildGraphicMemory();
+	bool LoadMemory();
 
 	bool IsInsideFrustum(
 		const DirectX::BoundingSphere& bSphere, 
@@ -66,8 +63,6 @@ private:
 	void OnMouseDown(WPARAM btnState, int x, int y);
 	void OnMouseUp(WPARAM btnState, int x, int y);
 	void OnMouseMove(WPARAM btnState, int x, int y);
-
-	void CalculateFrameStats();
 	void OnKeyboardInput();
 
 private:
@@ -80,7 +75,6 @@ private:
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
 	
-	std::unique_ptr<CTexture> m_texture{ nullptr };
 	std::unique_ptr<CModel> m_model{ nullptr };
 	std::unique_ptr<CInstance> m_instance{ nullptr };
 	//랜더링시 필요한 데이터들

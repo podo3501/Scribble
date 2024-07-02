@@ -1,26 +1,23 @@
 ﻿틈나는대로 noexcept, const, constexpr 키워드 쓰기
-
 --void CMainLoop::UpdateRenderItems()에서 cube world값을 안 넣어주고 있다.
 --instance 버퍼에 인덱스문제가 있다.
 --cubemap 붙이기
-
 --renderitem과 geometry구조가 맞지 않다.
-
 --일단  renderItem을 NRenderItem으로 계층구조가 있는 스트럭쳐로 바꾼다
 --그다음 gpu에 올릴 버퍼를 NRenderItem쪽으로 이동한다. 
 --그리고 geometry와 renderitem을 삭제한다.
-
 --데이터들 + instance정보 => renderItem 해서 renderer에 renderItem으로 랜더링 하게끔 한다.
 --랜더링에 의존적이지 않게 interface 를 만들어서 연결한다.
 --추후에 draw함수 테스트 할때 가짜 interface 클래스를 생성해서 연결하면 Draw함수도 테스트 가능하다.
-
 --directx3d를 외부에서 안 보이게 하는중
 --draw호출을 반대로 한다.
-
 --Renderer를 코어로 옮긴다.
 --SetUploadBuffer로 수정하고 frameResource를 renderer로 넣는다.
 --ModelTypeList와 instance클래스를 합친다.
 --instance 클래스에 texture 파일 목록을 넣는다.
+--EXPECT_EQ(m_instance->LoadModel(model.get()), true); 여기서 데이터를 넣으면 나중에 FillRenderItems를 따로 부를 이유가 없다.
+--material을 instance 클래스에 material 목록을 넣는다.
+--texture 클래스를 renderer에 넣는다.
 
 파일을 로딩하고 보여주는 부분을 나눌려고 한다.
 mainloop클래스에 클래스들을 나누어야 한다.
@@ -28,13 +25,11 @@ mainloop클래스에 클래스들을 나누어야 한다.
 fence를 renderer로 올린다.
 frameResource로 넣으면 fence 문제가 어떻게 될지 다시 분석해 보자.
 
-model, m_texture, m_instance 이 세개를 밖으로 뺀다
+m_camFrustum을 카메라에 넣고 컬링 부분을 헬퍼함수로 뺀다.
 
-texture 클래스를 renderer에 넣는다.
 
-material을 instance 클래스에 material 목록을 넣는다.
 
-EXPECT_EQ(m_instance->LoadModel(model.get()), true); 여기서 데이터를 넣으면 나중에 FillRenderItems를 따로 부를 이유가 없다.
+
 
 
 

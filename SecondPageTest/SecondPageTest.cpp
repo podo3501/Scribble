@@ -13,7 +13,6 @@
 #include "../Include/FrameResourceData.h"
 #include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
-#include "../SecondPage/Texture.h"
 #include "../SecondPage/Model.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
@@ -32,21 +31,24 @@ namespace MainLoop
 		{
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(false), true);
-
 			m_renderer = CreateRenderer(m_resourcePath, m_window.get());
 			EXPECT_EQ(m_renderer != nullptr, true);
+			m_instance = std::make_unique<CInstance>();
+			EXPECT_EQ(m_instance->CreateMockData(), true);
 		}
 
 		void TearDown() override
 		{
-			m_window.reset();
+			m_instance.reset();
 			m_renderer.reset();
+			m_window.reset();
 		}
 		
 	protected:
 		std::wstring m_resourcePath{ L"../Resource/" };
 		std::unique_ptr<CWindow> m_window{ nullptr };
 		std::unique_ptr<IRenderer> m_renderer{ nullptr };
+		std::unique_ptr<CInstance> m_instance{ nullptr };
 	};
 
 	TEST_F(MainLoopClassTest, CameraUpdate)
@@ -82,13 +84,17 @@ namespace MainLoop
 
 	TEST_F(MainLoopClassTest, Instance)
 	{
-		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
-		std::unique_ptr<CInstance> m_instance = std::make_unique<CInstance>();
 		AllRenderItems renderItems{};
-		EXPECT_EQ(m_instance->CreateMockData(), true);
+		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
 		EXPECT_EQ(m_instance->LoadModel(model.get(), &renderItems), true);
 		EXPECT_EQ(model->LoadModelIntoVRAM(m_renderer.get(), &renderItems), true);
 		EXPECT_EQ(renderItems.empty(), false);
+	}
+
+	TEST_F(MainLoopClassTest, Texture)
+	{
+		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
+		EXPECT_EQ(m_instance->LoadTextureIntoVRAM(m_renderer.get(), material.get()), true);
 	}
 } //SecondPage
 

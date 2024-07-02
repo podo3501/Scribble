@@ -5,6 +5,7 @@
 #include "./d3dUtil.h"
 #include "./Utility.h"
 #include "./Shader.h"
+#include "./Texture.h"
 #include "./UploadBuffer.h"
 #include "./FrameResources.h"
 #include "../Include/RendererDefine.h"
@@ -32,6 +33,8 @@ bool CRenderer::Initialize(CWindow* window)
 {
 	m_shader = std::make_unique<CShader>(m_resPath);
 	m_directx3D = std::make_unique<CDirectx3D>(window);
+	m_texture = std::make_unique<CTexture>(m_resPath);
+
 	ReturnIfFalse(m_directx3D->Initialize());
 
 	m_device = m_directx3D->GetDevice();
@@ -42,6 +45,8 @@ bool CRenderer::Initialize(CWindow* window)
 	ReturnIfFalse(BuildDescriptorHeaps());
 	ReturnIfFalse(BuildPSOs());
 	ReturnIfFalse(MakeFrameResource());
+
+	m_isInitialize = true;
 
 	return true;
 }
@@ -63,6 +68,18 @@ bool CRenderer::LoadData(std::function<bool(ID3D12Device* device, ID3D12Graphics
 
 	ReturnIfFalse(m_directx3D->ExcuteCommandLists());
 	ReturnIfFalse(m_directx3D->FlushCommandQueue());
+
+	return true;
+}
+
+bool CRenderer::LoadTexture(eTextureType type, std::vector<std::wstring>& filenames)
+{
+	ReturnIfFalse(LoadData(
+		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+			ReturnIfFalse(m_texture->Upload(device, cmdList, type, filenames));
+			return true; }));
+
+	m_texture->CreateShaderResourceView(this, type);
 
 	return true;
 }

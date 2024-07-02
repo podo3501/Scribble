@@ -5,13 +5,15 @@
 #include "../Core/d3dUtil.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
+#include "../Include/Types.h"
+#include "../Include/Interface.h"
 #include "./Material.h"
 #include "./Model.h"
-#include "./Texture.h"
 
 using namespace DirectX;
 
-CInstance::CInstance() {}
+CInstance::CInstance() 
+{}
 CInstance::~CInstance() = default;
 
 InstanceDataList CInstance::CreateSkullInstanceData()
@@ -77,14 +79,14 @@ bool CInstance::CreateModelMock()
 	cube.cullingFrustum = false;
 	cube.filename = L"";
 	cube.instanceDataList = CreateSkyCubeInstanceData();
-	ReturnIfFalse(Insert("nature", "cube", cube));
+	ReturnIfFalse(InsertModelProperty("nature", "cube", cube));
 
 	ModelProperty skull{};
 	skull.createType = ModelProperty::CreateType::ReadFile;
 	skull.cullingFrustum = true;
 	skull.filename = L"skull.txt";
 	skull.instanceDataList = CreateSkullInstanceData();
-	ReturnIfFalse(Insert("things", "skull", skull));
+	ReturnIfFalse(InsertModelProperty("things", "skull", skull));
 
 	return true;
 }
@@ -101,19 +103,38 @@ bool CInstance::CreateTextureMock()
 	return true;
 }
 
-//bool CInstance::CreateMaterialMock()
-//{
-//	name = "sky";
-//	textureType = eTextureType::Cube;
-//	textureFile = L"grasscube1024.dds";
-//	diffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-//	fresnelR0 = { 0.1f, 0.1f, 0.1f };
-//	roughness = 1.0f;
-//}
+bool CInstance::CreateMaterialMock()
+{
+	auto MakeMaterial = [this, diffuseIndex{ 0u }](std::string&& name, eTextureType type, std::wstring&& filename,
+		XMFLOAT4 diffuseAlbedo, XMFLOAT3 fresnelR0, float rough) mutable {
+			std::shared_ptr<Material> curMat = std::make_shared<Material>();
+			curMat->name = std::move(name);
+			curMat->type = type;
+			curMat->filename = std::move(filename);
+			curMat->diffuseIndex = diffuseIndex++;
+			curMat->normalSrvHeapIndex = 0;
+			curMat->diffuseAlbedo = diffuseAlbedo;
+			curMat->fresnelR0 = fresnelR0;
+			curMat->roughness = rough;
+			curMat->transform = DirectX::XMMatrixIdentity();
+			m_materialList.emplace_back(std::move(curMat));
+		};
+
+	MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f);
+	MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f);
+	MakeMaterial("stone0", eTextureType::Common, L"stone.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f);
+	MakeMaterial("tile0", eTextureType::Common, L"tile.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f);
+	MakeMaterial("checkboard0", eTextureType::Common, L"WoodCrate01.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("ice0", eTextureType::Common, L"ice.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f);
+	MakeMaterial("grass0", eTextureType::Common, L"grass.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f);
+	MakeMaterial("skullMat", eTextureType::Common, L"white1x1.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f);
+
+	return true;
+}
 
 bool CInstance::CreateMockData()
 {
-	//ReturnIfFalse(CreateMaterialMock());
+	ReturnIfFalse(CreateMaterialMock());
 	ReturnIfFalse(CreateTextureMock());
 	ReturnIfFalse(CreateModelMock());
 
@@ -133,7 +154,7 @@ bool CInstance::FillRenderItems(AllRenderItems* renderItems)
 	return true;
 }
 
-bool CInstance::Insert(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
+bool CInstance::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
 {
 	auto& mesh = m_allModelProperty[geoName];
 	if (mesh.find(meshName) != mesh.end())
@@ -159,10 +180,13 @@ bool CInstance::LoadModel(CModel* model, AllRenderItems* renderItems)
 	return FillRenderItems(renderItems);
 }
 
-bool CInstance::LoadTextureIntoVRAM(IRenderer* renderer, CTexture* texture)
+bool CInstance::LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material)
 {
-	return std::ranges::all_of(m_textureList, [renderer, texture](auto& typeTex) {
-		return texture->LoadTexture(renderer, typeTex.first, typeTex.second); });
+	ReturnIfFalse(std::ranges::all_of(m_textureList, [renderer](auto& typeTex) {
+		return renderer->LoadTexture(typeTex.first, typeTex.second); }));
+
+	material->SetMaterialList(m_materialList);
+	return true;
 }
 
 int CInstance::GetTextureCount(eTextureType texType)

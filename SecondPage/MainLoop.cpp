@@ -11,10 +11,10 @@
 #include "./GameTimer.h"
 #include "./Material.h"
 #include "./Model.h"
-#include "./Texture.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
 #include "./Instance.h"
+#include "./Helper.h"
 
 using namespace DirectX;
 
@@ -48,7 +48,7 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 
 		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
-		if (m_iRenderer->GetDevice())
+		if (m_iRenderer->IsInitialize())
 		{
 			if (wParam == SIZE_MINIMIZED)
 			{
@@ -139,8 +139,7 @@ bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 	//local에서 작업할 것들
 	ReturnIfFalse(InitializeClass());	//초기화
 	ReturnIfFalse(OnResize());
-	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
-	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
+	ReturnIfFalse(LoadMemory());	//데이터를 ram, vram에 올리기
 
 	return true;
 }
@@ -148,35 +147,23 @@ bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 bool CMainLoop::InitializeClass()
 {
 	m_camera = std::make_unique<CCamera>();
-	m_camera->SetPosition(0.0f, 2.0f, -15.0f);
-	m_camera->SetSpeed(10.0f);
 
 	m_timer = std::make_unique<CGameTimer>();
-
 	m_material = std::make_unique<CMaterial>();
-	m_material->Build();
-
 	m_instance = std::make_unique<CInstance>();
+	m_model = std::make_unique<CModel>(m_resourcePath);
+
 	ReturnIfFalse(m_instance->CreateMockData());
 
 	return true;
 }
 
-bool CMainLoop::BuildCpuMemory()
+bool CMainLoop::LoadMemory()
 {
-	m_model = std::make_unique<CModel>(m_resourcePath);
 	ReturnIfFalse(m_instance->LoadModel(m_model.get(), &m_AllRenderItems));
-
-	return true;
-}
-
-bool CMainLoop::BuildGraphicMemory()
-{
 	ReturnIfFalse(m_model->LoadModelIntoVRAM(m_iRenderer, &m_AllRenderItems));
+	ReturnIfFalse(m_instance->LoadTextureIntoVRAM(m_iRenderer, m_material.get()));
 
-	m_texture = std::make_unique<CTexture>(m_resourcePath);
-	ReturnIfFalse(m_instance->LoadTextureIntoVRAM(m_iRenderer, m_texture.get()));
-	
 	return true;
 }
 
@@ -340,28 +327,6 @@ void CMainLoop::OnMouseMove(WPARAM btnState, int x, int y)
 	m_lastMousePos.y = y;
 }
 
-void CMainLoop::CalculateFrameStats()
-{
-	static int _frameCnt = 0;
-	static float _timeElapsed = 0.0f;
-
-	_frameCnt++;
-
-	const bool IsOverOneSecond = ((m_timer->TotalTime() - _timeElapsed) >= 1.0f);
-	if (!IsOverOneSecond) return;
-	
-	float fps = (float)_frameCnt; // fps = frameCnt / 1
-	float mspf = 1000.0f / fps;
-
-	std::wstring fpsStr = std::to_wstring(fps);
-	std::wstring mspfStr = std::to_wstring(mspf);
-	m_windowCaption += L"    fps: " + fpsStr + L"   mspf: " + mspfStr;
-	m_window->SetText(m_windowCaption);
-
-	_frameCnt = 0;
-	_timeElapsed += 1.0f;
-}
-
 void CMainLoop::OnKeyboardInput()
 {
 	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
@@ -391,7 +356,13 @@ bool CMainLoop::Run(IRenderer* renderer)
 			if (m_appPaused)
 				Sleep(100);
 			
-			CalculateFrameStats();
+			std::wstring fps = CalculateFrameStats(m_timer.get());
+			if (!fps.empty())
+			{
+				m_windowCaption += fps;
+				m_window->SetText(m_windowCaption);
+			}
+			
 			OnKeyboardInput();
 
 			m_camera->Update(m_timer->DeltaTime());

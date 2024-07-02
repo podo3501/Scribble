@@ -8,6 +8,28 @@
 
 interface IRenderer;
 struct MaterialBuffer;
+enum class eTextureType : int;
+
+struct Material
+{
+	Material();
+
+	std::string name{};
+	eTextureType type;
+	std::wstring filename{};
+	UINT diffuseIndex{ 0 };
+	UINT normalSrvHeapIndex{ 0 };	//normal map
+
+	DirectX::XMFLOAT4 diffuseAlbedo{ 1.0f, 1.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT3 fresnelR0{ 0.01f, 0.01f, 0.01f };
+	float roughness{ .25f };
+
+	DirectX::XMMATRIX transform = DirectX::XMMatrixIdentity();
+
+	int numFramesDirty;
+};
+
+using MaterialList = std::vector<std::shared_ptr<Material>>;
 
 class CMaterial
 {
@@ -18,14 +40,12 @@ public:
 	CMaterial(const CMaterial&) = delete;
 	CMaterial& operator=(const CMaterial&) = delete;
 
-	void Build();
 	void MakeMaterialBuffer(IRenderer* renderer);
+	inline void SetMaterialList(const MaterialList& materialList) { m_materialList = materialList; };
 
 private:
-	struct Material;
 	MaterialBuffer ConvertUploadBuffer(UINT diffuseIndex, Material* material);
 
 private:
-	using MaterialData = std::pair<std::string, std::unique_ptr<Material>>;
-	std::vector<MaterialData> m_materials;
+	MaterialList m_materialList{};
 };
