@@ -141,7 +141,6 @@ bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 	ReturnIfFalse(OnResize());
 	ReturnIfFalse(BuildCpuMemory());	//데이터를 시스템 메모리에 올리기
 	ReturnIfFalse(BuildGraphicMemory());		//시스템 메모리에서 그래픽 메모리에 데이터 올리기
-	ReturnIfFalse(m_instance->FillRenderItems(m_AllRenderItems)); //instance 나 frustum 컬링 데이터를 넣는다.
 
 	return true;
 }
@@ -166,7 +165,7 @@ bool CMainLoop::InitializeClass()
 bool CMainLoop::BuildCpuMemory()
 {
 	m_model = std::make_unique<CModel>(m_resourcePath);
-	ReturnIfFalse(m_instance->LoadModel(m_model.get()));
+	ReturnIfFalse(m_instance->LoadModel(m_model.get(), &m_AllRenderItems));
 
 	return true;
 }

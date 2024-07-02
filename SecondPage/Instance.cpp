@@ -9,7 +9,6 @@
 #include "./Model.h"
 #include "./Texture.h"
 
-
 using namespace DirectX;
 
 CInstance::CInstance() {}
@@ -102,38 +101,36 @@ bool CInstance::CreateTextureMock()
 	return true;
 }
 
+//bool CInstance::CreateMaterialMock()
+//{
+//	name = "sky";
+//	textureType = eTextureType::Cube;
+//	textureFile = L"grasscube1024.dds";
+//	diffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+//	fresnelR0 = { 0.1f, 0.1f, 0.1f };
+//	roughness = 1.0f;
+//}
+
 bool CInstance::CreateMockData()
 {
+	//ReturnIfFalse(CreateMaterialMock());
 	ReturnIfFalse(CreateTextureMock());
 	ReturnIfFalse(CreateModelMock());
 
 	return true;
 }
 
-using MeshProperty = std::unordered_map<std::string, ModelProperty>;
-bool FillInstanceInfo(SubRenderItems& subRenderItems, const MeshProperty& meshProperties)
+bool CInstance::FillRenderItems(AllRenderItems* renderItems)
 {
-	return std::ranges::all_of(meshProperties, [&subRenderItems](auto& mProp) {
-		auto findSubItem = subRenderItems.find(mProp.first);
-		if (findSubItem == subRenderItems.end())
-			return false;
+	std::ranges::for_each(m_allModelProperty, [renderItems](auto& geoProp) {
+		std::ranges::for_each(geoProp.second, [renderItems, geoProp](auto& meshProp) {
+			SubRenderItem* subRenderItem = GetSubRenderItem((*renderItems), geoProp.first, meshProp.first);
+			subRenderItem->instanceDataList = meshProp.second.instanceDataList;
+			subRenderItem->cullingFrustum = meshProp.second.cullingFrustum;
+			});
+		});
 
-		const ModelProperty& modelProp = mProp.second;
-		auto& subItem = findSubItem->second;
-		subItem.instanceDataList = modelProp.instanceDataList;
-		subItem.cullingFrustum = modelProp.cullingFrustum;
-		return true; });
-}
-
-bool CInstance::FillRenderItems(AllRenderItems& renderItems)
-{
-	return std::ranges::all_of(m_allModelProperty, [&renderItems](auto& geoProp) {
-		const std::string& geoName = geoProp.first;
-		auto findGeo = renderItems.find(geoName);
-		if (findGeo == renderItems.end())
-			return false;
-		SubRenderItems& subRenderItems = findGeo->second->subRenderItems;
-		return FillInstanceInfo(subRenderItems, geoProp.second); });
+	return true;
 }
 
 bool CInstance::Insert(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
@@ -153,11 +150,13 @@ bool CInstance::LoadMesh(CModel* model, const std::string& geoName, MeshProperty
 		return model->LoadGeometry(geoName, mProp.first, &mProp.second);});
 }
 
-bool CInstance::LoadModel(CModel* model)
+bool CInstance::LoadModel(CModel* model, AllRenderItems* renderItems)
 {
-	return std::ranges::all_of(m_allModelProperty, [this, model](auto& geoProp) {
+	ReturnIfFalse( std::ranges::all_of(m_allModelProperty, [this, model](auto& geoProp) {
 		auto& geoName = geoProp.first;
-		return LoadMesh(model, geoName, geoProp.second); });
+		return LoadMesh(model, geoName, geoProp.second); }));
+
+	return FillRenderItems(renderItems);
 }
 
 bool CInstance::LoadTextureIntoVRAM(IRenderer* renderer, CTexture* texture)

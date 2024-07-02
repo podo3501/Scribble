@@ -49,9 +49,8 @@ public:
 	CInstance& operator=(const CInstance&) = delete;
 
 	bool CreateMockData();
-	bool LoadModel(CModel* model);
+	bool LoadModel(CModel* model, AllRenderItems* renderItems);
 	bool LoadTextureIntoVRAM(IRenderer* renderer, CTexture* texture);
-	bool FillRenderItems(AllRenderItems& renderItems);
 
 private:
 	bool CreateModelMock();
@@ -62,6 +61,7 @@ private:
 	bool LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp);
 
 	int GetTextureCount(eTextureType texType);
+	bool FillRenderItems(AllRenderItems* renderItems);
 
 private:
 	AllModelProperty m_allModelProperty{};

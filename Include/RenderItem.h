@@ -1,8 +1,12 @@
 #pragma once
 
+#include <wrl.h>
 #include <d3dcommon.h>
 #include <DirectXCollision.h>
 #include <vector>
+#include <unordered_map>
+#include <memory>
+#include <string>
 #include <d3d12.h>
 
 struct Material;
@@ -71,3 +75,7 @@ struct RenderItem
 };
 
 using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
+
+RenderItem* GetRenderItem(AllRenderItems& allRenderItems, const std::string& geoName);
+SubRenderItem* GetSubRenderItem(RenderItem* renderItem, const std::string& meshName);
+SubRenderItem* GetSubRenderItem(AllRenderItems& allRenderItems, const std::string& geoName, const std::string& meshName);

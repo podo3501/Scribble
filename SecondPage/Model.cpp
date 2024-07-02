@@ -142,23 +142,18 @@ bool CModel::ReadFile(const std::wstring& filename, MeshData* outData)
 
 CModel::Offsets CModel::SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data)
 {
-	UINT indexCount = static_cast<UINT>(data->indices.size());
+	SubRenderItem* subRenderItem = GetSubRenderItem(renderItem, data->name);
 
-	SubItem subItem{};
+	auto& subItem = subRenderItem->subItem;
 	subItem.baseVertexLocation = offsets.first;
 	subItem.startIndexLocation = offsets.second;
 	subItem.boundingBox = data->boundingBox;
 	subItem.boundingSphere = data->boundingSphere;
-	subItem.indexCount = indexCount;
-
-	SubRenderItem subRenderItem{};
-	subRenderItem.subItem = subItem;
-
-	renderItem->subRenderItems.insert(std::make_pair(data->name, std::move(subRenderItem)));
+	subItem.indexCount = static_cast<UINT>(data->indices.size());
 
 	return Offsets(
 		offsets.first + static_cast<UINT>(data->vertices.size()),
-		offsets.second + indexCount);
+		offsets.second + subItem.indexCount);
 }
 
 void CModel::SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataList,
@@ -192,22 +187,19 @@ bool CModel::Convert(const MeshDataList& meshDataList,
 bool CModel::LoadModelIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems)
 {
 	return std::ranges::all_of(m_AllMeshDataList, [&outRenderItems, renderer, this](auto& iter) {
-			auto renderItem = std::make_unique<RenderItem>();
-			auto pRenderItem = renderItem.get();
-			(*outRenderItems).insert(std::make_pair(iter.first, std::move(renderItem)));
+		auto pRenderItem = GetRenderItem(*outRenderItems, iter.first);
 
-			//데이터를 채워 넣는다.
-			std::vector<Vertex> totalVertices{};
-			std::vector<std::int32_t> totalIndices{};
-			ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
+		//데이터를 채워 넣는다.
+		std::vector<Vertex> totalVertices{};
+		std::vector<std::int32_t> totalIndices{};
+		ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
 
-			//그래픽 메모리에 올린다.
-			ReturnIfFalse(renderer->LoadData(
-				[&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-					 return Load(device, cmdList, totalVertices, totalIndices, pRenderItem);	}));
+		//그래픽 메모리에 올린다.
+		ReturnIfFalse(renderer->LoadData(
+			[&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+					return Load(device, cmdList, totalVertices, totalIndices, pRenderItem);	}));
 
-			return true;
-		}); 	
+		return true;	}); 	
 }
 
 bool CModel::Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 

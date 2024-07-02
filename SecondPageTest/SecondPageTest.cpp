@@ -86,10 +86,8 @@ namespace MainLoop
 		std::unique_ptr<CInstance> m_instance = std::make_unique<CInstance>();
 		AllRenderItems renderItems{};
 		EXPECT_EQ(m_instance->CreateMockData(), true);
-		EXPECT_EQ(m_instance->LoadModel(model.get()), true);
-		
+		EXPECT_EQ(m_instance->LoadModel(model.get(), &renderItems), true);
 		EXPECT_EQ(model->LoadModelIntoVRAM(m_renderer.get(), &renderItems), true);
-		EXPECT_EQ(m_instance->FillRenderItems(renderItems), true);
 		EXPECT_EQ(renderItems.empty(), false);
 	}
 } //SecondPage

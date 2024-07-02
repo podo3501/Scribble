@@ -34,5 +34,7 @@ texture 클래스를 renderer에 넣는다.
 
 material을 instance 클래스에 material 목록을 넣는다.
 
+EXPECT_EQ(m_instance->LoadModel(model.get()), true); 여기서 데이터를 넣으면 나중에 FillRenderItems를 따로 부를 이유가 없다.
+
 
 

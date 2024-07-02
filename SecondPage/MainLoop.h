@@ -83,7 +83,6 @@ private:
 	std::unique_ptr<CTexture> m_texture{ nullptr };
 	std::unique_ptr<CModel> m_model{ nullptr };
 	std::unique_ptr<CInstance> m_instance{ nullptr };
-	
 	//랜더링시 필요한 데이터들
 	AllRenderItems m_AllRenderItems{};
 

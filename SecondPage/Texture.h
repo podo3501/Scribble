@@ -14,7 +14,8 @@ struct ID3D12DescriptorHeap;
 
 enum class eTextureType : int
 {
-	Cube = 0,
+	None = 0,
+	Cube,
 	Common,
 };
 
