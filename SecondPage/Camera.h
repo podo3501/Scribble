@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 
 struct PassConstants;
 
@@ -53,6 +54,7 @@ public:
 
 	DirectX::XMMATRIX GetView() const;
 	DirectX::XMMATRIX GetProj() const;
+	DirectX::BoundingFrustum GetFrustum() const;
 
 	void Walk(float d);
 	void Strafe(float d);
@@ -63,8 +65,8 @@ public:
 
 	void SetSpeed(float speed);
 	void SetSpeed(eMove move, float moveSpeed);
-	void Move(eMove move, bool forward, float deltaTime);
 	void Move(eMove move, float speed);
+	void Move(float dx, float dy);
 
 	void GetPassCB(PassConstants* pc);
 
@@ -91,4 +93,6 @@ private:
 
 	std::map<eMove, float> m_moveSpeed{};
 	std::vector<eMove> m_moveDirection{};
+
+	DirectX::BoundingFrustum m_camFrustum{};
 };

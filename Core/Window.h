@@ -64,18 +64,7 @@ inline void CWindow::SetText(std::wstring text)
 	SetWindowText(m_wnd, text.c_str());
 }
 
-inline void CWindow::AddWndProcListener(WndProcListener listener)
-{
-	m_wndProcListeners.emplace_back(std::move(listener));
-}
-
-inline void CWindow::AddOnResizeListener(OnResizeListener listener)
-{
-	m_onResizeListener = listener;
-}
-
-inline void CWindow::AddAppPauseListener(AppPauseListener listener)
-{
-	m_appPauseListener = listener;
-}
+inline void CWindow::AddWndProcListener(WndProcListener listener)		{	m_wndProcListeners.emplace_back(std::move(listener)); }
+inline void CWindow::AddOnResizeListener(OnResizeListener listener)		{	m_onResizeListener = listener; }
+inline void CWindow::AddAppPauseListener(AppPauseListener listener)		{	m_appPauseListener = listener; }
 

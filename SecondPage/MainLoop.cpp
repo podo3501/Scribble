@@ -1,6 +1,5 @@
 #include "MainLoop.h"
 #include <WinUser.h>
-#include <windowsx.h>
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
 #include "../Core/Window.h"
@@ -29,45 +28,17 @@ CMainLoop::CMainLoop(std::wstring resourcePath)
 	m_resourcePath = resourcePath;
 }
 
-bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
-{
-	switch (msg)
-	{
-	case WM_LBUTTONDOWN:
-	case WM_MBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-		OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return true;
-	case WM_LBUTTONUP:
-	case WM_MBUTTONUP:
-	case WM_RBUTTONUP:
-		OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return true;
-	case WM_MOUSEMOVE:
-		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return true;
-	}
-
-	return false;
-}
-
 bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 {
 	m_window = window;
 	m_iRenderer = renderer;
 
-	m_window->AddWndProcListener([this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
-		return MsgProc(wnd, msg, wp, lp, lr); });
-	m_window->AddOnResizeListener([this](int width, int height)->bool {
-		return OnResize(width, height); });
-	m_window->AddAppPauseListener([this](bool pause)->void {
-		return SetAppPause(pause); });
+	ReturnIfFalse(InitializeClass());	//초기화
 
 	AddKeyListener();	//키 리스너 등록
 
 	//local에서 작업할 것들
-	ReturnIfFalse(InitializeClass());	//초기화
-	ReturnIfFalse(OnResize());
+	ReturnIfFalse(OnResize(m_window->GetWidth(), m_window->GetHeight()));
 	ReturnIfFalse(LoadMemory());	//데이터를 ram, vram에 올리기
 
 	return true;
@@ -75,8 +46,8 @@ bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 
 bool CMainLoop::InitializeClass()
 {
+	m_keyInputManager = std::make_unique<CKeyInputManager>(m_window->GetHandle());
 	m_camera = std::make_unique<CCamera>();
-
 	m_timer = std::make_unique<CGameTimer>();
 	m_material = std::make_unique<CMaterial>();
 	m_instance = std::make_unique<CInstance>();
@@ -85,6 +56,23 @@ bool CMainLoop::InitializeClass()
 	ReturnIfFalse(m_instance->CreateMockData());
 
 	return true;
+}
+
+void CMainLoop::AddKeyListener()
+{
+	m_window->AddWndProcListener([&keyMng = m_keyInputManager](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return keyMng->MsgProc(wnd, msg, wp, lp, lr); });
+	m_window->AddOnResizeListener([this](int width, int height)->bool {
+		return OnResize(width, height); });
+	m_window->AddAppPauseListener([this](bool pause)->void {
+		return SetAppPause(pause); });
+
+	m_keyInputManager->AddKeyListener([&cam = m_camera](std::vector<int> keyList) {
+		cam->PressedKey(keyList); });
+	m_keyInputManager->AddKeyListener([this](std::vector<int> keyList) {
+		PressedKey(keyList); });
+	m_keyInputManager->AddMouseListener([&cam = m_camera](float dx, float dy) {
+		cam->Move(dx, dy);	 });
 }
 
 bool CMainLoop::LoadMemory()
@@ -102,7 +90,7 @@ bool CMainLoop::IsInsideFrustum(const DirectX::BoundingSphere& bSphere, const XM
 	XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
 	XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
 
-	m_camFrustum.Transform(frustum, viewToLocal);
+	m_camera->GetFrustum().Transform(frustum, viewToLocal);
 
 	const bool isInside = (frustum.Contains(bSphere) != DirectX::DISJOINT);
 	return (isInside || !m_frustumCullingEnabled);
@@ -200,19 +188,6 @@ void CMainLoop::SetAppPause(bool pause)
 	pause ? m_timer->Stop() : m_timer->Start();
 }
 
-bool CMainLoop::OnResize()
-{
-	int width = m_window->GetWidth();
-	int height = m_window->GetHeight();
-	ReturnIfFalse(m_iRenderer->OnResize(width, height));
-	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
-
-	BoundingFrustum::CreateFromMatrix(m_camFrustum, m_camera->GetProj());
-
-	return true;
-}
-
 bool CMainLoop::OnResize(int width, int height)
 {
 	if (m_iRenderer->IsInitialize() == false) 
@@ -222,18 +197,7 @@ bool CMainLoop::OnResize(int width, int height)
 	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
 
-	BoundingFrustum::CreateFromMatrix(m_camFrustum, m_camera->GetProj());
-
 	return true;
-}
-
-void CMainLoop::AddKeyListener()
-{
-	m_keyInputManager = std::make_unique<CKeyInputManager>();
-	m_keyInputManager->AddListener([&cam = m_camera](std::vector<int> keyList) {
-		cam->PressedKey(keyList); });
-	m_keyInputManager->AddListener([this](std::vector<int> keyList) {
-		PressedKey(keyList); });
 }
 
 void CMainLoop::PressedKey(std::vector<int> keyList)
@@ -246,44 +210,6 @@ void CMainLoop::PressedKey(std::vector<int> keyList)
 		case '2':		m_frustumCullingEnabled = false;		break;
 		}
 	}
-}
-
-void CMainLoop::OnMouseDown(WPARAM btnState, int x, int y)
-{
-	m_lastMousePos.x = x;
-	m_lastMousePos.y = y;
-
-	SetCapture(m_window->GetHandle());
-}
-void CMainLoop::OnMouseUp(WPARAM btnState, int x, int y)
-{
-	ReleaseCapture();
-}
-void CMainLoop::OnMouseMove(WPARAM btnState, int x, int y)
-{
-	if ((btnState & MK_LBUTTON) != 0)
-	{
-		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_lastMousePos.x));
-		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_lastMousePos.y));
-
-		m_camera->Move(eMove::Pitch, dy);
-		m_camera->Move(eMove::RotateY, dx);
-	}
-
-	m_lastMousePos.x = x;
-	m_lastMousePos.y = y;
-}
-
-void CMainLoop::OnKeyboardInput()
-{
-	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
-	m_keyInputManager->PressedKeyList([]()->std::vector<int> {
-		std::vector<int> keyList{ 'W', 'S', 'D', 'A', '1', '2' };
-		std::vector<int> pressedKeyList{};
-		std::ranges::copy_if(keyList, std::back_inserter(pressedKeyList),
-			[](int vKey) { return GetAsyncKeyState(vKey) & 0x8000; });
-		return pressedKeyList; });
 }
 
 bool CMainLoop::Run(IRenderer* renderer)
@@ -311,10 +237,8 @@ bool CMainLoop::Run(IRenderer* renderer)
 				m_window->SetText(m_windowCaption);
 			}
 			
-			OnKeyboardInput();
-
+			m_keyInputManager->CheckInput();
 			m_camera->Update(m_timer->DeltaTime());
-
 			ReturnIfFalse(m_iRenderer->PrepareFrame());
 
 			m_material->MakeMaterialBuffer(m_iRenderer);

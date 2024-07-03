@@ -83,6 +83,7 @@ void CCamera::SetLens(float fovY, float aspect, float zn, float zf)
 	mFarWindowHeight  = 2.0f * mFarZ * tanf( 0.5f*mFovY );
 
 	XMMATRIX P = XMMatrixPerspectiveFovLH(mFovY, mAspect, mNearZ, mFarZ);
+	BoundingFrustum::CreateFromMatrix(m_camFrustum, P);
 	XMStoreFloat4x4(&mProj, P);
 }
 
@@ -107,15 +108,20 @@ void CCamera::LookAt(const XMFLOAT3& pos, const XMFLOAT3& target, const XMFLOAT3
 	mViewDirty = true;
 }
 
-XMMATRIX CCamera::GetView()const
+XMMATRIX CCamera::GetView() const
 {
 	assert(!mViewDirty);
 	return XMLoadFloat4x4(&mView);
 }
 
-XMMATRIX CCamera::GetProj()const
+XMMATRIX CCamera::GetProj() const
 {
 	return XMLoadFloat4x4(&mProj);
+}
+
+DirectX::BoundingFrustum CCamera::GetFrustum() const
+{
+	return m_camFrustum;
 }
 
 void CCamera::Strafe(float d)
@@ -193,6 +199,12 @@ void CCamera::Move(eMove move, float speed)
 	case eMove::Pitch:			Pitch(speed);		break;
 	case eMove::RotateY:		RotateY(speed);	break;
 	}
+}
+
+void CCamera::Move(float dx, float dy)
+{
+	Move(eMove::RotateY, dx);
+	Move(eMove::Pitch, dy);
 }
 
 void CCamera::GetPassCB(PassConstants* pc)

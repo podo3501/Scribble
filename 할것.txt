@@ -18,6 +18,8 @@
 --EXPECT_EQ(m_instance->LoadModel(model.get()), true); 여기서 데이터를 넣으면 나중에 FillRenderItems를 따로 부를 이유가 없다.
 --material을 instance 클래스에 material 목록을 넣는다.
 --texture 클래스를 renderer에 넣는다.
+--winproc을 윈도우로 옮기고 관련 변수들 정리 한다.
+--m_camFrustum을 카메라에 넣고 컬링 부분을 헬퍼함수로 뺀다.
 
 파일을 로딩하고 보여주는 부분을 나눌려고 한다.
 mainloop클래스에 클래스들을 나누어야 한다.
@@ -25,8 +27,6 @@ mainloop클래스에 클래스들을 나누어야 한다.
 fence를 renderer로 올린다.
 frameResource로 넣으면 fence 문제가 어떻게 될지 다시 분석해 보자.
 
-m_camFrustum을 카메라에 넣고 컬링 부분을 헬퍼함수로 뺀다.
-winproc을 윈도우로 옮기고 관련 변수들 정리 한다.
 
 
 

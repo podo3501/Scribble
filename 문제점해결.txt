@@ -29,3 +29,5 @@ microsoft c++ 예외: poco::notfoundexception 출력창에 나왔는데 nvdia �
 구글테스트에서 window msg 처리를 안 하고 풀 테스트를 할 경우 그 메세지가 살아남아서 다른 테스트에
 영향을 끼침. 그래서 소멸자에 메세지를 처리하도록(리스너 제거) 하니 정상적으로 동작함
 
+C1189: #error:  "No Target Architecture" include <windows.h> 하자
+

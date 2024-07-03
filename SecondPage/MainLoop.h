@@ -54,17 +54,11 @@ private:
 	void UpdateMainPassCB();
 	void FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance);
 
-	bool CALLBACK MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 	void CALLBACK SetAppPause(bool pause);
 	bool CALLBACK OnResize(int width, int height);
 
-	bool OnResize();
 	void AddKeyListener();
 	void PressedKey(std::vector<int> keyList);
-	void OnMouseDown(WPARAM btnState, int x, int y);
-	void OnMouseUp(WPARAM btnState, int x, int y);
-	void OnMouseMove(WPARAM btnState, int x, int y);
-	void OnKeyboardInput();
 
 private:
 	std::wstring m_resourcePath{};
@@ -81,9 +75,7 @@ private:
 	//랜더링시 필요한 데이터들
 	AllRenderItems m_AllRenderItems{};
 
-	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };
 
-	POINT m_lastMousePos{};
 	std::wstring m_windowCaption{};
 };
