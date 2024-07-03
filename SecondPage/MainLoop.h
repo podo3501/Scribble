@@ -76,6 +76,4 @@ private:
 	AllRenderItems m_AllRenderItems{};
 
 	bool m_frustumCullingEnabled{ true };
-
-	std::wstring m_windowCaption{};
 };

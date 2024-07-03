@@ -96,16 +96,6 @@ bool CMainLoop::IsInsideFrustum(const DirectX::BoundingSphere& bSphere, const XM
 	return (isInside || !m_frustumCullingEnabled);
 }
 
-std::wstring SetWindowCaption(std::size_t visibleCount, std::size_t totalCount)
-{
-	std::wostringstream outs;
-	outs.precision(6);
-	outs << L"Instancing and Culling Demo" <<
-		L"    " << visibleCount <<
-		L" objects visible out of " << totalCount;
-	return outs.str();
-}
-
 void CMainLoop::FindVisibleSubRenderItems( SubRenderItems& subRenderItems, InstanceDataList& visibleInstance)
 {
 	XMMATRIX view = m_camera->GetView();
@@ -121,7 +111,6 @@ void CMainLoop::FindVisibleSubRenderItems( SubRenderItems& subRenderItems, Insta
 				[this, &invView, &subRenderItem](auto& instance) {
 					return IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
 				});
-			m_windowCaption = SetWindowCaption(visibleInstance.size(), instanceList.size());
 		}
 		else
 			std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
@@ -133,17 +122,20 @@ void CMainLoop::FindVisibleSubRenderItems( SubRenderItems& subRenderItems, Insta
 void CMainLoop::UpdateRenderItems()
 {
 	//처리 안할것을 먼저 골라낸다.
-	InstanceDataList visibleInstance{};
+	InstanceDataList totalVisibleInstance{};
 	int instanceStartIndex{ 0 };
 	for (auto& e : m_AllRenderItems)
 	{
+		InstanceDataList visibleInstance{};
 		auto renderItem = e.second.get();
 		renderItem->startIndexInstance = instanceStartIndex;
 		//보여지는 서브 아이템을 찾아낸다.
 		FindVisibleSubRenderItems(renderItem->subRenderItems, visibleInstance);
 		instanceStartIndex += static_cast<int>(visibleInstance.size());
+
+		std::ranges::copy(visibleInstance, std::back_inserter(totalVisibleInstance));
 	}
-	UpdateInstanceBuffer(visibleInstance);
+	UpdateInstanceBuffer(totalVisibleInstance);
 }
 
 void CMainLoop::UpdateInstanceBuffer(const InstanceDataList& visibleInstance)
@@ -212,6 +204,16 @@ void CMainLoop::PressedKey(std::vector<int> keyList)
 	}
 }
 
+std::wstring SetWindowCaption(std::size_t visibleCount, std::size_t totalCount)
+{
+	std::wostringstream outs;
+	outs.precision(6);
+	outs << L"Instancing and Culling Demo" <<
+		L"    " << visibleCount <<
+		L" objects visible out of " << totalCount;
+	return outs.str();
+}
+
 bool CMainLoop::Run(IRenderer* renderer)
 {
 	m_timer->Reset();
@@ -231,10 +233,12 @@ bool CMainLoop::Run(IRenderer* renderer)
 				Sleep(100);
 			
 			std::wstring fps = CalculateFrameStats(m_timer.get());
+
 			if (!fps.empty())
 			{
-				m_windowCaption += fps;
-				m_window->SetText(m_windowCaption);
+				SubRenderItem* renderItem = GetSubRenderItem(m_AllRenderItems, "things", "skull");
+				std::wstring caption = SetWindowCaption(renderItem->instanceCount, renderItem->instanceDataList.size());
+				m_window->SetText(caption + fps);
 			}
 			
 			m_keyInputManager->CheckInput();
