@@ -24,6 +24,7 @@ public:
 	void Tick();  // Call every frame.
 
 	void GetPassCB(PassConstants* outPc);
+	inline bool IsStop() { return mStopped; }
 
 private:
 	double mSecondsPerCount{ 0.0 };

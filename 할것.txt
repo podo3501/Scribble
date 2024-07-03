@@ -26,6 +26,7 @@ fence를 renderer로 올린다.
 frameResource로 넣으면 fence 문제가 어떻게 될지 다시 분석해 보자.
 
 m_camFrustum을 카메라에 넣고 컬링 부분을 헬퍼함수로 뺀다.
+winproc을 윈도우로 옮기고 관련 변수들 정리 한다.
 
 
 

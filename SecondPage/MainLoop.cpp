@@ -33,81 +33,6 @@ bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESU
 {
 	switch (msg)
 	{
-	case WM_ACTIVATE:
-		if (LOWORD(wParam) == WA_INACTIVE)
-		{
-			m_appPaused = true;
-			m_timer->Stop();
-		}
-		else
-		{
-			m_appPaused = false;
-			m_timer->Start();
-		}
-		return true;
-
-		// WM_SIZE is sent when the user resizes the window.  
-	case WM_SIZE:
-		if (m_iRenderer->IsInitialize())
-		{
-			if (wParam == SIZE_MINIMIZED)
-			{
-				m_appPaused = true;
-				m_minimized = true;
-				m_maximized = false;
-			}
-			else if (wParam == SIZE_MAXIMIZED)
-			{
-				m_appPaused = false;
-				m_minimized = false;
-				m_maximized = true;
-				OnResize();
-			}
-			else if (wParam == SIZE_RESTORED)
-			{
-
-				// Restoring from minimized state?
-				if (m_minimized)
-				{
-					m_appPaused = false;
-					m_minimized = false;
-					OnResize();
-				}
-
-				// Restoring from maximized state?
-				else if (m_maximized)
-				{
-					m_appPaused = false;
-					m_maximized = false;
-					OnResize();
-				}
-				else if (m_resizing)
-				{
-				}
-				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
-				{
-					OnResize();
-				}
-			}
-		}
-		return true;
-
-		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
-	case WM_ENTERSIZEMOVE:
-		m_appPaused = true;
-		m_resizing = true;
-		m_timer->Stop();
-		return true;
-
-		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
-		// Here we reset everything based on the new window dimensions.
-	case WM_EXITSIZEMOVE:
-		m_appPaused = false;
-		m_resizing = false;
-		m_timer->Start();
-		OnResize();
-		return true;
-
 	case WM_LBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
@@ -133,6 +58,10 @@ bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 
 	m_window->AddWndProcListener([this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return MsgProc(wnd, msg, wp, lp, lr); });
+	m_window->AddOnResizeListener([this](int width, int height)->bool {
+		return OnResize(width, height); });
+	m_window->AddAppPauseListener([this](bool pause)->void {
+		return SetAppPause(pause); });
 
 	AddKeyListener();	//키 리스너 등록
 
@@ -266,10 +195,29 @@ void CMainLoop::UpdateMainPassCB()
 	m_iRenderer->SetUploadBuffer(eBufferType::PassCB, &pc, 1);
 }
 
+void CMainLoop::SetAppPause(bool pause)
+{
+	pause ? m_timer->Stop() : m_timer->Start();
+}
+
 bool CMainLoop::OnResize()
 {
 	int width = m_window->GetWidth();
 	int height = m_window->GetHeight();
+	ReturnIfFalse(m_iRenderer->OnResize(width, height));
+	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
+
+	BoundingFrustum::CreateFromMatrix(m_camFrustum, m_camera->GetProj());
+
+	return true;
+}
+
+bool CMainLoop::OnResize(int width, int height)
+{
+	if (m_iRenderer->IsInitialize() == false) 
+		return true;
+
 	ReturnIfFalse(m_iRenderer->OnResize(width, height));
 	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
@@ -353,7 +301,7 @@ bool CMainLoop::Run(IRenderer* renderer)
 		{
 			m_timer->Tick();
 
-			if (m_appPaused)
+			if (m_timer->IsStop())
 				Sleep(100);
 			
 			std::wstring fps = CalculateFrameStats(m_timer.get());

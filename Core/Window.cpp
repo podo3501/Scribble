@@ -21,10 +21,67 @@ bool CWindow::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT
 {
 	switch (msg)
 	{
+	case WM_ACTIVATE:
+		if (LOWORD(wParam) == WA_INACTIVE)
+			AppPause(true);
+		else
+			AppPause(false);
+		return true;
 	case WM_SIZE:
 		m_width = static_cast<int>(LOWORD(lParam));
 		m_height = static_cast<int>(HIWORD(lParam));
-		return false;	//다른 MsgProc에서 처리할 게 남았다.
+		if (wParam == SIZE_MINIMIZED)
+		{
+			m_minimized = true;
+			m_maximized = false;
+			AppPause(true);
+		}
+		else if (wParam == SIZE_MAXIMIZED)
+		{
+			m_minimized = false;
+			m_maximized = true;
+			AppPause(false);
+			OnResize();
+		}
+		else if (wParam == SIZE_RESTORED)
+		{
+			// Restoring from minimized state?
+			if (m_minimized)
+			{
+				m_minimized = false;
+				AppPause(false);
+				OnResize();
+			}
+
+			// Restoring from maximized state?
+			else if (m_maximized)
+			{
+				m_maximized = false;
+				AppPause(false);
+				OnResize();
+			}
+			else if (m_resizing)
+			{
+			}
+			else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
+			{
+				OnResize();
+			}
+		}
+		return true;
+		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
+	case WM_ENTERSIZEMOVE:
+		m_resizing = true;
+		AppPause(true);
+		return true;
+
+		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
+		// Here we reset everything based on the new window dimensions.
+	case WM_EXITSIZEMOVE:
+		m_resizing = false;
+		AppPause(false);
+		OnResize();
+		return true;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -116,8 +173,14 @@ bool CWindow::Initialize(bool bShow)
 	return true;
 }
 
-inline void CWindow::AddWndProcListener(WndProcListener listener)
+bool CWindow::OnResize()
 {
-	m_wndProcListeners.emplace_back(std::move(listener));
+	if (m_onResizeListener == nullptr) return true;
+	return m_onResizeListener(m_width, m_height);
 }
 
+void CWindow::AppPause(bool pause)
+{
+	if (m_appPauseListener == nullptr) return;
+	return m_appPauseListener(pause);
+}

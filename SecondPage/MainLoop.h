@@ -41,8 +41,6 @@ public:
 	bool Run(IRenderer* renderer = nullptr);
 
 private:
-	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
-
 	bool InitializeClass();
 	bool LoadMemory();
 
@@ -56,8 +54,11 @@ private:
 	void UpdateMainPassCB();
 	void FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance);
 
-	bool OnResize();
+	bool CALLBACK MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
+	void CALLBACK SetAppPause(bool pause);
+	bool CALLBACK OnResize(int width, int height);
 
+	bool OnResize();
 	void AddKeyListener();
 	void PressedKey(std::vector<int> keyList);
 	void OnMouseDown(WPARAM btnState, int x, int y);
@@ -82,11 +83,6 @@ private:
 
 	DirectX::BoundingFrustum m_camFrustum{};
 	bool m_frustumCullingEnabled{ true };
-
-	bool m_appPaused{ false };
-	bool m_minimized{ false };
-	bool m_maximized{ false };
-	bool m_resizing{ false };
 
 	POINT m_lastMousePos{};
 	std::wstring m_windowCaption{};
