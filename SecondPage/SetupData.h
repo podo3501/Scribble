@@ -32,7 +32,7 @@ struct ModelProperty
 	bool cullingFrustum{ false };
 };
 
-class CInstance
+class CSetupData
 {
 	using MeshProperty = std::unordered_map<std::string, ModelProperty>;
 	using AllModelProperty = std::unordered_map<std::string, MeshProperty>;
@@ -43,11 +43,11 @@ class CInstance
 	using MaterialList = std::vector<std::shared_ptr<Material>>;
 
 public:
-	CInstance();
-	~CInstance();
+	CSetupData();
+	~CSetupData();
 
-	CInstance(const CInstance&) = delete;
-	CInstance& operator=(const CInstance&) = delete;
+	CSetupData(const CSetupData&) = delete;
+	CSetupData& operator=(const CSetupData&) = delete;
 
 	bool CreateMockData();
 	bool LoadModel(CModel* model, AllRenderItems* renderItems);

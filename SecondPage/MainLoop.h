@@ -16,7 +16,7 @@ class CFrameResources;
 class CKeyInputManager;
 class CGameTimer;
 class CGeometry;
-class CInstance;
+class CSetupData;
 struct RenderItem;
 struct FrameResource;
 struct InstanceData;
@@ -71,7 +71,7 @@ private:
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
 	
 	std::unique_ptr<CModel> m_model{ nullptr };
-	std::unique_ptr<CInstance> m_instance{ nullptr };
+	std::unique_ptr<CSetupData> m_setupData{ nullptr };
 	//랜더링시 필요한 데이터들
 	AllRenderItems m_AllRenderItems{};
 

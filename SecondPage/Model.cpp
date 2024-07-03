@@ -5,7 +5,7 @@
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
 #include "./GeometryGenerator.h"
-#include "./Instance.h"
+#include "./SetupData.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;

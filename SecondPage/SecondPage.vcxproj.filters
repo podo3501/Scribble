@@ -38,7 +38,7 @@
     <ClCompile Include="GeometryGenerator.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Instance.cpp">
+    <ClCompile Include="SetupData.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="..\Include\RenderItem.cpp">
@@ -70,7 +70,7 @@
     <ClInclude Include="GeometryGenerator.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Instance.h">
+    <ClInclude Include="SetupData.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\FrameResourceData.h">

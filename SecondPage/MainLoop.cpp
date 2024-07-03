@@ -12,7 +12,7 @@
 #include "./Model.h"
 #include "./Camera.h"
 #include "./KeyInputManager.h"
-#include "./Instance.h"
+#include "./SetupData.h"
 #include "./Helper.h"
 
 using namespace DirectX;
@@ -50,10 +50,10 @@ bool CMainLoop::InitializeClass()
 	m_camera = std::make_unique<CCamera>();
 	m_timer = std::make_unique<CGameTimer>();
 	m_material = std::make_unique<CMaterial>();
-	m_instance = std::make_unique<CInstance>();
+	m_setupData = std::make_unique<CSetupData>();
 	m_model = std::make_unique<CModel>(m_resourcePath);
 
-	ReturnIfFalse(m_instance->CreateMockData());
+	ReturnIfFalse(m_setupData->CreateMockData());
 
 	return true;
 }
@@ -77,9 +77,9 @@ void CMainLoop::AddKeyListener()
 
 bool CMainLoop::LoadMemory()
 {
-	ReturnIfFalse(m_instance->LoadModel(m_model.get(), &m_AllRenderItems));
+	ReturnIfFalse(m_setupData->LoadModel(m_model.get(), &m_AllRenderItems));
 	ReturnIfFalse(m_model->LoadModelIntoVRAM(m_iRenderer, &m_AllRenderItems));
-	ReturnIfFalse(m_instance->LoadTextureIntoVRAM(m_iRenderer, m_material.get()));
+	ReturnIfFalse(m_setupData->LoadTextureIntoVRAM(m_iRenderer, m_material.get()));
 
 	return true;
 }

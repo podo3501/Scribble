@@ -1,4 +1,4 @@
-#include "./Instance.h"
+#include "./SetupData.h"
 #include <algorithm>
 #include <ranges>
 #include "../Core/Utility.h"
@@ -12,11 +12,11 @@
 
 using namespace DirectX;
 
-CInstance::CInstance() 
+CSetupData::CSetupData() 
 {}
-CInstance::~CInstance() = default;
+CSetupData::~CSetupData() = default;
 
-InstanceDataList CInstance::CreateSkullInstanceData()
+InstanceDataList CSetupData::CreateSkullInstanceData()
 {
 	InstanceDataList instances{};
 
@@ -30,7 +30,7 @@ InstanceDataList CInstance::CreateSkullInstanceData()
 
 	float x = -0.5f * width;
 	float y = -0.5f * height;
-	float z = -0.5f * depth;
+	float z = 1.0f * depth;
 	float dx = width / (n - 1);
 	float dy = height / (n - 1);
 	float dz = depth / (n - 1);
@@ -72,7 +72,7 @@ InstanceDataList CreateSkyCubeInstanceData()
 	return instances;
 }
 
-bool CInstance::CreateModelMock()
+bool CSetupData::CreateModelMock()
 {
 	ModelProperty cube{};
 	cube.createType = ModelProperty::CreateType::Generator;
@@ -91,7 +91,7 @@ bool CInstance::CreateModelMock()
 	return true;
 }
 
-bool CInstance::CreateTextureMock()
+bool CSetupData::CreateTextureMock()
 {
 	TypeTextures cubeTextures(eTextureType::Cube, { L"grasscube1024.dds" });
 	TypeTextures skullTextures(eTextureType::Common,
@@ -103,7 +103,7 @@ bool CInstance::CreateTextureMock()
 	return true;
 }
 
-bool CInstance::CreateMaterialMock()
+bool CSetupData::CreateMaterialMock()
 {
 	auto MakeMaterial = [this, diffuseIndex{ 0u }](std::string&& name, eTextureType type, std::wstring&& filename,
 		XMFLOAT4 diffuseAlbedo, XMFLOAT3 fresnelR0, float rough) mutable {
@@ -132,7 +132,7 @@ bool CInstance::CreateMaterialMock()
 	return true;
 }
 
-bool CInstance::CreateMockData()
+bool CSetupData::CreateMockData()
 {
 	ReturnIfFalse(CreateMaterialMock());
 	ReturnIfFalse(CreateTextureMock());
@@ -141,7 +141,7 @@ bool CInstance::CreateMockData()
 	return true;
 }
 
-bool CInstance::FillRenderItems(AllRenderItems* renderItems)
+bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 {
 	std::ranges::for_each(m_allModelProperty, [renderItems](auto& geoProp) {
 		std::ranges::for_each(geoProp.second, [renderItems, geoProp](auto& meshProp) {
@@ -154,7 +154,7 @@ bool CInstance::FillRenderItems(AllRenderItems* renderItems)
 	return true;
 }
 
-bool CInstance::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
+bool CSetupData::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
 {
 	auto& mesh = m_allModelProperty[geoName];
 	if (mesh.find(meshName) != mesh.end())
@@ -165,13 +165,13 @@ bool CInstance::InsertModelProperty(const std::string& geoName, const std::strin
 	return true;
 }
 
-bool CInstance::LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp)
+bool CSetupData::LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp)
 {
 	return std::ranges::all_of(meshProp, [model, &geoName](auto& mProp) {
 		return model->LoadGeometry(geoName, mProp.first, &mProp.second);});
 }
 
-bool CInstance::LoadModel(CModel* model, AllRenderItems* renderItems)
+bool CSetupData::LoadModel(CModel* model, AllRenderItems* renderItems)
 {
 	ReturnIfFalse( std::ranges::all_of(m_allModelProperty, [this, model](auto& geoProp) {
 		auto& geoName = geoProp.first;
@@ -180,7 +180,7 @@ bool CInstance::LoadModel(CModel* model, AllRenderItems* renderItems)
 	return FillRenderItems(renderItems);
 }
 
-bool CInstance::LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material)
+bool CSetupData::LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material)
 {
 	ReturnIfFalse(std::ranges::all_of(m_textureList, [renderer](auto& typeTex) {
 		return renderer->LoadTexture(typeTex.first, typeTex.second); }));
@@ -189,7 +189,7 @@ bool CInstance::LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material)
 	return true;
 }
 
-int CInstance::GetTextureCount(eTextureType texType)
+int CSetupData::GetTextureCount(eTextureType texType)
 {
 	auto find = std::ranges::find_if(m_textureList, [texType](auto& typeTex) { return typeTex.first == texType; });
 	return static_cast<int>(find->second.size());

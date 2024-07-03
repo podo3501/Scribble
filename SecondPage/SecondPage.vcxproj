@@ -135,7 +135,7 @@
     <ClCompile Include="..\Include\RenderItem.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Helper.cpp" />
-    <ClCompile Include="Instance.cpp" />
+    <ClCompile Include="SetupData.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="KeyInputManager.cpp" />
@@ -151,7 +151,7 @@
     <ClInclude Include="..\Include\Types.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Helper.h" />
-    <ClInclude Include="Instance.h" />
+    <ClInclude Include="SetupData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="KeyInputManager.h" />
