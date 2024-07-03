@@ -9,8 +9,6 @@
 
 interface IRenderer;
 class CGeometry;
-struct ID3D12Device;
-struct ID3D12GraphicsCommandList;
 struct InstanceData;
 struct Vertex;
 struct RenderItem;
@@ -86,11 +84,8 @@ private:
 	void SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataList,
 		Vertices& totalVertices, Indices& totalIndices);
 	bool Convert(const MeshDataList& meshDataList, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
-	bool Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
-		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
 
 private:
-	//std::string m_name{};
 	std::wstring m_resPath{};
 	const std::wstring m_filePath{ L"Models/" };
 

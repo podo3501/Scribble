@@ -1,7 +1,6 @@
 #pragma once
 
 #include<wtypes.h>
-#include"CoreInterface.h"
 #include<memory>
 #include <wrl.h>
 #include <dxgiformat.h>
@@ -43,20 +42,20 @@ struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 class CDirectx3D
 {
 public:
-	CDirectx3D(CWindow* pWindow);
+	CDirectx3D();
 	~CDirectx3D();
 
-	CDirectx3D() = delete;
 	CDirectx3D(const CDirectx3D&) = delete;
 	CDirectx3D& operator=(const CDirectx3D&) = delete;
 
-	bool Initialize();
+	bool Initialize(HWND hwnd, int width, int height);
 	bool ResetCommandLists();
 	bool ExcuteCommandLists();
 	bool ExcuteSwapChain(UINT64* outFenceIdx);
 	bool FlushCommandQueue();
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
-	bool OnResize();
+	bool OnResize(int width, int height);
+	bool Set4xMsaaState(HWND hwnd, int width, int height, bool value);
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;
 
@@ -69,22 +68,19 @@ public:
 	inline D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
 private:
-	bool InitDirect3D();
+	bool InitDirect3D(HWND hwnd, int width, int height);
 
 	void LogAdapters();
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 	bool CreateCommandObjects();
-	bool CreateSwapChain();
+	bool CreateSwapChain(HWND hwnd, int width, int height);
 	bool CreateRtvAndDsvDescriptorHeaps();
 
 	bool CreateDescriptorHeap(
 		UINT numDescriptor, 
 		D3D12_DESCRIPTOR_HEAP_TYPE heapType, 
 		ID3D12DescriptorHeap** descriptorHeap);
-
-	bool MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
-	bool Set4xMsaaState(bool value);
 
 private:
 	CWindow* m_window{ nullptr };

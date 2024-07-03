@@ -13,7 +13,6 @@ class CDirectx3D;
 class CShader;
 class CCamera;
 class CUploadBuffer;
-class CFrameResources;
 class CTexture;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
@@ -33,15 +32,17 @@ public:
 	CRenderer(const CRenderer&) = delete;
 	CRenderer& operator=(const CRenderer&) = delete;
 
-	bool Initialize(CWindow* window);
-	virtual bool IsInitialize() { return m_isInitialize; };
-	virtual bool OnResize(int wndWidth, int wndHeight) override;
-	virtual bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory) override;
+	virtual bool IsInitialize() override { return m_isInitialize; };
+	virtual bool OnResize(int width, int height) override;
+	virtual bool LoadModel(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
 	virtual bool LoadTexture(eTextureType type, std::vector<std::wstring>& filenames) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
 	virtual bool PrepareFrame() override;
 	virtual bool Draw(AllRenderItems& renderItem) override;
-	virtual bool WaitUntilGpuFinished(UINT64 fenceCount) override;
+	virtual void Set4xMsaaState(HWND hwnd, int widht, int height, bool value) override;
+
+	bool Initialize(HWND hwnd, int width, int height);
+	bool WaitUntilGpuFinished(UINT64 fenceCount);
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
@@ -50,11 +51,17 @@ private:
 	bool BuildRootSignature();
 	bool BuildDescriptorHeaps();
 	bool BuildPSOs();
+
+	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
+	bool LoadModel(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
+
 	bool MakeFrameResource();
 	bool MakePSOPipelineState(GraphicsPSO psoType);
 	void MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 
 private:

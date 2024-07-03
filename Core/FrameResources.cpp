@@ -2,7 +2,7 @@
 #include <d3d12.h>
 #include "./d3dUtil.h"
 #include "./UploadBuffer.h"
-#include "../Include/Interface.h"
+#include "./Renderer.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
 
@@ -49,7 +49,7 @@ bool CFrameResources::SetUploadBuffer(eBufferType bufferType, const void* buffer
 	return true;
 }
 
-bool CFrameResources::PrepareFrame(IRenderer* renderer)
+bool CFrameResources::PrepareFrame(CRenderer* renderer)
 {
 	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
 	if (m_fenceCount == 0)

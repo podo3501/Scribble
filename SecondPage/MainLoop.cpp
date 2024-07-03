@@ -1,12 +1,11 @@
 #include "MainLoop.h"
-#include <WinUser.h>
 #include "../Core/d3dUtil.h"
 #include "../Core/Utility.h"
-#include "../Core/Window.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/RenderItem.h"
 #include "../Include/interface.h"
 #include "../Include/FrameResourceData.h"
+#include "./Window.h"
 #include "./GameTimer.h"
 #include "./Material.h"
 #include "./Model.h"
@@ -16,6 +15,24 @@
 #include "./Helper.h"
 
 using namespace DirectX;
+
+bool g4xMsaaState{ false };
+bool CMainLoop::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
+{
+	switch (msg)
+	{
+	case WM_KEYUP:
+		if ((int)wParam == VK_F2)
+		{
+			m_iRenderer->Set4xMsaaState(
+				m_window->GetHandle(), m_window->GetWidth(), m_window->GetHeight(), !g4xMsaaState);
+			g4xMsaaState = !g4xMsaaState;
+		}
+		return true;
+	}
+
+	return false;
+}
 
 RenderItem::RenderItem()
 	: NumFramesDirty{ gFrameResourceCount }
@@ -60,6 +77,8 @@ bool CMainLoop::InitializeClass()
 
 void CMainLoop::AddKeyListener()
 {
+	m_window->AddWndProcListener([this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return MsgProc(wnd, msg, wp, lp, lr); });
 	m_window->AddWndProcListener([&keyMng = m_keyInputManager](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return keyMng->MsgProc(wnd, msg, wp, lp, lr); });
 	m_window->AddOnResizeListener([this](int width, int height)->bool {
@@ -133,7 +152,7 @@ void CMainLoop::UpdateRenderItems()
 		FindVisibleSubRenderItems(renderItem->subRenderItems, visibleInstance);
 		instanceStartIndex += static_cast<int>(visibleInstance.size());
 
-		std::ranges::copy(visibleInstance, std::back_inserter(totalVisibleInstance));
+		std::ranges::move(visibleInstance, std::back_inserter(totalVisibleInstance));
 	}
 	UpdateInstanceBuffer(totalVisibleInstance);
 }
@@ -242,9 +261,9 @@ bool CMainLoop::Run(IRenderer* renderer)
 			}
 			
 			m_keyInputManager->CheckInput();
-			m_camera->Update(m_timer->DeltaTime());
 			ReturnIfFalse(m_iRenderer->PrepareFrame());
 
+			m_camera->Update(m_timer->DeltaTime());
 			m_material->MakeMaterialBuffer(m_iRenderer);
 			UpdateRenderItems();
 			UpdateMainPassCB();

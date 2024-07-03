@@ -15,12 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Window.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="CoreInterface.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Directx3D.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -59,9 +53,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Window.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Directx3D.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>

@@ -6,11 +6,11 @@
 #include <unordered_map>
 #include <functional>
 #include "../Core/Directx3D.h"
-#include "../Core/Window.h"
 #include "../Core/d3dUtil.h"
 #include "../Include/interface.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
+#include "../SecondPage/Window.h"
 #include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Model.h"
@@ -31,7 +31,7 @@ namespace MainLoop
 		{
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(false), true);
-			m_renderer = CreateRenderer(m_resourcePath, m_window.get());
+			m_renderer = CreateRenderer(m_resourcePath, m_window->GetHandle(), m_window->GetWidth(), m_window->GetHeight());
 			EXPECT_EQ(m_renderer != nullptr, true);
 			m_setupData = std::make_unique<CSetupData>();
 			EXPECT_EQ(m_setupData->CreateMockData(), true);
@@ -117,7 +117,7 @@ namespace A_SecondPage
 
 		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 		window->Initialize(true);
-		auto renderer = CreateRenderer(resPath, window.get());
+		auto renderer = CreateRenderer(resPath, window->GetHandle(), window->GetWidth(), window->GetHeight());
 
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(resPath);
 		EXPECT_EQ(mainLoop->Initialize(window.get(), renderer.get()), true);

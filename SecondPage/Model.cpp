@@ -1,5 +1,4 @@
 #include "Model.h"
-#include <DirectXMath.h>
 #include "../Core/d3dUtil.h"
 #include "../Include/Interface.h"
 #include "../Include/FrameResourceData.h"
@@ -195,31 +194,7 @@ bool CModel::LoadModelIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderIte
 		ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
 
 		//그래픽 메모리에 올린다.
-		ReturnIfFalse(renderer->LoadData(
-			[&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-					return Load(device, cmdList, totalVertices, totalIndices, pRenderItem);	}));
+		ReturnIfFalse(renderer->LoadModel(totalVertices, totalIndices, pRenderItem));
 
 		return true;	}); 	
-}
-
-bool CModel::Load(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
-	Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
-{
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		device, cmdList,
-		totalVertices.data(),
-		renderItem->vertexBufferView.SizeInBytes,
-		renderItem->vertexBufferUploader,
-		&renderItem->vertexBufferGPU));
-	renderItem->vertexBufferView.BufferLocation = renderItem->vertexBufferGPU->GetGPUVirtualAddress();
-
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		device, cmdList,
-		totalIndices.data(),
-		renderItem->indexBufferView.SizeInBytes,
-		renderItem->indexBufferUploader,
-		&renderItem->indexBufferGPU));
-	renderItem->indexBufferView.BufferLocation = renderItem->indexBufferGPU->GetGPUVirtualAddress();
-
-	return true;
 }

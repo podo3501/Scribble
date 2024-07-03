@@ -23,6 +23,7 @@
 
 캐릭터를 붙인다.
 
-
+utility를 core용과 다른 것으로 분리한다.
+window를 core에서 꺼낸다. 그래서 core에 바로 include 하는 것이 없도록 한다.
 
 

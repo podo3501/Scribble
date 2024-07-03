@@ -54,6 +54,7 @@ private:
 	void UpdateMainPassCB();
 	void FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance);
 
+	bool CALLBACK MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 	void CALLBACK SetAppPause(bool pause);
 	bool CALLBACK OnResize(int width, int height);
 

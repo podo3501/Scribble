@@ -1,5 +1,4 @@
 #include "Directx3D.h"
-#include "Window.h"
 #include "d3dUtil.h"
 #include <WindowsX.h>
 
@@ -7,25 +6,8 @@ using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace DirectX;
 
-bool CDirectx3D::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
-{
-	switch (msg)
-	{
-	case WM_KEYUP:
-		if ((int)wParam == VK_F2)
-			Set4xMsaaState(!m_4xMsaaState);
-		return true;
-	}
-
-	return false;
-}
-
-CDirectx3D::CDirectx3D(CWindow* pWindow)
-	: m_window(pWindow)
-{
-	m_window->AddWndProcListener([directx3D = this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
-		return directx3D->MsgProc(wnd, msg, wp, lp, lr); });
-}
+CDirectx3D::CDirectx3D()
+{}
 
 CDirectx3D::~CDirectx3D()
 {
@@ -33,15 +15,15 @@ CDirectx3D::~CDirectx3D()
 		FlushCommandQueue();
 }
 
-bool CDirectx3D::Initialize()
+bool CDirectx3D::Initialize(HWND hwnd, int width, int height)
 {
-	ReturnIfFalse(InitDirect3D());
-	ReturnIfFalse(OnResize());
+	ReturnIfFalse(InitDirect3D(hwnd, width, height));
+	ReturnIfFalse(OnResize(width, height));
 
 	return true;
 }
 
-bool CDirectx3D::InitDirect3D()
+bool CDirectx3D::InitDirect3D(HWND hwnd, int width, int height)
 {
 #if defined(DEBUG) || defined(_DEBUG) 
 	// Enable the D3D12 debug layer.
@@ -97,7 +79,7 @@ bool CDirectx3D::InitDirect3D()
 	#endif
 
 	ReturnIfFalse(CreateCommandObjects());
-	ReturnIfFalse(CreateSwapChain());
+	ReturnIfFalse(CreateSwapChain(hwnd, width, height));
 	ReturnIfFalse(CreateRtvAndDsvDescriptorHeaps());
 
 	return true;
@@ -205,14 +187,14 @@ bool CDirectx3D::CreateCommandObjects()
 	return true;
 }
 
-bool CDirectx3D::CreateSwapChain()
+bool CDirectx3D::CreateSwapChain(HWND hwnd, int width, int height)
 {
 	// Release the previous swapchain we will be recreating.
 	m_swapChain.Reset();
 
 	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width = m_window->GetWidth();
-	sd.BufferDesc.Height = m_window->GetHeight();
+	sd.BufferDesc.Width = width;
+	sd.BufferDesc.Height = height;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferDesc.Format = m_backBufferFormat;
@@ -222,7 +204,7 @@ bool CDirectx3D::CreateSwapChain()
 	sd.SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.BufferCount = SwapChainBufferCount;
-	sd.OutputWindow = m_window->GetHandle();
+	sd.OutputWindow = hwnd;
 	sd.Windowed = true;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -259,7 +241,7 @@ bool CDirectx3D::CreateRtvAndDsvDescriptorHeaps()
 	return true;
 }
 
-bool CDirectx3D::OnResize()
+bool CDirectx3D::OnResize(int width, int height)
 {
 	assert(m_device);
 	assert(m_swapChain);
@@ -277,7 +259,7 @@ bool CDirectx3D::OnResize()
 	// Resize the swap chain.
 	ReturnIfFailed(m_swapChain->ResizeBuffers(
 		SwapChainBufferCount,
-		m_window->GetWidth(), m_window->GetHeight(),
+		width, height,
 		m_backBufferFormat,
 		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
@@ -296,8 +278,8 @@ bool CDirectx3D::OnResize()
 	D3D12_RESOURCE_DESC depthStencilDesc;
 	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	depthStencilDesc.Alignment = 0;
-	depthStencilDesc.Width = m_window->GetWidth();
-	depthStencilDesc.Height = m_window->GetHeight();
+	depthStencilDesc.Width = width;
+	depthStencilDesc.Height = height;
 	depthStencilDesc.DepthOrArraySize = 1;
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.Format = m_depthStencilFormat;
@@ -399,14 +381,14 @@ void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutD
 	inoutDesc->SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
 }
 
-bool CDirectx3D::Set4xMsaaState(bool value)
+bool CDirectx3D::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 {
 	if (m_4xMsaaState == value)
 		return true;
 	
 	m_4xMsaaState = value;
-	ReturnIfFalse(CreateSwapChain());
-	ReturnIfFalse(OnResize());
+	ReturnIfFalse(CreateSwapChain(hwnd, width, height));
+	ReturnIfFalse(OnResize(width, height));
 
 	return true;
 }

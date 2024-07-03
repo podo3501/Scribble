@@ -14,10 +14,10 @@
 
 using Microsoft::WRL::ComPtr;
 
-std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath, CWindow* window)
+std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath, HWND hwnd, int width, int height)
 {
 	std::unique_ptr<CRenderer> renderer = std::make_unique<CRenderer>(resPath);
-	bool bResult = renderer->Initialize(window);
+	bool bResult = renderer->Initialize(hwnd, width, height);
 	if (bResult != true)
 		return nullptr;
 
@@ -29,13 +29,13 @@ CRenderer::CRenderer(std::wstring resPath)
 {}
 CRenderer::~CRenderer() = default;
 
-bool CRenderer::Initialize(CWindow* window)
+bool CRenderer::Initialize(HWND hwnd, int width, int height)
 {
 	m_shader = std::make_unique<CShader>(m_resPath);
-	m_directx3D = std::make_unique<CDirectx3D>(window);
+	m_directx3D = std::make_unique<CDirectx3D>();
 	m_texture = std::make_unique<CTexture>(m_resPath);
 
-	ReturnIfFalse(m_directx3D->Initialize());
+	ReturnIfFalse(m_directx3D->Initialize(hwnd, width, height));
 
 	m_device = m_directx3D->GetDevice();
 	m_cmdList = m_directx3D->GetCommandList();
@@ -72,12 +72,39 @@ bool CRenderer::LoadData(std::function<bool(ID3D12Device* device, ID3D12Graphics
 	return true;
 }
 
+bool CRenderer::LoadModel(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+	Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
+{
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
+		device, cmdList,
+		totalVertices.data(),
+		renderItem->vertexBufferView.SizeInBytes,
+		renderItem->vertexBufferUploader,
+		&renderItem->vertexBufferGPU));
+	renderItem->vertexBufferView.BufferLocation = renderItem->vertexBufferGPU->GetGPUVirtualAddress();
+
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
+		device, cmdList,
+		totalIndices.data(),
+		renderItem->indexBufferView.SizeInBytes,
+		renderItem->indexBufferUploader,
+		&renderItem->indexBufferGPU));
+	renderItem->indexBufferView.BufferLocation = renderItem->indexBufferGPU->GetGPUVirtualAddress();
+
+	return true;
+}
+
+bool CRenderer::LoadModel(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
+{
+	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+		return LoadModel(device, cmdList, totalVertices, totalIndices, renderItem); });
+}
+
 bool CRenderer::LoadTexture(eTextureType type, std::vector<std::wstring>& filenames)
 {
 	ReturnIfFalse(LoadData(
 		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-			ReturnIfFalse(m_texture->Upload(device, cmdList, type, filenames));
-			return true; }));
+			return (m_texture->Upload(device, cmdList, type, filenames)); }));
 
 	m_texture->CreateShaderResourceView(this, type);
 
@@ -94,18 +121,18 @@ bool CRenderer::PrepareFrame()
 	return m_frameResources->PrepareFrame(this);
 }
 
-bool CRenderer::OnResize(int wndWidth, int wndHeight)
+bool CRenderer::OnResize(int width, int height)
 {
-	ReturnIfFalse(m_directx3D->OnResize());
+	ReturnIfFalse(m_directx3D->OnResize(width, height));
 	// Update the viewport transform to cover the client area.
 	m_screenViewport.TopLeftX = 0;
 	m_screenViewport.TopLeftY = 0;
-	m_screenViewport.Width = static_cast<float>(wndWidth);
-	m_screenViewport.Height = static_cast<float>(wndHeight);
+	m_screenViewport.Width = static_cast<float>(width);
+	m_screenViewport.Height = static_cast<float>(height);
 	m_screenViewport.MinDepth = 0.0f;
 	m_screenViewport.MaxDepth = 1.0f;
 
-	m_scissorRect = { 0, 0, wndWidth, wndHeight };
+	m_scissorRect = { 0, 0, width, height };
 
 	return true;
 }
@@ -301,6 +328,11 @@ void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderI
 		m_cmdList->DrawIndexedInstanced(subItem.indexCount, subRenderItem.instanceCount,
 			subItem.startIndexLocation, subItem.baseVertexLocation, 0);
 	}
+}
+
+void CRenderer::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
+{
+	m_directx3D->Set4xMsaaState(hwnd, width, height, value);
 }
 
 

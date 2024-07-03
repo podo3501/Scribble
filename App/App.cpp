@@ -2,8 +2,8 @@
 #include <crtdbg.h>
 #include <memory>
 #include "../Core/d3dUtil.h"
-#include "../Core/Window.h"
 #include "../Include/Interface.h"
+#include "../SecondPage/Window.h"
 #include "../SecondPage/MainLoop.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
@@ -21,7 +21,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 
 		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(hInstance);
 		window->Initialize(true);
-		auto renderer = CreateRenderer(resPath, window.get());
+		auto renderer = CreateRenderer(resPath, window->GetHandle(), window->GetWidth(), window->GetHeight());
 
 		bool bResult{ true };
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(resPath);

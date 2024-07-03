@@ -2,6 +2,7 @@
 
 #include <DirectXMath.h>
 #include <wrl.h>
+#include <vector>
 
 struct Light
 {
@@ -84,3 +85,6 @@ struct Vertex
     DirectX::XMFLOAT3 normal{};
     DirectX::XMFLOAT2 texC{};
 };
+
+using Vertices = std::vector<Vertex>;
+using Indices = std::vector<std::int32_t>;
