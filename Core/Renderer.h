@@ -25,9 +25,10 @@ enum class eBufferType;
 class CRenderer : public IRenderer
 {
 public:
-	CRenderer();
+	CRenderer(std::wstring resPath);
 	~CRenderer();
 
+	CRenderer() = delete;
 	CRenderer(const CRenderer&) = delete;
 	CRenderer& operator=(const CRenderer&) = delete;
 
@@ -40,7 +41,7 @@ public:
 	virtual bool Draw(AllRenderItems& renderItem) override;
 	virtual void Set4xMsaaState(HWND hwnd, int widht, int height, bool value) override;
 
-	bool Initialize(const std::wstring& resPath, HWND hwnd, int width, int height);
+	bool Initialize(HWND hwnd, int width, int height);
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
 
 	inline ID3D12Device* GetDevice() const;
@@ -64,6 +65,8 @@ private:
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 
 private:
+	std::wstring m_resPath{};
+
 	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
 	std::unique_ptr<CShader> m_shader{ nullptr };
 

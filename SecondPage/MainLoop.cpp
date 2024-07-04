@@ -41,15 +41,19 @@ RenderItem::RenderItem()
 	: NumFramesDirty{ gFrameResourceCount }
 {}
 
-CMainLoop::CMainLoop() = default;
 CMainLoop::~CMainLoop() = default;
 
-bool CMainLoop::Initialize(const std::wstring& resourcePath, CWindow* window, IRenderer* renderer)
+CMainLoop::CMainLoop(std::wstring resourcePath)
+{
+	m_resourcePath = resourcePath;
+}
+
+bool CMainLoop::Initialize(CWindow* window, IRenderer* renderer)
 {
 	m_window = window;
 	m_iRenderer = renderer;
 
-	ReturnIfFalse(InitializeClass(resourcePath));	//초기화
+	ReturnIfFalse(InitializeClass());	//초기화
 
 	AddKeyListener();	//키 리스너 등록
 
@@ -60,14 +64,14 @@ bool CMainLoop::Initialize(const std::wstring& resourcePath, CWindow* window, IR
 	return true;
 }
 
-bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
+bool CMainLoop::InitializeClass()
 {
 	m_keyInputManager = std::make_unique<CKeyInputManager>(m_window->GetHandle());
 	m_camera = std::make_unique<CCamera>();
 	m_timer = std::make_unique<CGameTimer>();
 	m_material = std::make_unique<CMaterial>();
 	m_setupData = std::make_unique<CSetupData>();
-	m_model = std::make_unique<CModel>(resourcePath);
+	m_model = std::make_unique<CModel>(m_resourcePath);
 
 	ReturnIfFalse(m_setupData->CreateMockData());
 
@@ -137,12 +141,21 @@ void CMainLoop::UpdateMainPassCB()
 	PassConstants pc;
 	m_camera->GetPassCB(&pc);
 	m_timer->GetPassCB(&pc);
-	m_setupData->GetPassCB(&pc);
 
 	float width = (float)m_window->GetWidth();
 	float height = (float)m_window->GetHeight();
 	pc.renderTargetSize = { width, height };
 	pc.invRenderTargetSize = { 1.0f / width, 1.0f / height };
+
+	pc.nearZ = 1.0f;
+	pc.farZ = 1000.0f;
+	pc.ambientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	pc.lights[0].direction = { 0.57735f, -0.57735f, 0.57735f };
+	pc.lights[0].strength = { 0.8f, 0.8f, 0.8f };
+	pc.lights[1].direction = { -0.57735f, -0.57735f, 0.57735f };
+	pc.lights[1].strength = { 0.4f, 0.4f, 0.4f };
+	pc.lights[2].direction = { 0.0f, -0.707f, -0.707f };
+	pc.lights[2].strength = { 0.2f, 0.2f, 0.2f };
 
 	m_iRenderer->SetUploadBuffer(eBufferType::PassCB, &pc, 1);
 }

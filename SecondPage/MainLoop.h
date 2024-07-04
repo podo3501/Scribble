@@ -28,17 +28,18 @@ class CMainLoop
 	using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
 
 public:
-	CMainLoop();
+	CMainLoop(std::wstring resourcePath);
 	~CMainLoop();
 
+	CMainLoop() = delete;
 	CMainLoop(const CMainLoop&) = delete;
 	CMainLoop& operator=(const CMainLoop&) = delete;
 
-	bool Initialize(const std::wstring& resourcePath, CWindow* window, IRenderer* renderer);
+	bool Initialize(CWindow* window, IRenderer* renderer);
 	bool Run(IRenderer* renderer = nullptr);
 
 private:
-	bool InitializeClass(const std::wstring& resourcePath);
+	bool InitializeClass();
 	bool LoadMemory();
 
 	void UpdateRenderItems();
@@ -52,6 +53,7 @@ private:
 	void AddKeyListener();
 
 private:
+	std::wstring m_resourcePath{};
 	CWindow* m_window{ nullptr };
 	IRenderer* m_iRenderer{ nullptr };
 

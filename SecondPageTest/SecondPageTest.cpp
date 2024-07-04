@@ -119,8 +119,8 @@ namespace A_SecondPage
 		window->Initialize(true);
 		auto renderer = CreateRenderer(resPath, window->GetHandle(), window->GetWidth(), window->GetHeight());
 
-		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
-		EXPECT_EQ(mainLoop->Initialize(resPath, window.get(), renderer.get()), true);
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(resPath);
+		EXPECT_EQ(mainLoop->Initialize(window.get(), renderer.get()), true);
 
 		GTestRenderer testRenderer;
 		EXPECT_EQ(mainLoop->Run(&testRenderer), true);
