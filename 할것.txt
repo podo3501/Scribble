@@ -26,6 +26,10 @@
 --컬링 부분을 카메라 클래스에 옮긴다.
 --UpdateMainPassCB() 에서 빛 데이터를 setupdata클래스에 넣는다.
 
+판 띄운다.
+기둥 세운다.
+ssao 적용
+shadow map 적용
 캐릭터를 붙인다.
 
 

@@ -9,11 +9,11 @@
 #include "./Material.h"
 #include "./Model.h"
 #include "./Helper.h"
+#include "./GeometryGenerator.h"
 
 using namespace DirectX;
 
-CSetupData::CSetupData() 
-{}
+CSetupData::CSetupData() {}
 CSetupData::~CSetupData() = default;
 
 InstanceDataList CSetupData::CreateSkullInstanceData()
@@ -72,10 +72,26 @@ InstanceDataList CreateSkyCubeInstanceData()
 	return instances;
 }
 
+std::unique_ptr<MeshData> Generator(std::string&& meshName)
+{
+	auto meshData = std::make_unique<MeshData>();
+	meshData->name = std::move(meshName);
+
+	CGeometryGenerator geoGen{};
+	CGeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
+
+	std::ranges::transform(box.Vertices, std::back_inserter(meshData->vertices),
+		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC); });
+	meshData->indices.insert(meshData->indices.end(), box.Indices32.begin(), box.Indices32.end());
+	
+	return std::move(meshData);
+}
+
 bool CSetupData::CreateModelMock()
 {
 	ModelProperty cube{};
 	cube.createType = ModelProperty::CreateType::Generator;
+	cube.meshData = Generator("cube");
 	cube.cullingFrustum = false;
 	cube.filename = L"";
 	cube.instanceDataList = CreateSkyCubeInstanceData();
@@ -83,10 +99,19 @@ bool CSetupData::CreateModelMock()
 
 	ModelProperty skull{};
 	skull.createType = ModelProperty::CreateType::ReadFile;
+	skull.meshData = nullptr;
 	skull.cullingFrustum = true;
 	skull.filename = L"skull.txt";
 	skull.instanceDataList = CreateSkullInstanceData();
 	ReturnIfFalse(InsertModelProperty("things", "skull", skull));
+
+	//ModelProperty grid{};
+	//grid.createType = ModelProperty::CreateType::Generator;
+	//grid.meshData = Generator("grid");
+	//grid.cullingFrustum = false;
+	//grid.filename = L"";
+	//grid.instanceDataList = CreateSkullInstanceData();
+	//ReturnIfFalse(InsertModelProperty("things", "grid", grid));
 
 	return true;
 }
@@ -144,7 +169,7 @@ bool CSetupData::CreateMockData()
 bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 {
 	std::ranges::for_each(m_allModelProperty, [renderItems](auto& geoProp) {
-		std::ranges::for_each(geoProp.second, [renderItems, geoProp](auto& meshProp) {
+		std::ranges::for_each(geoProp.second, [renderItems, &geoProp](auto& meshProp) {
 			SubRenderItem* subRenderItem = GetSubRenderItem((*renderItems), geoProp.first, meshProp.first);
 			subRenderItem->instanceDataList = meshProp.second.instanceDataList;
 			subRenderItem->cullingFrustum = meshProp.second.cullingFrustum;

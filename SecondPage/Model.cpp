@@ -19,67 +19,30 @@ CModel::CModel(std::wstring resPath)
 
 CModel::~CModel() = default;
 
-bool CModel::LoadGeometryList(const ModelTypeList& modelTypeList)
-{
-	return std::ranges::all_of(modelTypeList, [this](auto& modelType) {
-		return LoadGeometry(modelType); });
-}
-
-bool CModel::LoadGeometry(const ModelType& type)
-{
-	auto meshData = std::make_unique<MeshData>();
-
-	auto result = true;
-	switch (type.createType)
-	{
-	case CreateType::Generator:		Generator(meshData.get());											break;
-	case CreateType::ReadFile:			result = ReadFile(type.filename, meshData.get());		break;
-	default: return false;
-	}
-	if (!result) return result;
-
-	meshData->name = type.submeshName;
-	m_AllMeshDataList[type.geometryName].emplace_back(std::move(meshData));
-
-	return true;
-}
-
 bool CModel::LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty)
 {
-	auto meshData = std::make_unique<MeshData>();
-
-	auto result = true;
+	std::unique_ptr<MeshData> meshData{ nullptr };
 	switch (mProperty->createType)
 	{
-	case ModelProperty::CreateType::Generator:	Generator(meshData.get());														break;
-	case ModelProperty::CreateType::ReadFile:		result = ReadFile(mProperty->filename, meshData.get());		break;
+	case ModelProperty::CreateType::Generator:	meshData = std::move(mProperty->meshData);		break;
+	case ModelProperty::CreateType::ReadFile:		meshData = ReadFile(mProperty->filename);			break;
 	default: return false;
 	}
-	if (!result) return result;
+	if (meshData == nullptr) return false;
 
-	meshData->name = meshName;
 	m_AllMeshDataList[geoName].emplace_back(std::move(meshData));
 
 	return true;
 }
 
-
-void CModel::Generator(MeshData* outData)
+std::unique_ptr<MeshData> CModel::ReadFile(const std::wstring& filename)
 {
-	CGeometryGenerator geoGen{};
-	CGeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
-	
-	std::ranges::transform(box.Vertices, std::back_inserter(outData->vertices),
-		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC); });
-	outData->indices.insert(outData->indices.end(), box.Indices32.begin(), box.Indices32.end());
-}
+	std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
 
-bool CModel::ReadFile(const std::wstring& filename, MeshData* outData)
-{
 	std::wstring fullFilename = m_resPath + m_filePath + filename;
 	std::ifstream fin(fullFilename);
 	if (fin.fail())
-		return false;
+		return nullptr;
 
 	UINT vCount = 0;
 	UINT iCount = 0;
@@ -119,14 +82,14 @@ bool CModel::ReadFile(const std::wstring& filename, MeshData* outData)
 		vMin = XMVectorMin(vMin, P);
 		vMax = XMVectorMax(vMax, P);
 
-		outData->vertices.emplace_back(std::move(curVertex));
+		meshData->vertices.emplace_back(std::move(curVertex));
 	}
 
-	XMStoreFloat3(&outData->boundingBox.Center, 0.5f * (vMin + vMax));
-	XMStoreFloat3(&outData->boundingBox.Extents, 0.5f * (vMax - vMin));
+	XMStoreFloat3(&meshData->boundingBox.Center, 0.5f * (vMin + vMax));
+	XMStoreFloat3(&meshData->boundingBox.Extents, 0.5f * (vMax - vMin));
 
-	XMStoreFloat3(&outData->boundingSphere.Center, 0.5f * (vMin + vMax));
-	outData->boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
+	XMStoreFloat3(&meshData->boundingSphere.Center, 0.5f * (vMin + vMax));
+	meshData->boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
 
 	fin >> ignore >> ignore >> ignore;
 
@@ -134,11 +97,11 @@ bool CModel::ReadFile(const std::wstring& filename, MeshData* outData)
 	{
 		std::int32_t readIdx{ 0 };
 		fin >> readIdx;
-		outData->indices.emplace_back(std::move(readIdx));
+		meshData->indices.emplace_back(std::move(readIdx));
 	}
 	fin.close();
 
-	return true; 
+	return std::move(meshData);
 }
 
 CModel::Offsets CModel::SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data)

@@ -41,23 +41,22 @@ struct ModelType
 };
 
 using ModelTypeList = std::vector<ModelType>;
+using Vertices = std::vector<Vertex>;
+using Indices = std::vector<std::int32_t>;
+
+struct MeshData
+{
+	std::string name{};
+
+	Vertices vertices{};
+	Indices indices{};
+
+	DirectX::BoundingBox boundingBox{};
+	DirectX::BoundingSphere boundingSphere{};
+};
 
 class CModel
 {
-	using Vertices = std::vector<Vertex>;
-	using Indices = std::vector<std::int32_t>;
-
-	struct MeshData
-	{
-		std::string name{};
-
-		Vertices vertices{};
-		Indices indices{};
-
-		DirectX::BoundingBox boundingBox{};
-		DirectX::BoundingSphere boundingSphere{};
-	};
-
 	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
 	using Offsets = std::pair<UINT, UINT>;
 	using MeshDataList = std::vector<std::unique_ptr<MeshData>>;
@@ -72,13 +71,10 @@ public:
 	CModel& operator=(const CModel&) = delete;
 
 	bool LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty);
-	bool LoadGeometryList(const ModelTypeList& modelTypeList);
 	bool LoadModelIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems);
 
 private:
-	bool LoadGeometry(const ModelType& type);
-	bool ReadFile(const std::wstring& filename, MeshData* outData);
-	void Generator(MeshData* outData);
+	std::unique_ptr<MeshData> ReadFile(const std::wstring& filename);
 
 	CModel::Offsets SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data);
 	void SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataList,

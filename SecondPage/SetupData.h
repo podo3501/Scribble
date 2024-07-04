@@ -10,6 +10,7 @@
 interface IRenderer;
 class CMaterial;
 class CModel;
+struct MeshData;
 struct Material;
 struct RenderItem;
 struct InstanceData;
@@ -28,6 +29,7 @@ struct ModelProperty
 	};
 
 	CreateType createType{ CreateType::None };
+	std::unique_ptr<MeshData> meshData;
 	std::wstring filename{};
 	InstanceDataList instanceDataList{};
 	bool cullingFrustum{ false };
