@@ -13,6 +13,7 @@ class CModel;
 struct Material;
 struct RenderItem;
 struct InstanceData;
+struct PassConstants;
 enum class eTextureType : int;
 
 using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
@@ -52,6 +53,7 @@ public:
 	bool CreateMockData();
 	bool LoadModel(CModel* model, AllRenderItems* renderItems);
 	bool LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material);
+	void GetPassCB(PassConstants* outPc);
 
 private:
 	bool CreateModelMock();

@@ -67,7 +67,7 @@ public:
 	CModel(std::wstring resPath);
 	~CModel();
 
-	CModel();
+	CModel() = delete;
 	CModel(const CModel&) = delete;
 	CModel& operator=(const CModel&) = delete;
 

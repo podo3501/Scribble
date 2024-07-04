@@ -15,24 +15,22 @@ using Microsoft::WRL::ComPtr;
 
 std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int width, int height)
 {
-	std::unique_ptr<CRenderer> renderer = std::make_unique<CRenderer>(resPath);
-	bool bResult = renderer->Initialize(hwnd, width, height);
+	std::unique_ptr<CRenderer> renderer = std::make_unique<CRenderer>();
+	bool bResult = renderer->Initialize(resPath, hwnd, width, height);
 	if (bResult != true)
 		return nullptr;
 
 	return std::move(renderer);
 }
 
-CRenderer::CRenderer(std::wstring resPath)
-	: m_resPath(std::move(resPath))
-{}
+CRenderer::CRenderer() = default;
 CRenderer::~CRenderer() = default;
 
-bool CRenderer::Initialize(HWND hwnd, int width, int height)
+bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height)
 {
-	m_shader = std::make_unique<CShader>(m_resPath);
+	m_shader = std::make_unique<CShader>(resPath);
 	m_directx3D = std::make_unique<CDirectx3D>();
-	m_texture = std::make_unique<CTexture>(m_resPath);
+	m_texture = std::make_unique<CTexture>(resPath);
 
 	ReturnIfFalse(m_directx3D->Initialize(hwnd, width, height));
 
