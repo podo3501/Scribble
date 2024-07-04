@@ -30,6 +30,7 @@ bool CModel::LoadGeometry(const std::string& geoName, const std::string& meshNam
 	}
 	if (meshData == nullptr) return false;
 
+	meshData->name = meshName;
 	m_AllMeshDataList[geoName].emplace_back(std::move(meshData));
 
 	return true;
