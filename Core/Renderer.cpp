@@ -3,7 +3,6 @@
 #include "./Directx3D.h"
 #include "./d3dx12.h"
 #include "./d3dUtil.h"
-#include "./Utility.h"
 #include "./Shader.h"
 #include "./Texture.h"
 #include "./UploadBuffer.h"
@@ -14,7 +13,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-std::unique_ptr<IRenderer> CreateRenderer(std::wstring resPath, HWND hwnd, int width, int height)
+std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int width, int height)
 {
 	std::unique_ptr<CRenderer> renderer = std::make_unique<CRenderer>(resPath);
 	bool bResult = renderer->Initialize(hwnd, width, height);

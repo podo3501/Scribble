@@ -1,6 +1,7 @@
 #include "MainLoop.h"
-#include "../Core/d3dUtil.h"
-#include "../Core/Utility.h"
+#include <ranges>
+#include <algorithm>
+#include <sstream>
 #include "../Include/RendererDefine.h"
 #include "../Include/RenderItem.h"
 #include "../Include/interface.h"
@@ -12,6 +13,8 @@
 #include "./Camera.h"
 #include "./KeyInputManager.h"
 #include "./SetupData.h"
+#include "./Utility.h"
+#include "./MathHelper.h"
 #include "./Helper.h"
 
 using namespace DirectX;

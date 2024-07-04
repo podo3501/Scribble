@@ -1,10 +1,10 @@
 #include "App.h"
 #include <crtdbg.h>
 #include <memory>
-#include "../Core/d3dUtil.h"
 #include "../Include/Interface.h"
 #include "../SecondPage/Window.h"
 #include "../SecondPage/MainLoop.h"
+#include "../SecondPage/Utility.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -28,7 +28,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 		bResult = mainLoop->Initialize(window.get(), renderer.get());
 		bResult = mainLoop->Run(renderer.get());
 	}
-	catch (CoreException e)
+	catch (CException e)
 	{
 		MessageBox(nullptr, e.ToString().c_str(), L"HR Failed", MB_OK);
 		return 0;

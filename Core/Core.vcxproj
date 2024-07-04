@@ -138,19 +138,16 @@
     <ClInclude Include="Directx3D.h" />
     <ClInclude Include="FrameResources.h" />
     <ClInclude Include="headerUtility.h" />
-    <ClInclude Include="MathHelper.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="UploadBuffer.h" />
-    <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="Directx3D.cpp" />
     <ClCompile Include="FrameResources.cpp" />
-    <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />

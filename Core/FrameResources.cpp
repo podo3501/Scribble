@@ -18,9 +18,13 @@ bool CFrameResources::Resource::CreateUpdateBuffer(
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
 		IID_PPV_ARGS(cmdListAlloc.GetAddressOf())));
 
-	passCB = std::make_unique<CUploadBuffer>(device, sizeof(PassConstants), passCount, true);
-	instanceBuffer = std::make_unique<CUploadBuffer>(device, sizeof(InstanceBuffer), maxInstanceCount, false);
-	materialBuffer = std::make_unique<CUploadBuffer>(device, sizeof(MaterialBuffer), materialCount, false);
+	passCB = std::make_unique<CUploadBuffer>(sizeof(PassConstants), passCount, true);
+	instanceBuffer = std::make_unique<CUploadBuffer>(sizeof(InstanceBuffer), maxInstanceCount, false);
+	materialBuffer = std::make_unique<CUploadBuffer>(sizeof(MaterialBuffer), materialCount, false);
+
+	ReturnIfFalse(passCB->Initialize(device));
+	ReturnIfFalse(instanceBuffer->Initialize(device));
+	ReturnIfFalse(materialBuffer->Initialize(device));
 
 	return true;
 }

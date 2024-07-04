@@ -9,13 +9,14 @@ struct ID3D12Resource;
 class CUploadBuffer
 {
 public:
-    CUploadBuffer(ID3D12Device* device, size_t typeSize, UINT elementCount, bool isConstantBuffer);
+    CUploadBuffer(size_t typeSize, UINT elementCount, bool isConstantBuffer);
     ~CUploadBuffer();
 
     CUploadBuffer() = delete;
     CUploadBuffer(const CUploadBuffer& rhs) = delete;
     CUploadBuffer& operator=(const CUploadBuffer& rhs) = delete;
 
+    bool Initialize(ID3D12Device* device);
     ID3D12Resource* Resource()const;
     void CopyDataList(const void* data, size_t size);
 
@@ -29,6 +30,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{ nullptr };
     BYTE* m_mappedData{ nullptr };
 
-    UINT m_elementByteSize{ 0 };
+    UINT m_elementByteSize{ 0u };
+    UINT m_elementCount{ 0u };
     bool m_isConstantBuffer{ false };
 };

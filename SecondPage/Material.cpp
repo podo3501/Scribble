@@ -1,7 +1,6 @@
 #include "./Material.h"
 #include <ranges>
 #include <algorithm>
-#include "../Core/d3dUtil.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/Interface.h"

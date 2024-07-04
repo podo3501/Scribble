@@ -132,9 +132,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Include\RenderItem.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Helper.cpp" />
+    <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="SetupData.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
@@ -142,16 +142,13 @@
     <ClCompile Include="MainLoop.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Utility.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Include\FrameResourceData.h" />
-    <ClInclude Include="..\Include\Interface.h" />
-    <ClInclude Include="..\Include\RendererDefine.h" />
-    <ClInclude Include="..\Include\RenderItem.h" />
-    <ClInclude Include="..\Include\Types.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Helper.h" />
+    <ClInclude Include="MathHelper.h" />
     <ClInclude Include="SetupData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
@@ -159,6 +156,7 @@
     <ClInclude Include="MainLoop.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Utility.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

@@ -12,9 +12,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{839f7b65-c190-4e57-83b1-bfce5459e597}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Include">
-      <UniqueIdentifier>{e0f6fdd9-14e3-4715-9049-d4604bc615be}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -41,13 +38,16 @@
     <ClCompile Include="SetupData.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="..\Include\RenderItem.cpp">
-      <Filter>Include</Filter>
-    </ClCompile>
     <ClCompile Include="Helper.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Window.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MathHelper.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -76,25 +76,16 @@
     <ClInclude Include="SetupData.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\FrameResourceData.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Interface.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RendererDefine.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderItem.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Types.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include="Helper.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Window.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MathHelper.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

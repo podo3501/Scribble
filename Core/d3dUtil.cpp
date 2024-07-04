@@ -1,5 +1,4 @@
 ﻿#include "./d3dUtil.h"
-#include "./Utility.h"
 #include <comdef.h>
 #include <fstream>
 #include "../Core/DirectXTK12Inc/WICTextureLoader.h"
@@ -187,22 +186,6 @@ std::vector<D3D12_STATIC_SAMPLER_DESC> CoreUtil::GetStaticSamplers()
     MakeSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0.0f, 8);
 
     return samplers;
-}
-
-CoreException::CoreException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
-    ErrorCode(hr),
-    FunctionName(functionName),
-    Filename(filename),
-    LineNumber(lineNumber)
-{}
-
-std::wstring CoreException::ToString()const
-{
-    // Get the string description of the error code.
-    _com_error err(ErrorCode);
-    std::wstring msg = err.ErrorMessage();
-
-    return FunctionName + L" failed in " + Filename + L"; line " + std::to_wstring(LineNumber) + L"; error: " + msg;
 }
 
 

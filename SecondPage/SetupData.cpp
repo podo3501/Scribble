@@ -1,14 +1,14 @@
 #include "./SetupData.h"
 #include <algorithm>
 #include <ranges>
-#include "../Core/Utility.h"
-#include "../Core/d3dUtil.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/Types.h"
 #include "../Include/Interface.h"
+#include "./Utility.h"
 #include "./Material.h"
 #include "./Model.h"
+#include "./Helper.h"
 
 using namespace DirectX;
 

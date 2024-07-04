@@ -1,13 +1,17 @@
 #include "Model.h"
-#include "../Core/d3dUtil.h"
+#include <algorithm>
+#include <ranges>
+#include <fstream>
+#include "./Utility.h"
 #include "../Include/Interface.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
 #include "./GeometryGenerator.h"
 #include "./SetupData.h"
+#include "./MathHelper.h"
+#include "./Helper.h"
 
 using namespace DirectX;
-using namespace DirectX::PackedVector;
 
 CModel::CModel() = default;
 

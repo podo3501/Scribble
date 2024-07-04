@@ -27,6 +27,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "App", "App\App.vcxproj", "{
 		{A867A4CD-56A7-4622-967C-9424AC2FA000} = {A867A4CD-56A7-4622-967C-9424AC2FA000}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Include", "Include", "{66E3E0CB-5038-46C8-84C6-9B6B4695F82C}"
+	ProjectSection(SolutionItems) = preProject
+		Include\FrameResourceData.h = Include\FrameResourceData.h
+		Include\Interface.h = Include\Interface.h
+		Include\RendererDefine.h = Include\RendererDefine.h
+		Include\RenderItem.h = Include\RenderItem.h
+		Include\Types.h = Include\Types.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

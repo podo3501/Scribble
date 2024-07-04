@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <memory>
 #include <wrl.h>
-#include "Utility.h"
+#include "./d3dUtil.h"
 
 #include "DDSTextureLoader.h" 
 

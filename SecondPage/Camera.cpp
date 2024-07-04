@@ -1,9 +1,9 @@
 ﻿#include "Camera.h"
 #include <ranges>
-#include "../Core/d3dUtil.h"
-#include "../Core/Utility.h"
-#include "../Core/headerUtility.h"
+#include <algorithm>
 #include "../Include/FrameResourceData.h"
+#include "./MathHelper.h"
+#include "./Utility.h"
 
 using namespace DirectX;
 

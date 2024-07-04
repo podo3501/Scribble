@@ -28,7 +28,7 @@
 #include <cassert>
 #include "./d3dx12.h"
 #include "./DDSTextureLoader.h"
-#include "./MathHelper.h"
+//#include "./MathHelper.h"
 
 extern const int gNumFrameResources;
 
@@ -140,20 +140,6 @@ public:
     static std::vector<D3D12_STATIC_SAMPLER_DESC> GetStaticSamplers();
 };
 
-class CoreException
-{
-public:
-    CoreException() = default;
-    CoreException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber);
-
-    std::wstring ToString()const;
-
-    HRESULT ErrorCode = S_OK;
-    std::wstring FunctionName;
-    std::wstring Filename;
-    int LineNumber = -1;
-};
-
 struct MaterialConstants
 {
 	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -161,8 +147,14 @@ struct MaterialConstants
 	float Roughness = 0.25f;
 
 	// Used in texture mapping.
-	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
+    DirectX::XMFLOAT4X4 MatTransform = {};
 };
+
+template <class _Tp>
+_Tp& RvToLv(_Tp&& __value)
+{
+    return __value;
+}
 
 #ifndef ThrowIfFailed
 #define ThrowIfFailed(x)                                              \
