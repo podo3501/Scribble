@@ -91,8 +91,6 @@ void CMainLoop::AddKeyListener()
 
 	m_keyInputManager->AddKeyListener([&cam = m_camera](std::vector<int> keyList) {
 		cam->PressedKey(keyList); });
-	m_keyInputManager->AddKeyListener([this](std::vector<int> keyList) {
-		PressedKey(keyList); });
 	m_keyInputManager->AddMouseListener([&cam = m_camera](float dx, float dy) {
 		cam->Move(dx, dy);	 });
 }
@@ -106,41 +104,6 @@ bool CMainLoop::LoadMemory()
 	return true;
 }
 
-bool CMainLoop::IsInsideFrustum(const DirectX::BoundingSphere& bSphere, const XMMATRIX& invView, const XMMATRIX& world)
-{
-	BoundingFrustum frustum{};
-	XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
-	XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
-
-	m_camera->GetFrustum().Transform(frustum, viewToLocal);
-
-	const bool isInside = (frustum.Contains(bSphere) != DirectX::DISJOINT);
-	return (isInside || !m_frustumCullingEnabled);
-}
-
-void CMainLoop::FindVisibleSubRenderItems( SubRenderItems& subRenderItems, InstanceDataList& visibleInstance)
-{
-	XMMATRIX view = m_camera->GetView();
-	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
-
-	for (auto& iterSubItem : subRenderItems)
-	{
-		auto& subRenderItem = iterSubItem.second;
-		auto& instanceList = subRenderItem.instanceDataList;
-		if (subRenderItem.cullingFrustum)
-		{
-			std::ranges::copy_if(instanceList, std::back_inserter(visibleInstance),
-				[this, &invView, &subRenderItem](auto& instance) {
-					return IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
-				});
-		}
-		else
-			std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
-
-		subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
-	}
-}
-
 void CMainLoop::UpdateRenderItems()
 {
 	//처리 안할것을 먼저 골라낸다.
@@ -152,7 +115,7 @@ void CMainLoop::UpdateRenderItems()
 		auto renderItem = e.second.get();
 		renderItem->startIndexInstance = instanceStartIndex;
 		//보여지는 서브 아이템을 찾아낸다.
-		FindVisibleSubRenderItems(renderItem->subRenderItems, visibleInstance);
+		m_camera->FindVisibleSubRenderItems(renderItem->subRenderItems, visibleInstance);
 		instanceStartIndex += static_cast<int>(visibleInstance.size());
 
 		std::ranges::move(visibleInstance, std::back_inserter(totalVisibleInstance));
@@ -212,18 +175,6 @@ bool CMainLoop::OnResize(int width, int height)
 	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
 
 	return true;
-}
-
-void CMainLoop::PressedKey(std::vector<int> keyList)
-{
-	for (auto vKey : keyList)
-	{
-		switch (vKey)
-		{
-		case '1':		m_frustumCullingEnabled = true;			break;
-		case '2':		m_frustumCullingEnabled = false;		break;
-		}
-	}
 }
 
 std::wstring SetWindowCaption(std::size_t visibleCount, std::size_t totalCount)

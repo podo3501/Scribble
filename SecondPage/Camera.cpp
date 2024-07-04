@@ -2,6 +2,7 @@
 #include <ranges>
 #include <algorithm>
 #include "../Include/FrameResourceData.h"
+#include "../Include/RenderItem.h"
 #include "./MathHelper.h"
 #include "./Utility.h"
 
@@ -30,14 +31,19 @@ void CCamera::PressedKey(std::vector<int> keyList)
 {
 	std::map<int, eMove> usableKeyList{ 
 		{'W', eMove::Forward}, {'S', eMove::Back}, {'D', eMove::Right}, {'A', eMove::Left} };
-
-	std::vector<int> moveKeyList{};
-	std::ranges::copy_if(keyList, std::back_inserter(moveKeyList), 
+	
+	auto middle = std::partition(keyList.begin(), keyList.end(),
 		[&usableKeyList](auto key) { return usableKeyList.find(key) != usableKeyList.end(); });
-	if (moveKeyList.empty()) return;
 
-	std::ranges::transform(keyList, std::back_inserter(m_moveDirection),
+	std::transform(keyList.begin(), middle, std::back_inserter(m_moveDirection),
 		[&usableKeyList](auto key) { return usableKeyList[key]; });
+
+	std::for_each(middle, keyList.end(), [this](auto key) {
+		switch (key)
+		{
+			case '1':		m_frustumCullingEnabled = true;			break;
+			case '2':		m_frustumCullingEnabled = false;		break;
+		}});
 }
 
 void CCamera::SetPosition(float x, float y, float z)
@@ -117,11 +123,6 @@ XMMATRIX CCamera::GetView() const
 XMMATRIX CCamera::GetProj() const
 {
 	return XMLoadFloat4x4(&mProj);
-}
-
-DirectX::BoundingFrustum CCamera::GetFrustum() const
-{
-	return m_camFrustum;
 }
 
 void CCamera::Strafe(float d)
@@ -272,6 +273,41 @@ void CCamera::UpdateViewMatrix()
 	mView(3, 3) = 1.0f;
 
 	mViewDirty = false;
+}
+
+bool CCamera::IsInsideFrustum(const DirectX::BoundingSphere& bSphere, const XMMATRIX& invView, const XMMATRIX& world)
+{
+	BoundingFrustum frustum{};
+	XMMATRIX invWorld = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(world)), world);
+	XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+
+	m_camFrustum.Transform(frustum, viewToLocal);
+
+	const bool isInside = (frustum.Contains(bSphere) != DirectX::DISJOINT);
+	return (isInside || !m_frustumCullingEnabled);
+}
+
+void CCamera::FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance)
+{
+	XMMATRIX view = GetView();
+	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
+
+	for (auto& iterSubItem : subRenderItems)
+	{
+		auto& subRenderItem = iterSubItem.second;
+		auto& instanceList = subRenderItem.instanceDataList;
+		if (subRenderItem.cullingFrustum)
+		{
+			std::ranges::copy_if(instanceList, std::back_inserter(visibleInstance),
+				[this, &invView, &subRenderItem](auto& instance) {
+					return IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
+				});
+		}
+		else
+			std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
+
+		subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
+	}
 }
 
 

@@ -1,4 +1,5 @@
 ﻿틈나는대로 noexcept, const, constexpr 키워드 쓰기
+
 --void CMainLoop::UpdateRenderItems()에서 cube world값을 안 넣어주고 있다.
 --instance 버퍼에 인덱스문제가 있다.
 --cubemap 붙이기
@@ -21,9 +22,11 @@
 --winproc을 윈도우로 옮기고 관련 변수들 정리 한다.
 --m_camFrustum을 카메라에 넣음
 --window를 core에서 꺼낸다.
+--utility를 core용과 다른 것으로 분리한다. 그래서 core에 바로 include 하는 것이 없도록 한다.
+--컬링 부분을 카메라 클래스에 옮긴다.
 
 캐릭터를 붙인다.
 
-utility를 core용과 다른 것으로 분리한다. 그래서 core에 바로 include 하는 것이 없도록 한다.
-
 UpdateMainPassCB() 에서 빛 데이터를 setupdata클래스에 넣는다.
+
+

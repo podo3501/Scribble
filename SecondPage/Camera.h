@@ -2,9 +2,14 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
+#include <memory>
+#include <string>
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
+struct InstanceData;
+struct SubRenderItem;
 struct PassConstants;
 
 enum class eMove : int
@@ -22,6 +27,9 @@ enum class eMove : int
 
 class CCamera
 {
+	using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;
+	using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
+
 public:
 	CCamera();
 	~CCamera();
@@ -54,7 +62,6 @@ public:
 
 	DirectX::XMMATRIX GetView() const;
 	DirectX::XMMATRIX GetProj() const;
-	DirectX::BoundingFrustum GetFrustum() const;
 
 	void Walk(float d);
 	void Strafe(float d);
@@ -72,6 +79,14 @@ public:
 
 	void Update(float deltaTime);
 	void UpdateViewMatrix();
+
+	void FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance);
+
+private:
+	bool IsInsideFrustum(
+		const DirectX::BoundingSphere& bSphere, 
+		const DirectX::XMMATRIX& invView, 
+		const DirectX::XMMATRIX& world);
 
 private:
 	DirectX::XMVECTOR m_position{ 0.0f, 0.0f, 0.0f };
@@ -95,4 +110,5 @@ private:
 	std::vector<eMove> m_moveDirection{};
 
 	DirectX::BoundingFrustum m_camFrustum{};
+	bool m_frustumCullingEnabled{ true };
 };

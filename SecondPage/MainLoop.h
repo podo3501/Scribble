@@ -21,13 +21,11 @@ struct RenderItem;
 struct FrameResource;
 struct InstanceData;
 struct RenderItem;
-struct SubRenderItem;
 
 class CMainLoop
 {
 	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
 	using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
-	using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;
 
 public:
 	CMainLoop(std::wstring resourcePath);
@@ -44,22 +42,15 @@ private:
 	bool InitializeClass();
 	bool LoadMemory();
 
-	bool IsInsideFrustum(
-		const DirectX::BoundingSphere& bSphere, 
-		const DirectX::XMMATRIX& invView, 
-		const DirectX::XMMATRIX& world);
-
 	void UpdateRenderItems();
 	void UpdateInstanceBuffer(const InstanceDataList& visibleInstance);
 	void UpdateMainPassCB();
-	void FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance);
 
 	bool CALLBACK MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 	void CALLBACK SetAppPause(bool pause);
 	bool CALLBACK OnResize(int width, int height);
 
 	void AddKeyListener();
-	void PressedKey(std::vector<int> keyList);
 
 private:
 	std::wstring m_resourcePath{};
@@ -75,6 +66,4 @@ private:
 	std::unique_ptr<CSetupData> m_setupData{ nullptr };
 	//랜더링시 필요한 데이터들
 	AllRenderItems m_AllRenderItems{};
-
-	bool m_frustumCullingEnabled{ true };
 };
