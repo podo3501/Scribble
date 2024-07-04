@@ -214,6 +214,19 @@ bool CSetupData::LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material)
 	return true;
 }
 
+void CSetupData::GetPassCB(PassConstants* outPc)
+{
+	(*outPc).nearZ = 1.0f;
+	(*outPc).farZ = 1000.0f;
+	(*outPc).ambientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	(*outPc).lights[0].direction = { 0.57735f, -0.57735f, 0.57735f };
+	(*outPc).lights[0].strength = { 0.8f, 0.8f, 0.8f };
+	(*outPc).lights[1].direction = { -0.57735f, -0.57735f, 0.57735f };
+	(*outPc).lights[1].strength = { 0.4f, 0.4f, 0.4f };
+	(*outPc).lights[2].direction = { 0.0f, -0.707f, -0.707f };
+	(*outPc).lights[2].strength = { 0.2f, 0.2f, 0.2f };
+}
+
 int CSetupData::GetTextureCount(eTextureType texType)
 {
 	auto find = std::ranges::find_if(m_textureList, [texType](auto& typeTex) { return typeTex.first == texType; });

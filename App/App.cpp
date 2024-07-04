@@ -24,8 +24,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 		auto renderer = CreateRenderer(resPath, window->GetHandle(), window->GetWidth(), window->GetHeight());
 
 		bool bResult{ true };
-		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>(resPath);
-		bResult = mainLoop->Initialize(window.get(), renderer.get());
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
+		bResult = mainLoop->Initialize(resPath, window.get(), renderer.get());
 		bResult = mainLoop->Run(renderer.get());
 	}
 	catch (CException e)

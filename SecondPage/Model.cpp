@@ -13,8 +13,6 @@
 
 using namespace DirectX;
 
-CModel::CModel() = default;
-
 CModel::CModel(std::wstring resPath)
 	: m_resPath(std::move(resPath))
 {}
