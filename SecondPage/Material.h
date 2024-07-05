@@ -47,11 +47,12 @@ public:
 	void SetMaterialList(const MaterialList& materialList);
 	bool LoadTextureIntoVRAM(IRenderer* renderer);
 	void MakeMaterialBuffer(IRenderer* renderer);
+
 	int GetDiffuseIndex(const std::wstring& filename);
+	int GetMaterialIndex(const std::string& matName);
 
 private:
 	MaterialBuffer ConvertUploadBuffer(UINT diffuseIndex, Material* material);
-	void InsertTexture(eTextureType type, const std::wstring& filename);
 
 private:
 	MaterialList m_materialList{};

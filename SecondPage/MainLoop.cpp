@@ -69,7 +69,7 @@ bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
 	m_setupData = std::make_unique<CSetupData>();
 	m_model = std::make_unique<CModel>(resourcePath);
 
-	ReturnIfFalse(m_setupData->CreateMockData());
+	ReturnIfFalse(m_setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), m_material.get()));
 
 	return true;
 }
@@ -93,9 +93,9 @@ void CMainLoop::AddKeyListener()
 
 bool CMainLoop::LoadMemory()
 {
+	ReturnIfFalse(m_material->LoadTextureIntoVRAM(m_iRenderer));
 	ReturnIfFalse(m_setupData->LoadModel(m_model.get(), &m_AllRenderItems));
 	ReturnIfFalse(m_model->LoadModelIntoVRAM(m_iRenderer, &m_AllRenderItems));
-	ReturnIfFalse(m_setupData->LoadTextureIntoVRAM(m_iRenderer, m_material.get()));
 
 	return true;
 }

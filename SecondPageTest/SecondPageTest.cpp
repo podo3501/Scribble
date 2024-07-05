@@ -19,6 +19,7 @@
 #include "../SecondPage/SetupData.h"
 #include "../SecondPage/GeometryGenerator.h"
 #include "../SecondPage/Utility.h"
+#include "../SecondPage/Helper.h"
 
 namespace MainLoop
 {
@@ -34,8 +35,10 @@ namespace MainLoop
 			EXPECT_EQ(m_window->Initialize(false), true);
 			m_renderer = CreateRenderer(m_resourcePath, m_window->GetHandle(), m_window->GetWidth(), m_window->GetHeight());
 			EXPECT_EQ(m_renderer != nullptr, true);
+
+			m_material = std::make_unique<CMaterial>();
 			m_setupData = std::make_unique<CSetupData>();
-			EXPECT_EQ(m_setupData->CreateMockData(), true);
+			m_setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), m_material.get());
 		}
 
 		void TearDown() override
@@ -49,6 +52,7 @@ namespace MainLoop
 		std::wstring m_resourcePath{ L"../Resource/" };
 		std::unique_ptr<CWindow> m_window{ nullptr };
 		std::unique_ptr<IRenderer> m_renderer{ nullptr };
+		std::unique_ptr<CMaterial> m_material{ nullptr };
 		std::unique_ptr<CSetupData> m_setupData{ nullptr };
 	};
 
@@ -93,36 +97,14 @@ namespace MainLoop
 		EXPECT_EQ(renderItems.empty(), false);
 	}
 
-	TEST_F(MainLoopClassTest, Texture)
-	{
-		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
-		EXPECT_EQ(m_setupData->LoadTextureIntoVRAM(m_renderer.get(), material.get()), true);
-	}
-
-	std::unique_ptr<Material> MakeMaterial(std::string&& name, eTextureType type, std::wstring&& filename,
-		DirectX::XMFLOAT4 diffuseAlbedo, DirectX::XMFLOAT3 fresnelR0, float rough)
-	{
-		std::unique_ptr<Material> material = std::make_unique<Material>();
-		material->name = std::move(name);
-		material->type = type;
-		material->filename = std::move(filename);
-		material->normalSrvHeapIndex = 0;
-		material->diffuseAlbedo = diffuseAlbedo;
-		material->fresnelR0 = fresnelR0;
-		material->roughness = rough;
-		material->transform = DirectX::XMMatrixIdentity();
-
-		return std::move(material);
-	}
-
-	ModelProperty CreateMock(const std::string& meshName)
+	ModelProperty TestCreateMock()
 	{
 		MaterialList materialList;
-		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-		materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f));
-		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Common, L"bricks2.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds", {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Common, L"bricks.dds", {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Common, L"bricks2.dds", {}, {}, 0.1f));
 
 		ModelProperty  modelProp{};
 		modelProp.createType = ModelProperty::CreateType::Generator;
@@ -153,13 +135,15 @@ namespace MainLoop
 	{
 		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
 		std::unique_ptr<CSetupData> setupData = std::make_unique<CSetupData>();
-		setupData->N_InsertModelProperty("nature", "cube1", CreateMock("cube"), material.get());
-		setupData->N_InsertModelProperty("nature", "cube2", CreateMock("cube"), material.get());
+		setupData->InsertModelProperty("nature", "cube1", TestCreateMock(), material.get());
+		setupData->InsertModelProperty("nature", "cube2", TestCreateMock(), material.get());
 
 		std::unique_ptr<IRenderer> mockRenderer = std::make_unique<GMockTestRenderer>();
 		EXPECT_EQ(material->LoadTextureIntoVRAM(mockRenderer.get()), true);
 		EXPECT_EQ(material->GetDiffuseIndex(L"bricks.dds"), 1);
 		EXPECT_EQ(material->GetDiffuseIndex(L"brickddddd"), -1);
+		EXPECT_EQ(material->GetMaterialIndex("bricks1"), 2);
+		EXPECT_EQ(material->GetMaterialIndex("bricks2"), 3);
 	}
 } //SecondPage
 

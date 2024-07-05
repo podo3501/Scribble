@@ -55,6 +55,16 @@ int CMaterial::GetDiffuseIndex(const std::wstring& filename)
 	return -1;
 }
 
+int CMaterial::GetMaterialIndex(const std::string& matName)
+{
+	auto find = std::ranges::find_if(m_materialList, [&matName](auto& mat) {
+		return mat->name == matName; });
+	if (find == m_materialList.end())
+		return -1;
+
+	return static_cast<int>(std::distance(m_materialList.begin(), find));
+}
+
 MaterialBuffer CMaterial::ConvertUploadBuffer(UINT diffuseIndex, Material* material)
 {
 	MaterialBuffer matData;

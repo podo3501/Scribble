@@ -53,16 +53,12 @@ public:
 	CSetupData(const CSetupData&) = delete;
 	CSetupData& operator=(const CSetupData&) = delete;
 
-	bool CreateMockData();
-	bool N_InsertModelProperty(
+	bool InsertModelProperty(
 		const std::string& geoName, 
 		const std::string& meshName, 
 		ModelProperty&& mProperty, 
 		CMaterial* material);
-	bool InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty);
 	bool LoadModel(CModel* model, AllRenderItems* renderItems);
-	bool LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material);
-	bool LoadTextureIntoVRAM(IRenderer* renderer);
 	void GetPassCB(PassConstants* outPc);
 
 private:

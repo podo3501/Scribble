@@ -60,42 +60,15 @@ InstanceDataList CSetupData::CreateSkullInstanceData()
 	return instances;
 }
 
-InstanceDataList CreateSkyCubeInstanceData()
-{
-	//하늘맵은 material과 texTransform을 쓰지 않고 shader에서 이렇게 사용
-	// return gCubeMap.Sample(gsamLinearWrap, pin.PosL);
-	InstanceDataList instances{};
-	auto instance = std::make_unique<InstanceData>();
-	instance->world = XMMatrixIdentity();
-	instances.emplace_back(std::move(instance));
-
-	return instances;
-}
-
-std::unique_ptr<MeshData> Generator(std::string&& meshName)
-{
-	auto meshData = std::make_unique<MeshData>();
-	meshData->name = std::move(meshName);
-
-	CGeometryGenerator geoGen{};
-	CGeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
-
-	std::ranges::transform(box.Vertices, std::back_inserter(meshData->vertices),
-		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC); });
-	meshData->indices.insert(meshData->indices.end(), box.Indices32.begin(), box.Indices32.end());
-	
-	return std::move(meshData);
-}
-
 bool CSetupData::CreateModelMock()
 {
-	ModelProperty cube{};
-	cube.createType = ModelProperty::CreateType::Generator;
-	cube.meshData = Generator("cube");
-	cube.cullingFrustum = false;
-	cube.filename = L"";
-	cube.instanceDataList = CreateSkyCubeInstanceData();
-	ReturnIfFalse(InsertModelProperty("nature", "cube", cube));
+	//ModelProperty cube{};
+	//cube.createType = ModelProperty::CreateType::Generator;
+	//cube.meshData = Generator("cube");
+	//cube.cullingFrustum = false;
+	//cube.filename = L"";
+	//cube.instanceDataList = CreateSkyCubeInstanceData();
+	//ReturnIfFalse(InsertModelProperty("nature", "cube", cube));
 
 	//ModelProperty skull{};
 	//skull.createType = ModelProperty::CreateType::ReadFile;
@@ -157,15 +130,6 @@ bool CSetupData::CreateMaterialMock()
 	return true;
 }
 
-bool CSetupData::CreateMockData()
-{
-	ReturnIfFalse(CreateMaterialMock());
-	ReturnIfFalse(CreateTextureMock());
-	ReturnIfFalse(CreateModelMock());
-
-	return true;
-}
-
 bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 {
 	std::ranges::for_each(m_allModelProperty, [renderItems](auto& geoProp) {
@@ -179,22 +143,10 @@ bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 	return true;
 }
 
-bool CSetupData::N_InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty&& mProperty, CMaterial* material)
+bool CSetupData::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty&& mProperty, CMaterial* material)
 {
-	//머터리얼들은 머터리얼 클래스로 데이터를 복사한다.
 	material->SetMaterialList(mProperty.materialList);
 
-	auto& mesh = m_allModelProperty[geoName];
-	if (mesh.find(meshName) != mesh.end())
-		return false;
-
-	m_allModelProperty[geoName].insert(std::make_pair(meshName, std::move(mProperty)));
-
-	return true;
-}
-
-bool CSetupData::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
-{
 	auto& mesh = m_allModelProperty[geoName];
 	if (mesh.find(meshName) != mesh.end())
 		return false;
@@ -217,23 +169,6 @@ bool CSetupData::LoadModel(CModel* model, AllRenderItems* renderItems)
 		return LoadMesh(model, geoName, geoProp.second); }));
 
 	return FillRenderItems(renderItems);
-}
-
-bool CSetupData::LoadTextureIntoVRAM(IRenderer* renderer)
-{
-	//return (std::ranges::all_of(m_textureList, [renderer](auto& typeTex) {
-		//return renderer->LoadTexture(typeTex.first, typeTex.second); }));
-	return true;
-}
-
-
-bool CSetupData::LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material)
-{
-	ReturnIfFalse(std::ranges::all_of(m_textureList, [renderer](auto& typeTex) {
-		return renderer->LoadTexture(typeTex.first, typeTex.second); }));
-
-	material->SetMaterialList(m_materialList);
-	return true;
 }
 
 void CSetupData::GetPassCB(PassConstants* outPc)
