@@ -108,6 +108,18 @@ bool CRenderer::LoadTexture(eTextureType type, std::vector<std::wstring>& filena
 	return true;
 }
 
+bool CRenderer::LoadTexture(eTextureType type, std::set<std::wstring>& filenames)
+{
+	ReturnIfFalse(LoadData(
+		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+			return (m_texture->Upload(device, cmdList, type, filenames)); }));
+
+	m_texture->CreateShaderResourceView(this, type);
+
+	return true;
+}
+
+
 bool CRenderer::SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize)
 {
 	return m_frameResources->SetUploadBuffer(bufferType, bufferData, dataSize);
@@ -260,7 +272,7 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 {
 	auto cmdListAlloc = m_frameResources->GetCurrCmdListAlloc();
 	ReturnIfFailed(cmdListAlloc->Reset());
-	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, m_psoList[EtoV(GraphicsPSO::Sky)].Get()));
+	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, nullptr));
 
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
@@ -291,10 +303,11 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	texDescriptor.Offset(CubeCount, cbvSrvUavDescSize);
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), texDescriptor);
 
+	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Sky)].Get());
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["nature"].get());
 
-	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Opaque)].Get());
-	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["things"].get());
+	//m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Opaque)].Get());
+	//DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["things"].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));

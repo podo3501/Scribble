@@ -27,6 +27,21 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
 	return true;
 }
 
+bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::set<std::wstring>& filenames)
+{
+	auto result = std::ranges::all_of(filenames, [this, device, cmdList, type](auto& curFilename) {
+		auto texMemory = std::make_unique<TextureMemory>();
+		texMemory->filename = m_resPath + m_filePath + curFilename;
+		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
+			texMemory->filename.c_str(), texMemory->resource, texMemory->uploadHeap));
+		m_texMemories[type].emplace_back(std::move(texMemory));
+		return true; });
+
+	if (!result) return result;
+
+	return true;
+}
+
 void CTexture::CreateShaderResourceView(CRenderer* renderer, eTextureType type)
 {
 	auto device = renderer->GetDevice();

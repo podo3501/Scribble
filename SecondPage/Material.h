@@ -2,7 +2,9 @@
 
 #include <DirectXMath.h>
 #include <memory>
-#include <unordered_map>
+#include <vector>
+#include <map>
+#include <set>
 #include <string>
 #include <combaseapi.h>
 
@@ -33,6 +35,8 @@ using MaterialList = std::vector<std::shared_ptr<Material>>;
 
 class CMaterial
 {
+	using TextureList = std::map<eTextureType, std::set<std::wstring>>;
+	
 public:
 	CMaterial();
 	~CMaterial();
@@ -40,12 +44,16 @@ public:
 	CMaterial(const CMaterial&) = delete;
 	CMaterial& operator=(const CMaterial&) = delete;
 
+	void SetMaterialList(const MaterialList& materialList);
+	bool LoadTextureIntoVRAM(IRenderer* renderer);
 	void MakeMaterialBuffer(IRenderer* renderer);
-	inline void SetMaterialList(const MaterialList& materialList) { m_materialList = materialList; };
+	int GetDiffuseIndex(const std::wstring& filename);
 
 private:
 	MaterialBuffer ConvertUploadBuffer(UINT diffuseIndex, Material* material);
+	void InsertTexture(eTextureType type, const std::wstring& filename);
 
 private:
 	MaterialList m_materialList{};
+	TextureList m_textures{};
 };

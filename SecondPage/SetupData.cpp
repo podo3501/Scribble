@@ -97,13 +97,13 @@ bool CSetupData::CreateModelMock()
 	cube.instanceDataList = CreateSkyCubeInstanceData();
 	ReturnIfFalse(InsertModelProperty("nature", "cube", cube));
 
-	ModelProperty skull{};
-	skull.createType = ModelProperty::CreateType::ReadFile;
-	skull.meshData = nullptr;
-	skull.cullingFrustum = true;
-	skull.filename = L"skull.txt";
-	skull.instanceDataList = CreateSkullInstanceData();
-	ReturnIfFalse(InsertModelProperty("things", "skull", skull));
+	//ModelProperty skull{};
+	//skull.createType = ModelProperty::CreateType::ReadFile;
+	//skull.meshData = nullptr;
+	//skull.cullingFrustum = true;
+	//skull.filename = L"skull.txt";
+	//skull.instanceDataList = CreateSkullInstanceData();
+	//ReturnIfFalse(InsertModelProperty("things", "skull", skull));
 
 	//ModelProperty grid{};
 	//grid.createType = ModelProperty::CreateType::Generator;
@@ -179,6 +179,20 @@ bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 	return true;
 }
 
+bool CSetupData::N_InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty&& mProperty, CMaterial* material)
+{
+	//머터리얼들은 머터리얼 클래스로 데이터를 복사한다.
+	material->SetMaterialList(mProperty.materialList);
+
+	auto& mesh = m_allModelProperty[geoName];
+	if (mesh.find(meshName) != mesh.end())
+		return false;
+
+	m_allModelProperty[geoName].insert(std::make_pair(meshName, std::move(mProperty)));
+
+	return true;
+}
+
 bool CSetupData::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty)
 {
 	auto& mesh = m_allModelProperty[geoName];
@@ -204,6 +218,14 @@ bool CSetupData::LoadModel(CModel* model, AllRenderItems* renderItems)
 
 	return FillRenderItems(renderItems);
 }
+
+bool CSetupData::LoadTextureIntoVRAM(IRenderer* renderer)
+{
+	//return (std::ranges::all_of(m_textureList, [renderer](auto& typeTex) {
+		//return renderer->LoadTexture(typeTex.first, typeTex.second); }));
+	return true;
+}
+
 
 bool CSetupData::LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material)
 {

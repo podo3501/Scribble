@@ -18,6 +18,7 @@ struct PassConstants;
 enum class eTextureType : int;
 
 using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
+using MaterialList = std::vector<std::shared_ptr<Material>>;
 
 struct ModelProperty
 {
@@ -29,10 +30,11 @@ struct ModelProperty
 	};
 
 	CreateType createType{ CreateType::None };
-	std::unique_ptr<MeshData> meshData;
+	std::unique_ptr<MeshData> meshData{ nullptr };
 	std::wstring filename{};
 	InstanceDataList instanceDataList{};
 	bool cullingFrustum{ false };
+	MaterialList materialList{};
 };
 
 class CSetupData
@@ -43,7 +45,6 @@ class CSetupData
 
 	using TypeTextures = std::pair<eTextureType, std::vector<std::wstring>>;
 	using TextureList = std::vector<TypeTextures>;
-	using MaterialList = std::vector<std::shared_ptr<Material>>;
 
 public:
 	CSetupData();
@@ -53,8 +54,15 @@ public:
 	CSetupData& operator=(const CSetupData&) = delete;
 
 	bool CreateMockData();
+	bool N_InsertModelProperty(
+		const std::string& geoName, 
+		const std::string& meshName, 
+		ModelProperty&& mProperty, 
+		CMaterial* material);
+	bool InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty);
 	bool LoadModel(CModel* model, AllRenderItems* renderItems);
 	bool LoadTextureIntoVRAM(IRenderer* renderer, CMaterial* material);
+	bool LoadTextureIntoVRAM(IRenderer* renderer);
 	void GetPassCB(PassConstants* outPc);
 
 private:
@@ -63,7 +71,6 @@ private:
 	bool CreateTextureMock();
 
 	InstanceDataList CreateSkullInstanceData();
-	bool InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty& mProperty);
 	bool LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp);
 
 	int GetTextureCount(eTextureType texType);

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <wrl.h>
 #include <memory>
 
@@ -27,6 +28,7 @@ public:
 
 	void CreateShaderResourceView(CRenderer* renderer, eTextureType type);
 	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::vector<std::wstring>& filenames);
+	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::set<std::wstring>& filenames);
 
 private:
 	struct TextureMemory

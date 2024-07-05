@@ -5,11 +5,10 @@
 #include <memory>
 #include <unordered_map>
 #include <functional>
-#include "../Core/Directx3D.h"
-#include "../Core/d3dUtil.h"
 #include "../Include/interface.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
+#include "../Include/types.h"
 #include "../SecondPage/Window.h"
 #include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
@@ -18,6 +17,8 @@
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/SetupData.h"
+#include "../SecondPage/GeometryGenerator.h"
+#include "../SecondPage/Utility.h"
 
 namespace MainLoop
 {
@@ -97,6 +98,69 @@ namespace MainLoop
 		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
 		EXPECT_EQ(m_setupData->LoadTextureIntoVRAM(m_renderer.get(), material.get()), true);
 	}
+
+	std::unique_ptr<Material> MakeMaterial(std::string&& name, eTextureType type, std::wstring&& filename,
+		DirectX::XMFLOAT4 diffuseAlbedo, DirectX::XMFLOAT3 fresnelR0, float rough)
+	{
+		std::unique_ptr<Material> material = std::make_unique<Material>();
+		material->name = std::move(name);
+		material->type = type;
+		material->filename = std::move(filename);
+		material->normalSrvHeapIndex = 0;
+		material->diffuseAlbedo = diffuseAlbedo;
+		material->fresnelR0 = fresnelR0;
+		material->roughness = rough;
+		material->transform = DirectX::XMMatrixIdentity();
+
+		return std::move(material);
+	}
+
+	ModelProperty CreateMock(const std::string& meshName)
+	{
+		MaterialList materialList;
+		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+		materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f));
+		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Common, L"bricks2.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+
+		ModelProperty  modelProp{};
+		modelProp.createType = ModelProperty::CreateType::Generator;
+		modelProp.meshData = nullptr;
+		modelProp.cullingFrustum = false;
+		modelProp.filename = L"";
+		modelProp.instanceDataList = {};
+		modelProp.materialList = materialList;
+		
+		return modelProp;
+	}
+
+	class GMockTestRenderer : public IRenderer
+	{
+		virtual bool LoadTexture(eTextureType type, std::set<std::wstring>& filenames) override
+		{
+			switch (type)
+			{
+			case eTextureType::Cube: EXPECT_EQ(filenames.size(), 1); break;
+			case eTextureType::Common: EXPECT_EQ(filenames.size(), 2); break;
+			}
+
+			return true;
+		}
+	};
+
+	TEST_F(MainLoopClassTest, MockData)
+	{
+		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
+		std::unique_ptr<CSetupData> setupData = std::make_unique<CSetupData>();
+		setupData->N_InsertModelProperty("nature", "cube1", CreateMock("cube"), material.get());
+		setupData->N_InsertModelProperty("nature", "cube2", CreateMock("cube"), material.get());
+
+		std::unique_ptr<IRenderer> mockRenderer = std::make_unique<GMockTestRenderer>();
+		EXPECT_EQ(material->LoadTextureIntoVRAM(mockRenderer.get()), true);
+		EXPECT_EQ(material->GetDiffuseIndex(L"bricks.dds"), 1);
+		EXPECT_EQ(material->GetDiffuseIndex(L"brickddddd"), -1);
+	}
 } //SecondPage
 
 class GTestRenderer : public IRenderer
@@ -122,7 +186,7 @@ namespace A_SecondPage
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
 		EXPECT_EQ(mainLoop->Initialize(resPath, window.get(), renderer.get()), true);
 
-		GTestRenderer testRenderer;
+		GTestRenderer testRenderer{};
 		EXPECT_EQ(mainLoop->Run(&testRenderer), true);
 	}
 }

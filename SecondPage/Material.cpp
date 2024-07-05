@@ -18,6 +18,43 @@ CMaterial::CMaterial()
 {}
 CMaterial::~CMaterial() = default;
 
+void CMaterial::SetMaterialList(const MaterialList& materialList)
+{
+	std::ranges::copy_if(materialList, std::back_inserter(m_materialList), [this](auto& mat) {
+		auto find = std::ranges::find_if(m_materialList, [&mat](auto& mMat) {
+			return mMat->name == mat->name; });
+		return (find == m_materialList.end()); });
+
+	std::ranges::sort(m_materialList, [](const auto& lhs, const auto& rhs) { return lhs->type < rhs->type; });
+	std::ranges::for_each(m_materialList, [this](auto& mat) { m_textures[mat->type].emplace(mat->filename); });
+}
+
+bool CMaterial::LoadTextureIntoVRAM(IRenderer* renderer)
+{
+	return std::ranges::all_of(m_textures, [renderer](auto& curTextures) {
+		return renderer->LoadTexture(curTextures.first, curTextures.second); });
+
+	return true;
+}
+
+int CMaterial::GetDiffuseIndex(const std::wstring& filename)
+{
+	int diffuseIndex{ 0 };
+
+	for (auto& cur : m_textures)
+	{
+		for (auto& tex : cur.second)
+		{
+			if (tex == filename)
+				return diffuseIndex;
+			else
+				++diffuseIndex;
+		}
+	}
+
+	return -1;
+}
+
 MaterialBuffer CMaterial::ConvertUploadBuffer(UINT diffuseIndex, Material* material)
 {
 	MaterialBuffer matData;

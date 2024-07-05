@@ -3,6 +3,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <set>
 #include <memory>
 #include <unordered_map>
 #include <combaseapi.h>
@@ -30,6 +31,7 @@ interface IRenderer
 	virtual bool OnResize(int wndWidth, int wndHeight) { return true; };
 	virtual bool LoadModel(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) { return true; };
 	virtual bool LoadTexture(eTextureType type, std::vector<std::wstring>& filenames) { return true; };
+	virtual bool LoadTexture(eTextureType type, std::set<std::wstring>& filenames) { return true; };
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) { return true; };
 	virtual bool PrepareFrame() { return true; };
 	virtual bool Draw(AllRenderItems& renderItem) { return true; };

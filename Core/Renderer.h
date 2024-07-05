@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <array>
+#include <set>
 #include <vector>
 #include <string>
 #include "../Include/Interface.h"
@@ -35,6 +36,7 @@ public:
 	virtual bool OnResize(int width, int height) override;
 	virtual bool LoadModel(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
 	virtual bool LoadTexture(eTextureType type, std::vector<std::wstring>& filenames) override;
+	virtual bool LoadTexture(eTextureType type, std::set<std::wstring>& filenames) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
 	virtual bool PrepareFrame() override;
 	virtual bool Draw(AllRenderItems& renderItem) override;
