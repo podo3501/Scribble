@@ -43,9 +43,6 @@ class CSetupData
 	using AllModelProperty = std::unordered_map<std::string, MeshProperty>;
 	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
 
-	using TypeTextures = std::pair<eTextureType, std::vector<std::wstring>>;
-	using TextureList = std::vector<TypeTextures>;
-
 public:
 	CSetupData();
 	~CSetupData();
@@ -62,19 +59,10 @@ public:
 	void GetPassCB(PassConstants* outPc);
 
 private:
-	bool CreateModelMock();
-	bool CreateMaterialMock();
-	bool CreateTextureMock();
-
-	InstanceDataList CreateSkullInstanceData();
 	bool LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp);
-
-	int GetTextureCount(eTextureType texType);
 	bool FillRenderItems(AllRenderItems* renderItems);
 
 private:
 	AllModelProperty m_allModelProperty{};
-	TextureList m_textureList{};
-	MaterialList m_materialList{};
 };
 

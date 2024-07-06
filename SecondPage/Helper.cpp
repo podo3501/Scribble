@@ -97,6 +97,50 @@ std::unique_ptr<MeshData> Generator(std::string&& meshName)
 	return std::move(meshData);
 }
 
+InstanceDataList CreateSkullInstanceData(const std::vector<std::string>& materialNameList)
+{
+	InstanceDataList instances{};
+
+	const int n = 5;
+	int matCount = static_cast<int>(materialNameList.size());
+
+	float width = 200.0f;
+	float height = 200.0f;
+	float depth = 200.0f;
+
+	float x = -0.5f * width;
+	float y = -0.5f * height;
+	float z = 1.0f * depth;
+	float dx = width / (n - 1);
+	float dy = height / (n - 1);
+	float dz = depth / (n - 1);
+
+	for (int k = 0; k < n; ++k)
+	{
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				auto instance = std::make_unique<InstanceData>();
+				const DirectX::XMFLOAT3 pos(x + j * dx, y + i * dy, z + k * dz);
+				instance->world = DirectX::XMMATRIX(
+					1.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 1.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f,
+					pos.x, pos.y, pos.z, 1.0f);
+
+				int index = k * n * n + i * n + j;
+				instance->texTransform = DirectX::XMMatrixScaling(2.0f, 2.0f, 1.0f);
+				
+				instance->matName = materialNameList[index % matCount];
+				instances.emplace_back(std::move(instance));
+			}
+		}
+	}
+
+	return instances;
+}
+
 InstanceDataList CreateSkyCubeInstanceData(const std::vector<std::string>& materialNameList)
 {
 	//하늘맵은 material과 texTransform을 쓰지 않고 shader에서 이렇게 사용
@@ -110,10 +154,10 @@ InstanceDataList CreateSkyCubeInstanceData(const std::vector<std::string>& mater
 	return instances;
 }
 
-ModelProperty CreateMock(const std::string& meshName)
+ModelProperty CreateCubeMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds", 
+	materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds",
 		{ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f));
 
 	std::vector<std::string> materialNameList{};
@@ -131,9 +175,48 @@ ModelProperty CreateMock(const std::string& meshName)
 	return modelProp;
 }
 
+ModelProperty CreateSkullMock()
+{
+	MaterialList materialList;
+	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Common, L"bricks2.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Common, L"bricks3.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Common, L"stone.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Common, L"tile.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Common, L"WoodCrate01.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Common, L"ice.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
+	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Common, L"grass.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Common, L"white1x1.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));
+
+	std::vector<std::string> materialNameList{};
+	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
+		return mat->name; });
+
+	ModelProperty  modelProp{};
+	modelProp.createType = ModelProperty::CreateType::ReadFile;
+	modelProp.meshData = nullptr;
+	modelProp.cullingFrustum = true;
+	modelProp.filename = L"skull.txt";
+	modelProp.instanceDataList = CreateSkullInstanceData(materialNameList);
+	modelProp.materialList = materialList;
+
+	return modelProp;
+}
+
+ModelProperty CreateMock(const std::string& meshName)
+{
+	if (meshName == "cube")
+		return CreateCubeMock();
+	else if (meshName == "skull")
+		return CreateSkullMock();
+
+	return ModelProperty{};
+}
+
 bool MakeMockData(CSetupData* setupData, CMaterial* material)
 {
 	ReturnIfFalse(setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), material));
+	ReturnIfFalse(setupData->InsertModelProperty("things", "skull", CreateMock("skull"), material));
 
 	return true;
 }

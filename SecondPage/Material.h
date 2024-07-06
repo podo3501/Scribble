@@ -35,8 +35,7 @@ using MaterialList = std::vector<std::shared_ptr<Material>>;
 
 class CMaterial
 {
-	using TextureList = std::map<eTextureType, std::set<std::wstring>>;
-	using N_TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
+	using TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
 	
 public:
 	CMaterial();
@@ -58,6 +57,5 @@ private:
 
 private:
 	MaterialList m_materialList{};
-	TextureList m_textures{};
-	N_TextureList m_textureList{};
+	TextureList m_textureList{};
 };

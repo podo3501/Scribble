@@ -18,7 +18,6 @@ struct InstanceData
 {
 	DirectX::XMMATRIX world{};
 	DirectX::XMMATRIX texTransform{};
-	UINT matIndex{ 0u };
 	std::string matName{};
 };
 

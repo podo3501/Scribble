@@ -83,16 +83,12 @@ void CMaterial::MakeMaterialBuffer(IRenderer* renderer)
 
 	std::vector<MaterialBuffer> materialBufferDatas{};
 	std::ranges::transform(updateMaterials, std::back_inserter(materialBufferDatas), 
-		[this, diffuseIndex{ 0u }, curType{ eTextureType::None }](auto& m) mutable {
+		[this, curType{ eTextureType::None }](auto& m) {
 			Material* mat = m.get();
-			if (curType != mat->type)
-			{
-				curType = mat->type;
-				diffuseIndex = 0;
-			}
+			int diffuseIndex = GetDiffuseIndex(mat->filename);
 			mat->numFramesDirty--;
+			return ConvertUploadBuffer(diffuseIndex, mat); });
 
-			return ConvertUploadBuffer(diffuseIndex++, mat); });
 	if (materialBufferDatas.empty())
 		return; 
 

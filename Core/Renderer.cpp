@@ -97,7 +97,7 @@ bool CRenderer::LoadModel(Vertices& totalVertices, Indices& totalIndices, Render
 		return LoadModel(device, cmdList, totalVertices, totalIndices, renderItem); });
 }
 
-bool CRenderer::LoadTexture(const N_TextureList& textureList)
+bool CRenderer::LoadTexture(const TextureList& textureList)
 {
 	ReturnIfFalse(LoadData(
 		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
@@ -107,7 +107,6 @@ bool CRenderer::LoadTexture(const N_TextureList& textureList)
 
 	return true;
 }
-
 
 bool CRenderer::SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize)
 {
@@ -154,8 +153,9 @@ enum class ParamType : int
 
 //셰이더의 내용물은 늘 자료가 있다고 가정한다.
 //남아서 넘치는 건 상관없지만 셰이더 데이터에 빈공간이 있으면 안된다.
+//텍스춰는 빈공간이 있어도 상관없다.
 constexpr UINT CubeCount{ 1u };
-constexpr UINT TextureCount{ 7u };
+constexpr UINT TextureCount{ 20u };
 constexpr UINT TotalHeapCount = CubeCount + TextureCount;
 bool CRenderer::BuildRootSignature()
 {
@@ -288,15 +288,13 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Cube), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
 	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
-	texDescriptor.Offset(CubeCount, cbvSrvUavDescSize);
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), texDescriptor);
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
 	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Sky)].Get());
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["nature"].get());
 
-	//m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Opaque)].Get());
-	//DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["things"].get());
+	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Opaque)].Get());
+	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["things"].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));

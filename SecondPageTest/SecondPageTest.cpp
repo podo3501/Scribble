@@ -119,7 +119,7 @@ namespace MainLoop
 
 	class GMockTestRenderer : public IRenderer
 	{
-		virtual bool LoadTexture(const N_TextureList& textureList) override
+		virtual bool LoadTexture(const TextureList& textureList) override
 		{
 			EXPECT_EQ(textureList.size(), 3);
 

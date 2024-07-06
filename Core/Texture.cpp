@@ -12,7 +12,7 @@ CTexture::CTexture(std::wstring resPath)
 {}
 CTexture::~CTexture() = default;
 
-bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const N_TextureList& textureList)
+bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const TextureList& textureList)
 {
 	return std::ranges::all_of(textureList, [this, device, cmdList](auto& tex) {
 		auto& type = tex.first;
@@ -32,7 +32,7 @@ void CTexture::CreateShaderResourceView(CRenderer* renderer)
 	auto srvDescHeap = renderer->GetSrvDescriptorHeap();
 
 	std::ranges::for_each(m_textureMemories,
-		[this, srvDescHeap, cbvSrvUavDescSize, device](auto& curTex) mutable {
+		[this, srvDescHeap, cbvSrvUavDescSize, device, offsetIndex{ 0 }](auto& curTex) mutable {
 			auto& type = curTex.first;
 			auto& curTexRes = curTex.second->resource;
 
@@ -51,11 +51,11 @@ void CTexture::CreateShaderResourceView(CRenderer* renderer)
 				srvDesc.TextureCube.MipLevels = curTexRes->GetDesc().MipLevels;
 				srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 				srvDesc.Format = curTexRes->GetDesc().Format;
-				m_skyTexHeapIndex = m_offsetIndex;
+				m_skyTexHeapIndex = offsetIndex;
 			}
 
 			CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-			hCpuDesc.Offset(m_offsetIndex++, cbvSrvUavDescSize);
+			hCpuDesc.Offset(offsetIndex++, cbvSrvUavDescSize);
 			device->CreateShaderResourceView(curTexRes.Get(), &srvDesc, hCpuDesc);
 		});
 }

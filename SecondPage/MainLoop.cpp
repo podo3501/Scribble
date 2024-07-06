@@ -122,11 +122,11 @@ void CMainLoop::UpdateRenderItems()
 void CMainLoop::UpdateInstanceBuffer(const InstanceDataList& visibleInstance)
 {
 	std::vector<InstanceBuffer> instanceBufferDatas{};
-	std::ranges::transform(visibleInstance, std::back_inserter(instanceBufferDatas), [](auto& visibleData) {
+	std::ranges::transform(visibleInstance, std::back_inserter(instanceBufferDatas), [this](auto& visibleData) {
 		InstanceBuffer curInsBuf{};
 		XMStoreFloat4x4(&curInsBuf.world, XMMatrixTranspose(visibleData->world));
 		XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(visibleData->texTransform));
-		curInsBuf.materialIndex = visibleData->matIndex;
+		curInsBuf.materialIndex = m_material->GetMaterialIndex(visibleData->matName);
 		return std::move(curInsBuf); });
 
 	m_iRenderer->SetUploadBuffer(eBufferType::Instance, instanceBufferDatas.data(), instanceBufferDatas.size());

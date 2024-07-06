@@ -6,6 +6,15 @@ using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace DirectX;
 
+constexpr bool gOutputDebugWindow = false;
+
+template<typename T>
+void OutputDebugWindow(T&& output) 
+{ 
+	if (gOutputDebugWindow == false) return;
+	::OutputDebugString(std::forward<T>(output)); 
+}
+
 CDirectx3D::CDirectx3D()
 {}
 
@@ -99,8 +108,8 @@ void CDirectx3D::LogAdapters()
 		text += desc.Description;
 		text += L"\n";
 
-		OutputDebugString(text.c_str());
-
+		OutputDebugWindow(text.c_str());
+	
 		adapterList.push_back(adapter);
 
 		++i;
@@ -126,7 +135,7 @@ void CDirectx3D::LogAdapterOutputs(IDXGIAdapter* adapter)
 		std::wstring text = L"***Output: ";
 		text += desc.DeviceName;
 		text += L"\n";
-		OutputDebugString(text.c_str());
+		OutputDebugWindow(text.c_str());
 
 		LogOutputDisplayModes(output, m_backBufferFormat);
 
@@ -157,7 +166,7 @@ void CDirectx3D::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) +
 			L"\n";
 
-		::OutputDebugString(text.c_str());
+		OutputDebugWindow(text.c_str());
 	}
 }
 
