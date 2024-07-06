@@ -363,3 +363,9 @@ MigrationBackup/
 FodyWeavers.xsd
 /Lib/SecondPage_d.lib
 /Lib/SecondPage_d.idb
+/Lib/Core_d.idb
+/Lib/Core_d.lib
+/Lib/PixelShader.cso
+/Lib/SkyPS.cso
+/Lib/SkyVS.cso
+/Lib/VertexShader.cso
