@@ -69,7 +69,7 @@ bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
 	m_setupData = std::make_unique<CSetupData>();
 	m_model = std::make_unique<CModel>(resourcePath);
 
-	ReturnIfFalse(m_setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), m_material.get()));
+	MakeMockData(m_setupData.get(), m_material.get());
 
 	return true;
 }

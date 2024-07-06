@@ -119,13 +119,9 @@ namespace MainLoop
 
 	class GMockTestRenderer : public IRenderer
 	{
-		virtual bool LoadTexture(eTextureType type, std::set<std::wstring>& filenames) override
+		virtual bool LoadTexture(const N_TextureList& textureList) override
 		{
-			switch (type)
-			{
-			case eTextureType::Cube: EXPECT_EQ(filenames.size(), 1); break;
-			case eTextureType::Common: EXPECT_EQ(filenames.size(), 2); break;
-			}
+			EXPECT_EQ(textureList.size(), 3);
 
 			return true;
 		}
@@ -140,7 +136,7 @@ namespace MainLoop
 
 		std::unique_ptr<IRenderer> mockRenderer = std::make_unique<GMockTestRenderer>();
 		EXPECT_EQ(material->LoadTextureIntoVRAM(mockRenderer.get()), true);
-		EXPECT_EQ(material->GetDiffuseIndex(L"bricks.dds"), 1);
+		EXPECT_EQ(material->GetDiffuseIndex(L"bricks.dds"), 0);
 		EXPECT_EQ(material->GetDiffuseIndex(L"brickddddd"), -1);
 		EXPECT_EQ(material->GetMaterialIndex("bricks1"), 2);
 		EXPECT_EQ(material->GetMaterialIndex("bricks2"), 3);

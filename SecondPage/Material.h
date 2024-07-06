@@ -36,6 +36,7 @@ using MaterialList = std::vector<std::shared_ptr<Material>>;
 class CMaterial
 {
 	using TextureList = std::map<eTextureType, std::set<std::wstring>>;
+	using N_TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
 	
 public:
 	CMaterial();
@@ -53,8 +54,10 @@ public:
 
 private:
 	MaterialBuffer ConvertUploadBuffer(UINT diffuseIndex, Material* material);
+	bool CheckSameFilename(const std::wstring& filename);
 
 private:
 	MaterialList m_materialList{};
 	TextureList m_textures{};
+	N_TextureList m_textureList{};
 };

@@ -9,6 +9,7 @@
 #include "./SetupData.h"
 #include "./GeometryGenerator.h"
 #include "./Model.h"
+#include "./Utility.h"
 
 std::wstring CalculateFrameStats(CGameTimer* timer)
 {
@@ -96,13 +97,14 @@ std::unique_ptr<MeshData> Generator(std::string&& meshName)
 	return std::move(meshData);
 }
 
-InstanceDataList CreateSkyCubeInstanceData()
+InstanceDataList CreateSkyCubeInstanceData(const std::vector<std::string>& materialNameList)
 {
 	//하늘맵은 material과 texTransform을 쓰지 않고 shader에서 이렇게 사용
 	// return gCubeMap.Sample(gsamLinearWrap, pin.PosL);
 	InstanceDataList instances{};
 	auto instance = std::make_unique<InstanceData>();
 	instance->world = DirectX::XMMatrixIdentity();
+	instance->matName = *materialNameList.begin();
 	instances.emplace_back(std::move(instance));
 
 	return instances;
@@ -114,13 +116,24 @@ ModelProperty CreateMock(const std::string& meshName)
 	materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds", 
 		{ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f));
 
+	std::vector<std::string> materialNameList{};
+	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
+		return mat->name; });
+
 	ModelProperty  modelProp{};
 	modelProp.createType = ModelProperty::CreateType::Generator;
 	modelProp.meshData = Generator("cube");
 	modelProp.cullingFrustum = false;
 	modelProp.filename = L"";
-	modelProp.instanceDataList = CreateSkyCubeInstanceData();
+	modelProp.instanceDataList = CreateSkyCubeInstanceData(materialNameList);
 	modelProp.materialList = materialList;
 
 	return modelProp;
+}
+
+bool MakeMockData(CSetupData* setupData, CMaterial* material)
+{
+	ReturnIfFalse(setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), material));
+
+	return true;
 }

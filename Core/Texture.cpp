@@ -12,44 +12,30 @@ CTexture::CTexture(std::wstring resPath)
 {}
 CTexture::~CTexture() = default;
 
-bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::vector<std::wstring>& filenames)
+bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const N_TextureList& textureList)
 {
-	auto result = std::ranges::all_of(filenames, [this, device, cmdList, type](auto& curFilename) {
-			auto texMemory = std::make_unique<TextureMemory>();
-			texMemory->filename = m_resPath + m_filePath + curFilename;
-			ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
-				texMemory->filename.c_str(), texMemory->resource, texMemory->uploadHeap));
-			m_texMemories[type].emplace_back(std::move(texMemory));
-			return true; });
-
-	if (!result) return result;
-
-	return true;
-}
-
-bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::set<std::wstring>& filenames)
-{
-	auto result = std::ranges::all_of(filenames, [this, device, cmdList, type](auto& curFilename) {
+	return std::ranges::all_of(textureList, [this, device, cmdList](auto& tex) {
+		auto& type = tex.first;
+		auto& filename = tex.second;
 		auto texMemory = std::make_unique<TextureMemory>();
-		texMemory->filename = m_resPath + m_filePath + curFilename;
+		texMemory->filename = m_resPath + m_filePath + filename;
 		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
 			texMemory->filename.c_str(), texMemory->resource, texMemory->uploadHeap));
-		m_texMemories[type].emplace_back(std::move(texMemory));
+		m_textureMemories.emplace_back(std::make_pair(type, std::move(texMemory)));
 		return true; });
-
-	if (!result) return result;
-
-	return true;
 }
 
-void CTexture::CreateShaderResourceView(CRenderer* renderer, eTextureType type)
+void CTexture::CreateShaderResourceView(CRenderer* renderer)
 {
 	auto device = renderer->GetDevice();
 	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	auto srvDescHeap = renderer->GetSrvDescriptorHeap();
-	std::ranges::for_each(m_texMemories[type],
-		[this, srvDescHeap, cbvSrvUavDescSize, device, type](auto& curTex) mutable {
-			auto& curTexRes = curTex->resource;
+
+	std::ranges::for_each(m_textureMemories,
+		[this, srvDescHeap, cbvSrvUavDescSize, device](auto& curTex) mutable {
+			auto& type = curTex.first;
+			auto& curTexRes = curTex.second->resource;
+
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 			srvDesc.Format = curTexRes->GetDesc().Format;
 			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -70,6 +56,6 @@ void CTexture::CreateShaderResourceView(CRenderer* renderer, eTextureType type)
 
 			CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
 			hCpuDesc.Offset(m_offsetIndex++, cbvSrvUavDescSize);
-			device->CreateShaderResourceView(curTex->resource.Get(), &srvDesc, hCpuDesc);
+			device->CreateShaderResourceView(curTexRes.Get(), &srvDesc, hCpuDesc);
 		});
 }

@@ -18,6 +18,8 @@ enum class eTextureType : int;
 
 class CTexture
 {
+	using N_TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
+
 public:
 	CTexture(std::wstring resPath);
 	~CTexture();
@@ -26,9 +28,8 @@ public:
 	CTexture(const CTexture&) = delete;
 	CTexture& operator=(const CTexture&) = delete;
 
-	void CreateShaderResourceView(CRenderer* renderer, eTextureType type);
-	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::vector<std::wstring>& filenames);
-	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, eTextureType type, std::set<std::wstring>& filenames);
+	void CreateShaderResourceView(CRenderer* renderer);
+	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const N_TextureList& textureList);
 
 private:
 	struct TextureMemory
@@ -44,7 +45,8 @@ private:
 	std::wstring m_resPath{};
 	const std::wstring m_filePath{ L"Textures/" };
 
-	std::map<eTextureType, std::vector<std::unique_ptr<TextureMemory>>> m_texMemories{};
+	std::vector<std::pair<eTextureType, std::unique_ptr<TextureMemory>>> m_textureMemories{};
+
 	int m_skyTexHeapIndex{ 0 };
 	int m_offsetIndex{ 0 };
 };

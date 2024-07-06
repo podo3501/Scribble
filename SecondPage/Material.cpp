@@ -18,6 +18,12 @@ CMaterial::CMaterial()
 {}
 CMaterial::~CMaterial() = default;
 
+bool CMaterial::CheckSameFilename(const std::wstring& filename)
+{
+	return std::ranges::count_if(m_textureList, [&filename](auto& tex) {
+		return tex.second == filename; });
+}
+
 void CMaterial::SetMaterialList(const MaterialList& materialList)
 {
 	std::ranges::copy_if(materialList, std::back_inserter(m_materialList), [this](auto& mat) {
@@ -25,34 +31,28 @@ void CMaterial::SetMaterialList(const MaterialList& materialList)
 			return mMat->name == mat->name; });
 		return (find == m_materialList.end()); });
 
-	std::ranges::sort(m_materialList, [](const auto& lhs, const auto& rhs) { return lhs->type < rhs->type; });
-	std::ranges::for_each(m_materialList, [this](auto& mat) { m_textures[mat->type].emplace(mat->filename); });
+	std::ranges::for_each(m_materialList, [this](auto& mat) {
+		auto& filename = mat->filename;
+		if (CheckSameFilename(filename)) return; 
+		m_textureList.emplace_back(std::make_pair(mat->type, filename)); });
 }
 
 bool CMaterial::LoadTextureIntoVRAM(IRenderer* renderer)
 {
-	return std::ranges::all_of(m_textures, [renderer](auto& curTextures) {
-		return renderer->LoadTexture(curTextures.first, curTextures.second); });
+	renderer->LoadTexture(m_textureList);
 
 	return true;
 }
 
 int CMaterial::GetDiffuseIndex(const std::wstring& filename)
 {
-	int diffuseIndex{ 0 };
+	auto find = std::ranges::find_if(m_textureList, [&filename](auto& tex) {
+		return tex.second == filename; });
+	
+	if (find == m_textureList.end())
+		return -1;
 
-	for (auto& cur : m_textures)
-	{
-		for (auto& tex : cur.second)
-		{
-			if (tex == filename)
-				return diffuseIndex;
-			else
-				++diffuseIndex;
-		}
-	}
-
-	return -1;
+	return static_cast<int>(std::distance(m_textureList.begin(), find));
 }
 
 int CMaterial::GetMaterialIndex(const std::string& matName)

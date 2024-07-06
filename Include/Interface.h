@@ -22,6 +22,7 @@ enum class eTextureType : int;
 using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
 using Vertices = std::vector<Vertex>;
 using Indices = std::vector<std::int32_t>;
+using N_TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
 
 interface IRenderer
 {
@@ -30,8 +31,7 @@ interface IRenderer
 	virtual bool IsInitialize() { return false; };
 	virtual bool OnResize(int wndWidth, int wndHeight) { return true; };
 	virtual bool LoadModel(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) { return true; };
-	virtual bool LoadTexture(eTextureType type, std::vector<std::wstring>& filenames) { return true; };
-	virtual bool LoadTexture(eTextureType type, std::set<std::wstring>& filenames) { return true; };
+	virtual bool LoadTexture(const N_TextureList& textureList) { return true; };
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) { return true; };
 	virtual bool PrepareFrame() { return true; };
 	virtual bool Draw(AllRenderItems& renderItem) { return true; };

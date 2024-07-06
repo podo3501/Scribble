@@ -97,24 +97,13 @@ bool CRenderer::LoadModel(Vertices& totalVertices, Indices& totalIndices, Render
 		return LoadModel(device, cmdList, totalVertices, totalIndices, renderItem); });
 }
 
-bool CRenderer::LoadTexture(eTextureType type, std::vector<std::wstring>& filenames)
+bool CRenderer::LoadTexture(const N_TextureList& textureList)
 {
 	ReturnIfFalse(LoadData(
-		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-			return (m_texture->Upload(device, cmdList, type, filenames)); }));
+		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+			return (m_texture->Upload(device, cmdList, textureList)); }));
 
-	m_texture->CreateShaderResourceView(this, type);
-
-	return true;
-}
-
-bool CRenderer::LoadTexture(eTextureType type, std::set<std::wstring>& filenames)
-{
-	ReturnIfFalse(LoadData(
-		[this, &filenames, type](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-			return (m_texture->Upload(device, cmdList, type, filenames)); }));
-
-	m_texture->CreateShaderResourceView(this, type);
+	m_texture->CreateShaderResourceView(this);
 
 	return true;
 }
