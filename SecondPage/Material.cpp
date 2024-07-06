@@ -31,10 +31,11 @@ void CMaterial::SetMaterialList(const MaterialList& materialList)
 			return mMat->name == mat->name; });
 		return (find == m_materialList.end()); });
 
-	std::ranges::for_each(m_materialList, [this](auto& mat) {
-		auto& filename = mat->filename;
-		if (CheckSameFilename(filename)) return; 
-		m_textureList.emplace_back(std::make_pair(mat->type, filename)); });
+	auto uniqNameMatList = m_materialList |
+		std::views::filter([this](auto& iter) { return CheckSameFilename(iter->filename) == false; });
+
+	std::ranges::transform(uniqNameMatList, std::back_inserter(m_textureList), [this](auto& mat) {
+		return std::make_pair(mat->type, mat->filename); });
 }
 
 bool CMaterial::LoadTextureIntoVRAM(IRenderer* renderer)
@@ -79,15 +80,14 @@ MaterialBuffer CMaterial::ConvertUploadBuffer(UINT diffuseIndex, Material* mater
 
 void CMaterial::MakeMaterialBuffer(IRenderer* renderer)
 {
-	auto updateMaterials = m_materialList | std::ranges::views::filter([](auto& iter) { return iter.get()->numFramesDirty > 0; });
-
 	std::vector<MaterialBuffer> materialBufferDatas{};
-	std::ranges::transform(updateMaterials, std::back_inserter(materialBufferDatas), 
-		[this, curType{ eTextureType::None }](auto& m) {
-			Material* mat = m.get();
-			int diffuseIndex = GetDiffuseIndex(mat->filename);
-			mat->numFramesDirty--;
-			return ConvertUploadBuffer(diffuseIndex, mat); });
+	std::ranges::for_each(m_materialList, [this, &materialBufferDatas](auto& m) {
+		Material* mat = m.get();
+		if (mat->numFramesDirty <= 0) return;
+
+		int diffuseIndex = GetDiffuseIndex(mat->filename);
+		materialBufferDatas.emplace_back(ConvertUploadBuffer(diffuseIndex, mat));
+		mat->numFramesDirty--; });
 
 	if (materialBufferDatas.empty())
 		return; 
