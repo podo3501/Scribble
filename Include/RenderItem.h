@@ -39,9 +39,10 @@ struct SubRenderItem
 
 	SubItem subItem{};
 
-	InstanceDataList instanceDataList{};
-	bool cullingFrustum{ false };
-	UINT instanceCount{ 0 };
+	InstanceDataList instanceDataList{};		//위치나 머터리얼 같은 정보들
+	bool cullingFrustum{ false };		//카메라 컬링여부
+	UINT instanceCount{ 0 };			//총 인스턴스
+	int startSubIndexInstance{ 0 };	//서브안에서 얼마나 떨어져 있는지 
 };
 
 using SubRenderItems = std::unordered_map<std::string, SubRenderItem>;

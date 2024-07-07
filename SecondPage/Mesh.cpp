@@ -125,7 +125,7 @@ void CMesh::SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataL
 	Vertices& totalVertices, Indices& totalIndices)
 {
 	Offsets offsets{ 0, 0 };
-	std::ranges::for_each(meshDataList,[this, &offsets, renderItem, &totalVertices, &totalIndices](auto& data) {
+	std::ranges::for_each(meshDataList, [this, &offsets, renderItem, &totalVertices, &totalIndices](auto& data) {
 			offsets = SetSubmesh(renderItem, offsets, data.get());
 			std::ranges::copy(data->vertices, std::back_inserter(totalVertices));
 			std::ranges::copy(data->indices, std::back_inserter(totalIndices));

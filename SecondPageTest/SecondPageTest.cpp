@@ -5,13 +5,14 @@
 #include <memory>
 #include <unordered_map>
 #include <functional>
-#include "../Include/interface.h"
+#include "./InterfaceTest.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/types.h"
 #include "../SecondPage/Window.h"
 #include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
+#include "../SecondPage/Model.h"
 #include "../SecondPage/Mesh.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
@@ -19,6 +20,7 @@
 #include "../SecondPage/SetupData.h"
 #include "../SecondPage/Utility.h"
 #include "../SecondPage/MockData.h"
+#include "../SecondPage/Helper.h"
 
 namespace MainLoop
 {
@@ -107,7 +109,7 @@ namespace MainLoop
 		return modelProp;
 	}
 
-	class GMockTestRenderer : public IRenderer
+	class GMockTestRenderer : public ITestRenderer
 	{
 		virtual bool LoadTexture(const TextureList& textureList) override
 		{
@@ -131,17 +133,41 @@ namespace MainLoop
 		EXPECT_EQ(material->GetMaterialIndex("bricks1"), 2);
 		EXPECT_EQ(material->GetMaterialIndex("bricks2"), 3);
 	}
+	
+	class GInstanceRenderer : public ITestRenderer
+	{
+		virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override
+		{
+			if (bufferType == eBufferType::Material) return true;
 
+			InstanceBuffer* startBuf = (InstanceBuffer*)(bufferData);
+			auto size = sizeof(InstanceBuffer) * dataSize;
+			std::vector<InstanceBuffer> instanceBuffers(startBuf, startBuf + dataSize);
+
+			return true;
+		}
+	};
+	//데이터 넣는 부분을 테스트용으로 교체하자.
 	TEST_F(MainLoopClassTest, Instance)
 	{
-		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
-		std::unique_ptr<CSetupData> setupData = std::make_unique<CSetupData>();
+		AllRenderItems allRenderItems{};
+		std::unique_ptr<CModel> model = std::make_unique<CModel>();
+		EXPECT_EQ(model->Initialize(m_resourcePath), true);
+		EXPECT_EQ(model->LoadMemory(m_renderer.get(), allRenderItems), true);
 
-		MakeMockData(setupData.get(), material.get());
+		GInstanceRenderer renderer{};
+		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
+		camera->OnResize(800, 600);
+		camera->Update(0.1f);
+		model->Update(&renderer, camera.get(), allRenderItems);
+
+		SubRenderItem* subItem = GetSubRenderItem(allRenderItems, "things", "grid");
+		EXPECT_EQ(subItem->instanceCount, 1);
+		EXPECT_EQ(subItem->startSubIndexInstance, 115);
 	}
 } //SecondPage
 
-class GTestRenderer : public IRenderer
+class GTestRenderer : public ITestRenderer
 {
 	virtual bool Draw(std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) override
 	{

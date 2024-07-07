@@ -96,6 +96,7 @@ InstanceDataList CreateSkyCubeInstanceData(const std::vector<std::string>& mater
 	InstanceDataList instances{};
 	auto instance = std::make_unique<InstanceData>();
 	instance->world = DirectX::XMMatrixIdentity();
+	instance->texTransform = DirectX::XMMatrixIdentity();
 	instance->matName = *materialNameList.begin();
 	instances.emplace_back(std::move(instance));
 
@@ -104,11 +105,10 @@ InstanceDataList CreateSkyCubeInstanceData(const std::vector<std::string>& mater
 
 InstanceDataList CreateGridInstanceData(const std::vector<std::string>& materialNameList)
 {
-	//하늘맵은 material과 texTransform을 쓰지 않고 shader에서 이렇게 사용
-	// return gCubeMap.Sample(gsamLinearWrap, pin.PosL);
 	InstanceDataList instances{};
 	auto instance = std::make_unique<InstanceData>();
 	instance->world = DirectX::XMMatrixIdentity();
+	instance->texTransform = DirectX::XMMatrixScaling(8.0f, 8.0f, 1.0f);
 	instance->matName = *materialNameList.begin();
 	instances.emplace_back(std::move(instance));
 
@@ -168,7 +168,7 @@ ModelProperty CreateGridMock()
 {
 	MaterialList materialList;
 	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Common, L"tile.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
-
+	
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
 		return mat->name; });
@@ -203,4 +203,17 @@ bool MakeMockData(CSetupData* setupData, CMaterial* material)
 	ReturnIfFalse(setupData->InsertModelProperty("things", "grid", CreateMock("grid"), material));
 
 	return true;
+}
+
+void GetMockLight(PassConstants* outPc)
+{
+	(*outPc).nearZ = 1.0f;
+	(*outPc).farZ = 1000.0f;
+	(*outPc).ambientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	(*outPc).lights[0].direction = { 0.57735f, -0.57735f, 0.57735f };
+	(*outPc).lights[0].strength = { 0.8f, 0.8f, 0.8f };
+	(*outPc).lights[1].direction = { -0.57735f, -0.57735f, 0.57735f };
+	(*outPc).lights[1].strength = { 0.4f, 0.4f, 0.4f };
+	(*outPc).lights[2].direction = { 0.0f, -0.707f, -0.707f };
+	(*outPc).lights[2].strength = { 0.2f, 0.2f, 0.2f };
 }

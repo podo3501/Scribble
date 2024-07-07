@@ -13,6 +13,7 @@
 #include "./KeyInputManager.h"
 #include "./Utility.h"
 #include "./Helper.h"
+#include "./MockData.h"
 
 using namespace DirectX;
 
@@ -52,7 +53,7 @@ bool CMainLoop::Initialize(const std::wstring& resourcePath, CWindow* window, IR
 
 	//local에서 작업할 것들
 	ReturnIfFalse(OnResize(m_window->GetWidth(), m_window->GetHeight()));
-	ReturnIfFalse(m_model->LoadMemory(m_AllRenderItems));	//데이터를 ram, vram에 올리기
+	ReturnIfFalse(m_model->LoadMemory(m_iRenderer, m_AllRenderItems));	//데이터를 ram, vram에 올리기
 
 	return true;
 }
@@ -62,7 +63,7 @@ bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
 	m_keyInputManager = std::make_unique<CKeyInputManager>(m_window->GetHandle());
 	m_camera = std::make_unique<CCamera>();
 	m_timer = std::make_unique<CGameTimer>();
-	m_model = std::make_unique<CModel>(m_iRenderer);
+	m_model = std::make_unique<CModel>();
 
 	ReturnIfFalse(m_model->Initialize(resourcePath));
 
@@ -91,7 +92,7 @@ void CMainLoop::UpdateMainPassCB()
 	PassConstants pc;
 	m_camera->GetPassCB(&pc);
 	m_timer->GetPassCB(&pc);
-	m_model->GetPassCB(&pc);
+	GetMockLight(&pc);
 
 	float width = (float)m_window->GetWidth();
 	float height = (float)m_window->GetHeight();
@@ -158,8 +159,7 @@ bool CMainLoop::Run(IRenderer* renderer)
 			ReturnIfFalse(m_iRenderer->PrepareFrame());
 
 			m_camera->Update(m_timer->DeltaTime());
-			m_model->MakeMaterialBuffer();
-			m_model->UpdateRenderItems(m_camera.get(), m_AllRenderItems);
+			m_model->Update(m_iRenderer, m_camera.get(), m_AllRenderItems);
 			UpdateMainPassCB();
 
 			ReturnIfFalse(renderer->Draw(m_AllRenderItems));

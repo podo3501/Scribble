@@ -22,7 +22,7 @@ float4 main(VertexOut pin) : SV_Target
     float roughness = matData.Roughness;
     uint diffuseTexIndex = matData.DiffuseMapIndex;
     
-    diffuseAlbedo *= gDiffuseMap[diffuseTexIndex].Sample(gsamLinearWrap, pin.TexC);
+    diffuseAlbedo *= gDiffuseMap[diffuseTexIndex].Sample(gsamAnisotropicWrap, pin.TexC);
     
     pin.NormalW = normalize(pin.NormalW);
     

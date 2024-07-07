@@ -28,15 +28,15 @@ interface IRenderer
 {
 	virtual ~IRenderer() {};
 
-	virtual bool IsInitialize() { return false; };
-	virtual bool OnResize(int wndWidth, int wndHeight) { return true; };
-	virtual bool LoadMesh(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) { return true; };
-	virtual bool LoadTexture(const TextureList& textureList) { return true; };
-	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) { return true; };
-	virtual bool PrepareFrame() { return true; };
-	virtual bool Draw(AllRenderItems& renderItem) { return true; };
+	virtual bool IsInitialize() = 0;
+	virtual bool OnResize(int wndWidth, int wndHeight) = 0;
+	virtual bool LoadMesh(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) = 0;
+	virtual bool LoadTexture(const TextureList& textureList) = 0;
+	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) = 0;
+	virtual bool PrepareFrame() = 0;
+	virtual bool Draw(AllRenderItems& renderItem) = 0;
 
-	virtual void Set4xMsaaState(HWND hwnd, int widht, int height, bool value) {};
+	virtual void Set4xMsaaState(HWND hwnd, int widht, int height, bool value) = 0;
 };
 
 std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int width, int height);

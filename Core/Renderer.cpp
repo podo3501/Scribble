@@ -315,13 +315,14 @@ void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderI
 	m_cmdList->IASetIndexBuffer(&renderItem->indexBufferView);
 	m_cmdList->IASetPrimitiveTopology(renderItem->primitiveType);
 
-	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance),
-		instanceRes->GetGPUVirtualAddress() + renderItem->startIndexInstance * sizeof(InstanceBuffer));
-
 	for (auto& ri : renderItem->subRenderItems)
 	{
 		auto& subRenderItem = ri.second;
 		auto& subItem = subRenderItem.subItem;
+
+		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance),
+			instanceRes->GetGPUVirtualAddress() + 
+			(renderItem->startIndexInstance + subRenderItem.startSubIndexInstance) * sizeof(InstanceBuffer));
 
 		m_cmdList->DrawIndexedInstanced(subItem.indexCount, subRenderItem.instanceCount,
 			subItem.startIndexLocation, subItem.baseVertexLocation, 0);

@@ -55,7 +55,6 @@ public:
 		ModelProperty&& mProperty, 
 		CMaterial* material);
 	bool LoadMesh(CMesh* mesh, AllRenderItems* renderItems);
-	void GetPassCB(PassConstants* outPc);
 
 private:
 	bool LoadMesh(CMesh* mesh, const std::string& geoName, MeshProperty& meshProp);

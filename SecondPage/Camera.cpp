@@ -298,21 +298,26 @@ void CCamera::FindVisibleSubRenderItems(SubRenderItems& subRenderItems, Instance
 	XMMATRIX view = GetView();
 	XMMATRIX invView = XMMatrixInverse(&RvToLv(XMMatrixDeterminant(view)), view);
 
+	int startSubIndex{ 0 };
 	for (auto& iterSubItem : subRenderItems)
 	{
+		InstanceDataList curVisible{};
 		auto& subRenderItem = iterSubItem.second;
 		auto& instanceList = subRenderItem.instanceDataList;
 		if (subRenderItem.cullingFrustum)
 		{
-			std::ranges::copy_if(instanceList, std::back_inserter(visibleInstance),
+			std::ranges::copy_if(instanceList, std::back_inserter(curVisible),
 				[this, &invView, &subRenderItem](auto& instance) {
 					return IsInsideFrustum(subRenderItem.subItem.boundingSphere, invView, instance->world);
 				});
 		}
 		else
-			std::ranges::copy(instanceList, std::back_inserter(visibleInstance));
+			std::ranges::copy(instanceList, std::back_inserter(curVisible));
+		subRenderItem.startSubIndexInstance = startSubIndex;
+		subRenderItem.instanceCount = static_cast<UINT>(curVisible.size());
+		startSubIndex += subRenderItem.instanceCount;
 
-		subRenderItem.instanceCount = static_cast<UINT>(visibleInstance.size());
+		visibleInstance.insert(visibleInstance.end(), curVisible.begin(), curVisible.end()); 
 	}
 }
 

@@ -97,6 +97,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="InterfaceTest.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
