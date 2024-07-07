@@ -135,14 +135,15 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Helper.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MockData.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="SetupData.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="KeyInputManager.cpp" />
     <ClCompile Include="MainLoop.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
@@ -150,14 +151,15 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="MockData.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="SetupData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="KeyInputManager.h" />
     <ClInclude Include="MainLoop.h" />
     <ClInclude Include="Material.h" />
-    <ClInclude Include="Model.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>

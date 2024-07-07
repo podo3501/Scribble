@@ -8,7 +8,7 @@
 
 interface IRenderer;
 class CMaterial;
-class CModel;
+class CMesh;
 struct MeshData;
 struct Material;
 struct RenderItem;
@@ -54,14 +54,14 @@ public:
 		const std::string& meshName, 
 		ModelProperty&& mProperty, 
 		CMaterial* material);
-	bool LoadModel(CModel* model, AllRenderItems* renderItems);
+	bool LoadMesh(CMesh* mesh, AllRenderItems* renderItems);
 	void GetPassCB(PassConstants* outPc);
 
 private:
-	bool LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp);
+	bool LoadMesh(CMesh* mesh, const std::string& geoName, MeshProperty& meshProp);
 	bool FillRenderItems(AllRenderItems* renderItems);
 
 private:
-	AllModelProperty m_allModelProperty{};
+	AllModelProperty m_allModelProperty;
 };
 

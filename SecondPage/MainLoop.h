@@ -4,23 +4,16 @@
 #include <memory>
 #include <string>
 #include <Windows.h>
-#include <DirectXCollision.h>
 #include <unordered_map>
 
 interface IRenderer;
 class CWindow;
 class CCamera;
-class CMaterial;
 class CModel;
-class CFrameResources;
 class CKeyInputManager;
 class CGameTimer;
-class CGeometry;
-class CSetupData;
 struct RenderItem;
-struct FrameResource;
 struct InstanceData;
-struct RenderItem;
 
 class CMainLoop
 {
@@ -39,10 +32,6 @@ public:
 
 private:
 	bool InitializeClass(const std::wstring& resourcePath);
-	bool LoadMemory();
-
-	void UpdateRenderItems();
-	void UpdateInstanceBuffer(const InstanceDataList& visibleInstance);
 	void UpdateMainPassCB();
 
 	bool CALLBACK MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
@@ -56,12 +45,12 @@ private:
 	IRenderer* m_iRenderer{ nullptr };
 
 	std::unique_ptr<CCamera> m_camera{ nullptr };
-	std::unique_ptr<CMaterial> m_material{ nullptr };
 	std::unique_ptr<CGameTimer> m_timer{ nullptr };
 	std::unique_ptr<CKeyInputManager> m_keyInputManager{ nullptr };
 	
+	//데이터를 불러와서 렌더링에 보여줄 데이터를 만드는 부분
 	std::unique_ptr<CModel> m_model{ nullptr };
-	std::unique_ptr<CSetupData> m_setupData{ nullptr };
+
 	//랜더링시 필요한 데이터들
 	AllRenderItems m_AllRenderItems{};
 };

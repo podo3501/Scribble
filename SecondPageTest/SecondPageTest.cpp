@@ -12,7 +12,7 @@
 #include "../SecondPage/Window.h"
 #include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
-#include "../SecondPage/Model.h"
+#include "../SecondPage/Mesh.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/KeyInputManager.h"
@@ -87,15 +87,6 @@ namespace MainLoop
 		EXPECT_EQ(m_window->GetHeight(), 768);
 	}
 
-	TEST_F(MainLoopClassTest, Instance)
-	{
-		AllRenderItems renderItems{};
-		std::unique_ptr<CModel> model = std::make_unique<CModel>(m_resourcePath);
-		EXPECT_EQ(m_setupData->LoadModel(model.get(), &renderItems), true);
-		EXPECT_EQ(model->LoadModelIntoVRAM(m_renderer.get(), &renderItems), true);
-		EXPECT_EQ(renderItems.empty(), false);
-	}
-
 	ModelProperty TestCreateMock()
 	{
 		MaterialList materialList;
@@ -139,6 +130,14 @@ namespace MainLoop
 		EXPECT_EQ(material->GetDiffuseIndex(L"brickddddd"), -1);
 		EXPECT_EQ(material->GetMaterialIndex("bricks1"), 2);
 		EXPECT_EQ(material->GetMaterialIndex("bricks2"), 3);
+	}
+
+	TEST_F(MainLoopClassTest, Instance)
+	{
+		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
+		std::unique_ptr<CSetupData> setupData = std::make_unique<CSetupData>();
+
+		MakeMockData(setupData.get(), material.get());
 	}
 } //SecondPage
 

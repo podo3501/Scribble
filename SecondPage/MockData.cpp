@@ -7,7 +7,7 @@
 #include "./Material.h"
 #include "./SetupData.h"
 #include "./GeometryGenerator.h"
-#include "./Model.h"
+#include "./Mesh.h"
 #include "./Utility.h"
 
 std::unique_ptr<Material> MakeMaterial(std::string&& name, eTextureType type, std::wstring&& filename,

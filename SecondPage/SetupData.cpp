@@ -7,12 +7,14 @@
 #include "../Include/Interface.h"
 #include "./Utility.h"
 #include "./Material.h"
-#include "./Model.h"
+#include "./Mesh.h"
 #include "./Helper.h"
 
 using namespace DirectX;
 
-CSetupData::CSetupData() {}
+CSetupData::CSetupData()
+	: m_allModelProperty{}
+{}
 CSetupData::~CSetupData() = default;
 
 bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
@@ -43,17 +45,17 @@ bool CSetupData::InsertModelProperty(const std::string& geoName, const std::stri
 	return true;
 }
 
-bool CSetupData::LoadMesh(CModel* model, const std::string& geoName, MeshProperty& meshProp)
+bool CSetupData::LoadMesh(CMesh* mesh, const std::string& geoName, MeshProperty& meshProp)
 {
-	return std::ranges::all_of(meshProp, [model, &geoName](auto& mProp) {
-		return model->LoadGeometry(geoName, mProp.first, &mProp.second);});
+	return std::ranges::all_of(meshProp, [mesh, &geoName](auto& mProp) {
+		return mesh->LoadGeometry(geoName, mProp.first, &mProp.second);});
 }
 
-bool CSetupData::LoadModel(CModel* model, AllRenderItems* renderItems)
+bool CSetupData::LoadMesh(CMesh* mesh, AllRenderItems* renderItems)
 {
-	ReturnIfFalse( std::ranges::all_of(m_allModelProperty, [this, model](auto& geoProp) {
+	ReturnIfFalse( std::ranges::all_of(m_allModelProperty, [this, mesh](auto& geoProp) {
 		auto& geoName = geoProp.first;
-		return LoadMesh(model, geoName, geoProp.second); }));
+		return LoadMesh(mesh, geoName, geoProp.second); }));
 
 	return FillRenderItems(renderItems);
 }

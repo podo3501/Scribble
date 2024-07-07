@@ -1,166 +1,79 @@
-#include "Model.h"
+#include "./Model.h"
 #include <algorithm>
 #include <ranges>
-#include <fstream>
-#include "./Utility.h"
+#include <DirectXMath.h>
 #include "../Include/Interface.h"
-#include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
-#include "./GeometryGenerator.h"
+#include "../Include/FrameResourceData.h"
 #include "./SetupData.h"
-#include "./MathHelper.h"
-#include "./Helper.h"
+#include "./Mesh.h"
+#include "./Material.h"
+#include "./MockData.h"
+#include "./Camera.h"
+#include "./Utility.h"
 
-using namespace DirectX;
-
-CModel::CModel(std::wstring resPath)
-	: m_resPath(std::move(resPath))
+CModel::CModel(IRenderer* renderer)
+	: m_iRenderer(renderer)
 {}
-
 CModel::~CModel() = default;
 
-bool CModel::LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty)
+bool CModel::Initialize(const std::wstring& resPath)
 {
-	std::unique_ptr<MeshData> meshData{ nullptr };
-	switch (mProperty->createType)
-	{
-	case ModelProperty::CreateType::Generator:	meshData = std::move(mProperty->meshData);		break;
-	case ModelProperty::CreateType::ReadFile:		meshData = ReadFile(mProperty->filename);			break;
-	default: return false;
-	}
-	if (meshData == nullptr) return false;
+	m_material = std::make_unique<CMaterial>();
+	m_setupData = std::make_unique<CSetupData>();
+	m_mesh = std::make_unique<CMesh>(resPath);
 
-	meshData->name = meshName;
-	m_AllMeshDataList[geoName].emplace_back(std::move(meshData));
+	return MakeMockData(m_setupData.get(), m_material.get());
+}
+
+bool CModel::LoadMemory(AllRenderItems& allRenderItems)
+{
+	ReturnIfFalse(m_material->LoadTextureIntoVRAM(m_iRenderer));
+	ReturnIfFalse(m_setupData->LoadMesh(m_mesh.get(), &allRenderItems));
+	ReturnIfFalse(m_mesh->LoadMeshIntoVRAM(m_iRenderer, &allRenderItems));
 
 	return true;
 }
 
-std::unique_ptr<MeshData> CModel::ReadFile(const std::wstring& filename)
+void CModel::UpdateRenderItems(CCamera* camera, const AllRenderItems& allRenderItems)
 {
-	std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
-
-	std::wstring fullFilename = m_resPath + m_filePath + filename;
-	std::ifstream fin(fullFilename);
-	if (fin.fail())
-		return nullptr;
-
-	UINT vCount = 0;
-	UINT iCount = 0;
-	std::string ignore;
-	fin >> ignore >> vCount;
-	fin >> ignore >> iCount;
-	fin >> ignore >> ignore >> ignore >> ignore;
-
-	XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
-	XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
-
-	XMVECTOR vMin = XMLoadFloat3(&vMinf3);
-	XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
-
-	for (auto i{ 0u }; i < vCount; ++i)
+	//처리 안할것을 먼저 골라낸다.
+	InstanceDataList totalVisibleInstance{};
+	int instanceStartIndex{ 0 };
+	for (auto& e : allRenderItems)
 	{
-		Vertex curVertex{};
-		fin >> curVertex.pos.x >> curVertex.pos.y >> curVertex.pos.z;
-		fin >> curVertex.normal.x >> curVertex.normal.y >> curVertex.normal.z;
+		InstanceDataList visibleInstance{};
+		auto renderItem = e.second.get();
+		renderItem->startIndexInstance = instanceStartIndex;
+		//보여지는 서브 아이템을 찾아낸다.
+		camera->FindVisibleSubRenderItems(renderItem->subRenderItems, visibleInstance);
+		instanceStartIndex += static_cast<int>(visibleInstance.size());
 
-		XMVECTOR P = XMLoadFloat3(&curVertex.pos);
-
-		XMFLOAT3 spherePos;
-		XMStoreFloat3(&spherePos, XMVector3Normalize(P));
-
-		float theta = atan2f(spherePos.z, spherePos.x);
-
-		if (theta < 0.0f) theta += XM_2PI;
-
-		float phi = acosf(spherePos.y);
-
-		float u = theta / (2.0f * XM_PI);
-		float v = phi / XM_PI;
-
-		curVertex.texC = { u, v };
-
-		vMin = XMVectorMin(vMin, P);
-		vMax = XMVectorMax(vMax, P);
-
-		meshData->vertices.emplace_back(std::move(curVertex));
+		std::ranges::move(visibleInstance, std::back_inserter(totalVisibleInstance));
 	}
-
-	XMStoreFloat3(&meshData->boundingBox.Center, 0.5f * (vMin + vMax));
-	XMStoreFloat3(&meshData->boundingBox.Extents, 0.5f * (vMax - vMin));
-
-	XMStoreFloat3(&meshData->boundingSphere.Center, 0.5f * (vMin + vMax));
-	meshData->boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
-
-	fin >> ignore >> ignore >> ignore;
-
-	for (auto iter{ 0u }; iter < iCount * 3; ++iter)
-	{
-		std::int32_t readIdx{ 0 };
-		fin >> readIdx;
-		meshData->indices.emplace_back(std::move(readIdx));
-	}
-	fin.close();
-
-	return std::move(meshData);
+	UpdateInstanceBuffer(totalVisibleInstance);
 }
 
-CModel::Offsets CModel::SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data)
+void CModel::UpdateInstanceBuffer(const InstanceDataList& visibleInstance)
 {
-	SubRenderItem* subRenderItem = GetSubRenderItem(renderItem, data->name);
+	std::vector<InstanceBuffer> instanceBufferDatas{};
+	std::ranges::transform(visibleInstance, std::back_inserter(instanceBufferDatas), [this](auto& visibleData) {
+		InstanceBuffer curInsBuf{};
+		XMStoreFloat4x4(&curInsBuf.world, DirectX::XMMatrixTranspose(visibleData->world));
+		XMStoreFloat4x4(&curInsBuf.texTransform, XMMatrixTranspose(visibleData->texTransform));
+		curInsBuf.materialIndex = m_material->GetMaterialIndex(visibleData->matName);
+		return std::move(curInsBuf); });
 
-	auto& subItem = subRenderItem->subItem;
-	subItem.baseVertexLocation = offsets.first;
-	subItem.startIndexLocation = offsets.second;
-	subItem.boundingBox = data->boundingBox;
-	subItem.boundingSphere = data->boundingSphere;
-	subItem.indexCount = static_cast<UINT>(data->indices.size());
-
-	return Offsets(
-		offsets.first + static_cast<UINT>(data->vertices.size()),
-		offsets.second + subItem.indexCount);
+	m_iRenderer->SetUploadBuffer(eBufferType::Instance, instanceBufferDatas.data(), instanceBufferDatas.size());
 }
 
-void CModel::SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataList,
-	Vertices& totalVertices, Indices& totalIndices)
+void CModel::GetPassCB(PassConstants* outPc)
 {
-	Offsets offsets{ 0, 0 };
-	std::ranges::for_each(meshDataList,[this, &offsets, renderItem, &totalVertices, &totalIndices](auto& data) {
-			offsets = SetSubmesh(renderItem, offsets, data.get());
-			std::ranges::copy(data->vertices, std::back_inserter(totalVertices));
-			std::ranges::copy(data->indices, std::back_inserter(totalIndices));
-		});
+	m_setupData->GetPassCB(outPc);
 }
 
-bool CModel::Convert(const MeshDataList& meshDataList,
-	Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
+void CModel::MakeMaterialBuffer()
 {
-	SetSubmeshList(renderItem, meshDataList, totalVertices, totalIndices);
-
-	UINT vbByteSize = static_cast<UINT>(totalVertices.size()) * sizeof(Vertex);
-	UINT ibByteSize = static_cast<UINT>(totalIndices.size()) * sizeof(std::int32_t);
-
-	renderItem->vertexBufferView.SizeInBytes = vbByteSize;
-	renderItem->vertexBufferView.StrideInBytes = sizeof(Vertex);
-
-	renderItem->indexBufferView.SizeInBytes = ibByteSize;
-	renderItem->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-
-	return true;
+	m_material->MakeMaterialBuffer(m_iRenderer);
 }
 
-bool CModel::LoadModelIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems)
-{
-	return std::ranges::all_of(m_AllMeshDataList, [&outRenderItems, renderer, this](auto& iter) {
-		auto pRenderItem = GetRenderItem(*outRenderItems, iter.first);
-
-		//데이터를 채워 넣는다.
-		std::vector<Vertex> totalVertices{};
-		std::vector<std::int32_t> totalIndices{};
-		ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
-
-		//그래픽 메모리에 올린다.
-		ReturnIfFalse(renderer->LoadModel(totalVertices, totalIndices, pRenderItem));
-
-		return true;	}); 	
-}

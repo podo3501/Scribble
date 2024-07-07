@@ -34,7 +34,7 @@ public:
 
 	virtual bool IsInitialize() override { return m_isInitialize; };
 	virtual bool OnResize(int width, int height) override;
-	virtual bool LoadModel(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
+	virtual bool LoadMesh(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
 	virtual bool LoadTexture(const TextureList& textureList) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
 	virtual bool PrepareFrame() override;
@@ -53,7 +53,7 @@ private:
 	bool BuildPSOs();
 
 	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
-	bool LoadModel(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+	bool LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
 
 	bool MakeFrameResource();

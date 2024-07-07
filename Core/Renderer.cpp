@@ -69,7 +69,7 @@ bool CRenderer::LoadData(std::function<bool(ID3D12Device* device, ID3D12Graphics
 	return true;
 }
 
-bool CRenderer::LoadModel(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+bool CRenderer::LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 	Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
 {
 	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
@@ -91,10 +91,10 @@ bool CRenderer::LoadModel(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLi
 	return true;
 }
 
-bool CRenderer::LoadModel(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
+bool CRenderer::LoadMesh(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
 {
 	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-		return LoadModel(device, cmdList, totalVertices, totalIndices, renderItem); });
+		return LoadMesh(device, cmdList, totalVertices, totalIndices, renderItem); });
 }
 
 bool CRenderer::LoadTexture(const TextureList& textureList)
