@@ -198,6 +198,7 @@ bool CRenderer::BuildRootSignature()
 	return true;
 }
 
+
 bool CRenderer::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};

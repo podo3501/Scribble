@@ -135,6 +135,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Helper.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="MockData.cpp" />
     <ClCompile Include="SetupData.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="MockData.h" />
     <ClInclude Include="SetupData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />

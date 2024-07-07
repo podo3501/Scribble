@@ -93,6 +93,12 @@ void CCamera::SetLens(float fovY, float aspect, float zn, float zf)
 	XMStoreFloat4x4(&mProj, P);
 }
 
+void CCamera::OnResize(int width, int height)
+{
+	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+	SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
+}
+
 void CCamera::LookAt(FXMVECTOR pos, FXMVECTOR target, FXMVECTOR worldUp)
 {
 	m_look = XMVector3Normalize(XMVectorSubtract(target, pos));

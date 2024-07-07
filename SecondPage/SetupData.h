@@ -5,7 +5,6 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include <DirectXMath.h>
 
 interface IRenderer;
 class CMaterial;

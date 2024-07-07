@@ -9,7 +9,6 @@
 #include "./Material.h"
 #include "./Model.h"
 #include "./Helper.h"
-#include "./GeometryGenerator.h"
 
 using namespace DirectX;
 
@@ -31,6 +30,8 @@ bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 
 bool CSetupData::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty&& mProperty, CMaterial* material)
 {
+	if (mProperty.meshData != nullptr && mProperty.meshData->vertices.empty()) return false;
+
 	material->SetMaterialList(mProperty.materialList);
 
 	auto& mesh = m_allModelProperty[geoName];

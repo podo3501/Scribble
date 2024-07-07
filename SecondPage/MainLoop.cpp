@@ -14,8 +14,8 @@
 #include "./KeyInputManager.h"
 #include "./SetupData.h"
 #include "./Utility.h"
-#include "./MathHelper.h"
 #include "./Helper.h"
+#include "./MockData.h"
 
 using namespace DirectX;
 
@@ -158,8 +158,7 @@ bool CMainLoop::OnResize(int width, int height)
 		return true;
 
 	ReturnIfFalse(m_iRenderer->OnResize(width, height));
-	auto aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-	m_camera->SetLens(0.25f * MathHelper::Pi, aspectRatio, 1.0f, 1000.f);
+	m_camera->OnResize(width, height);
 
 	return true;
 }

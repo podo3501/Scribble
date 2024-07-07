@@ -55,7 +55,7 @@ public:
 	float GetFarWindowWidth() const;
 	float GetFarWindowHeight() const;
 	
-	void SetLens(float fovY, float aspect, float zn, float zf);
+	void OnResize(int width, int height);
 
 	void LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR worldUp);
 	void LookAt(const DirectX::XMFLOAT3& pos, const DirectX::XMFLOAT3& target, const DirectX::XMFLOAT3& up);
@@ -83,6 +83,7 @@ public:
 	void FindVisibleSubRenderItems(SubRenderItems& subRenderItems, InstanceDataList& visibleInstance);
 
 private:
+	void SetLens(float fovY, float aspect, float zn, float zf);
 	bool IsInsideFrustum(
 		const DirectX::BoundingSphere& bSphere, 
 		const DirectX::XMMATRIX& invView, 

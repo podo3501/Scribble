@@ -17,9 +17,8 @@
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/SetupData.h"
-#include "../SecondPage/GeometryGenerator.h"
 #include "../SecondPage/Utility.h"
-#include "../SecondPage/Helper.h"
+#include "../SecondPage/MockData.h"
 
 namespace MainLoop
 {
@@ -38,7 +37,7 @@ namespace MainLoop
 
 			m_material = std::make_unique<CMaterial>();
 			m_setupData = std::make_unique<CSetupData>();
-			m_setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), m_material.get());
+			EXPECT_EQ(m_setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), m_material.get()), true);
 		}
 
 		void TearDown() override
