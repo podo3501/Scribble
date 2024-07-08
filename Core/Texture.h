@@ -34,18 +34,21 @@ public:
 private:
 	struct TextureMemory
 	{
+		TextureMemory();
+		~TextureMemory();
+
 		std::string name{};// Unique material name for lookup.
 		std::wstring filename{};
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> resource{ nullptr };
-		Microsoft::WRL::ComPtr<ID3D12Resource> uploadHeap{ nullptr };
+		Microsoft::WRL::ComPtr<ID3D12Resource> resource;
+		Microsoft::WRL::ComPtr<ID3D12Resource> uploadHeap;
 	};
 
 private:
 	std::wstring m_resPath{};
-	const std::wstring m_filePath{ L"Textures/" };
+	const std::wstring m_filePath;
 
-	std::vector<std::pair<eTextureType, std::unique_ptr<TextureMemory>>> m_textureMemories{};
+	std::vector<std::pair<eTextureType, std::unique_ptr<TextureMemory>>> m_textureMemories;
 
 	int m_skyTexHeapIndex{ 0 };
 };

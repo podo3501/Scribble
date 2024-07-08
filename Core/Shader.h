@@ -43,11 +43,11 @@ private:
 	std::wstring GetShaderFilename(GraphicsPSO psoType, ShaderType shaderType);
 
 private:
+	using ShaderList = std::array<Microsoft::WRL::ComPtr<ID3DBlob>, EtoV(ShaderType::Count)>;
+
 	std::wstring m_resPath{};
 	std::wstring m_filePath{ L"Shaders/" };
 
-	using ShaderList = std::array<Microsoft::WRL::ComPtr<ID3DBlob>, EtoV(ShaderType::Count)>;
-	std::vector<ShaderList> m_shaderList{};
-
-	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout{};
+	std::vector<ShaderList> m_shaderList;
+	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout;
 };

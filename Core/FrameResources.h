@@ -6,7 +6,6 @@
 
 class CRenderer;
 class CUploadBuffer;
-class CDirectx3D;
 struct ID3D12Device;
 struct ID3D12CommandAllocator;
 struct ID3D12Resource;
@@ -16,14 +15,14 @@ class CFrameResources
 {
 	struct Resource
 	{
+		Resource();
 		~Resource();
 		bool CreateUpdateBuffer(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
 
-		std::unique_ptr<CUploadBuffer> passCB{ nullptr };
-		std::unique_ptr<CUploadBuffer> instanceBuffer{ nullptr };
-		std::unique_ptr<CUploadBuffer> materialBuffer{ nullptr };
-
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdListAlloc{ nullptr };
+		std::unique_ptr<CUploadBuffer> passCB;
+		std::unique_ptr<CUploadBuffer> instanceBuffer;
+		std::unique_ptr<CUploadBuffer> materialBuffer;
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdListAlloc;
 	};
 
 public:
@@ -46,7 +45,7 @@ private:
 	CUploadBuffer* GetUploadBuffer(eBufferType bufferType);
 
 private:
-	std::vector<std::unique_ptr<Resource>> m_resources{};
+	std::vector<std::unique_ptr<Resource>> m_resources;
 	UINT m_frameResIdx{ 0 };
 	UINT64 m_fenceCount{ 0 };
 };

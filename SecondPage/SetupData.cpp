@@ -3,7 +3,6 @@
 #include <ranges>
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
-#include "../Include/Types.h"
 #include "../Include/Interface.h"
 #include "./Utility.h"
 #include "./Material.h"

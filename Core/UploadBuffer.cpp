@@ -2,7 +2,8 @@
 #include "./d3dUtil.h"
 
 CUploadBuffer::CUploadBuffer(size_t typeSize, UINT elementCount, bool isConstantBuffer) 
-    : m_isConstantBuffer(isConstantBuffer)
+    : m_uploadBuffer{ nullptr }
+    , m_isConstantBuffer(isConstantBuffer)
     , m_elementByteSize{ static_cast<UINT>(typeSize) }
     , m_elementCount{ elementCount }
 {

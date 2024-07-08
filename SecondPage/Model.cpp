@@ -13,6 +13,9 @@
 #include "./Utility.h"
 
 CModel::CModel()
+	: m_material{ nullptr }
+	, m_mesh{ nullptr }
+	, m_setupData{ nullptr }
 {}
 CModel::~CModel() = default;
 

@@ -10,7 +10,6 @@
 #include "../Include/FrameResourceData.h"
 #include "../Include/types.h"
 #include "../SecondPage/Window.h"
-#include "../SecondPage/GameTimer.h"
 #include "../SecondPage/Camera.h"
 #include "../SecondPage/Model.h"
 #include "../SecondPage/Mesh.h"
@@ -18,7 +17,6 @@
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/KeyInputManager.h"
 #include "../SecondPage/SetupData.h"
-#include "../SecondPage/Utility.h"
 #include "../SecondPage/MockData.h"
 #include "../SecondPage/Helper.h"
 

@@ -7,8 +7,16 @@
 
 using namespace DirectX;
 
+CTexture::TextureMemory::TextureMemory()
+	: resource{ nullptr }
+	, uploadHeap{ nullptr }
+{}
+CTexture::TextureMemory::~TextureMemory() = default;
+
 CTexture::CTexture(std::wstring resPath)
 	: m_resPath(std::move(resPath))
+	, m_filePath{ L"Textures/" }
+	, m_textureMemories{}
 {}
 CTexture::~CTexture() = default;
 

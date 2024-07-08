@@ -85,5 +85,5 @@ private:
 	std::wstring m_resPath{};
 	const std::wstring m_filePath{ L"Meshes/" };
 
-	AllMeshDataList m_AllMeshDataList{};
+	AllMeshDataList m_AllMeshDataList;
 };

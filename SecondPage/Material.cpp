@@ -15,6 +15,7 @@ Material::Material()
 
 CMaterial::CMaterial()
 	: m_materialList{}
+	, m_textureList{}
 {}
 CMaterial::~CMaterial() = default;
 

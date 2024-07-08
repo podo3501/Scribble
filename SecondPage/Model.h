@@ -36,8 +36,8 @@ private:
 	void UpdateInstanceBuffer(IRenderer* renderer, const InstanceDataList& visibleInstance);
 
 private:
-	std::unique_ptr<CMaterial> m_material{ nullptr };
-	std::unique_ptr<CMesh> m_mesh{ nullptr };
-	std::unique_ptr<CSetupData> m_setupData{ nullptr };
+	std::unique_ptr<CMaterial> m_material;
+	std::unique_ptr<CMesh> m_mesh;
+	std::unique_ptr<CSetupData> m_setupData;
 };
 

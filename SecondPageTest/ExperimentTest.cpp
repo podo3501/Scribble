@@ -3,6 +3,8 @@
 #include <ranges>
 #include <numeric>
 
+import std.core;
+
 namespace Experiment
 {
 	class TestRenderer
@@ -74,6 +76,8 @@ namespace Experiment
 	}
 }
 
+import std.core;
+
 namespace STDTest
 {
 	TEST(STD, all_of)
@@ -127,5 +131,11 @@ namespace STDTest
 
 		auto view{ std::views::transform(v, [](int i) { return i * i; }) };
 		auto sumsq {std::accumulate(view.begin(), view.end(), 0)};
+	}
+
+
+	TEST(STD20, modules)
+	{
+
 	}
 }

@@ -6,7 +6,6 @@
 #include "../Include/Interface.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
-#include "./GeometryGenerator.h"
 #include "./SetupData.h"
 #include "./MathHelper.h"
 #include "./Helper.h"
@@ -15,8 +14,8 @@ using namespace DirectX;
 
 CMesh::CMesh(std::wstring resPath)
 	: m_resPath(std::move(resPath))
+	, m_AllMeshDataList{}
 {}
-
 CMesh::~CMesh() = default;
 
 bool CMesh::LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty)

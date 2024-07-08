@@ -6,9 +6,17 @@
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
 
+CFrameResources::Resource::Resource()
+	: passCB{ nullptr }
+	, instanceBuffer{ nullptr }
+	, materialBuffer{ nullptr }
+	, cmdListAlloc{ nullptr }
+{}
 CFrameResources::Resource::~Resource() = default;
 
-CFrameResources::CFrameResources() = default;
+CFrameResources::CFrameResources()
+	: m_resources{}
+{}
 CFrameResources::~CFrameResources() = default;
 
 bool CFrameResources::Resource::CreateUpdateBuffer(

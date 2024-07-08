@@ -15,6 +15,8 @@
 #include "./Helper.h"
 #include "./MockData.h"
 
+import std.core;
+
 using namespace DirectX;
 
 bool g4xMsaaState{ false };
@@ -39,7 +41,13 @@ RenderItem::RenderItem()
 	: NumFramesDirty{ gFrameResourceCount }
 {}
 
-CMainLoop::CMainLoop() = default;
+CMainLoop::CMainLoop()
+	: m_camera{ nullptr }
+	, m_timer{ nullptr }
+	, m_keyInputManager{ nullptr }
+	, m_model{ nullptr }
+	, m_AllRenderItems{}
+{}
 CMainLoop::~CMainLoop() = default;
 
 bool CMainLoop::Initialize(const std::wstring& resourcePath, CWindow* window, IRenderer* renderer)

@@ -65,20 +65,20 @@ private:
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 
 private:
-	std::unique_ptr<CDirectx3D> m_directx3D{ nullptr };
-	std::unique_ptr<CShader> m_shader{ nullptr };
+	std::unique_ptr<CDirectx3D> m_directx3D;
+	std::unique_ptr<CShader> m_shader;
 
 	bool m_isInitialize{ false };
 	ID3D12Device* m_device{ nullptr };
 	ID3D12GraphicsCommandList* m_cmdList{ nullptr };
 
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature{ nullptr };
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
 
-	std::unique_ptr<CFrameResources> m_frameResources{ nullptr };
-	std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList{};
+	std::unique_ptr<CFrameResources> m_frameResources;
+	std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList;
 
-	std::unique_ptr<CTexture> m_texture{ nullptr };
+	std::unique_ptr<CTexture> m_texture;
 
 	D3D12_VIEWPORT m_screenViewport{};
 	D3D12_RECT m_scissorRect{};

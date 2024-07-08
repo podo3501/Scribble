@@ -84,24 +84,24 @@ private:
 
 private:
 	CWindow* m_window{ nullptr };
-	Microsoft::WRL::ComPtr<IDXGIFactory4> m_dxgiFactory{ nullptr };
-	Microsoft::WRL::ComPtr<IDXGISwapChain> m_swapChain{ nullptr };
-	Microsoft::WRL::ComPtr<ID3D12Device> m_device{ nullptr };
+	Microsoft::WRL::ComPtr<IDXGIFactory4> m_dxgiFactory;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> m_swapChain;
+	Microsoft::WRL::ComPtr<ID3D12Device> m_device;
 
-	Microsoft::WRL::ComPtr<ID3D12Fence> m_fence{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_currentFence{ 0 };
 
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue{ nullptr };
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_cmdListAlloc{ nullptr };
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_cmdListAlloc;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap{ nullptr };
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_dsvHeap{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
 	static const int SwapChainBufferCount = 2;
 	int m_currBackBuffer{ 0 };
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_swapChainBuffer[SwapChainBufferCount]{ nullptr, };
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_depthStencilBuffer{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12Resource> m_depthStencilBuffer;
 
 	DXGI_FORMAT m_backBufferFormat{ DXGI_FORMAT_R8G8B8A8_UNORM };
 	DXGI_FORMAT m_depthStencilFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };

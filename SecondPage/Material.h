@@ -56,6 +56,6 @@ private:
 	bool CheckSameFilename(const std::wstring& filename);
 
 private:
-	MaterialList m_materialList{};
-	TextureList m_textureList{};
+	MaterialList m_materialList;
+	TextureList m_textureList;
 };

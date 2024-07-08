@@ -27,10 +27,10 @@ public:
     }
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{ nullptr };
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer;
     BYTE* m_mappedData{ nullptr };
 
+    bool m_isConstantBuffer{ false };
     UINT m_elementByteSize{ 0u };
     UINT m_elementCount{ 0u };
-    bool m_isConstantBuffer{ false };
 };

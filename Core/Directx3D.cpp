@@ -16,6 +16,16 @@ void OutputDebugWindow(T&& output)
 }
 
 CDirectx3D::CDirectx3D()
+	: m_dxgiFactory{ nullptr }
+	, m_swapChain{ nullptr }
+	, m_device{ nullptr }
+	, m_fence{ nullptr }
+	, m_commandQueue{ nullptr }
+	, m_cmdListAlloc{ nullptr }
+	, m_commandList{ nullptr }
+	, m_rtvHeap{ nullptr }
+	, m_dsvHeap{ nullptr }
+	, m_depthStencilBuffer{ nullptr }
 {}
 
 CDirectx3D::~CDirectx3D()

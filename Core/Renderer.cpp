@@ -5,7 +5,6 @@
 #include "./d3dUtil.h"
 #include "./Shader.h"
 #include "./Texture.h"
-#include "./UploadBuffer.h"
 #include "./FrameResources.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
@@ -23,7 +22,16 @@ std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int 
 	return std::move(renderer);
 }
 
-CRenderer::CRenderer() = default;
+CRenderer::CRenderer()
+	: m_directx3D{ nullptr }
+	, m_shader{ nullptr }
+	, m_rootSignature{ nullptr }
+	, m_srvDescHeap{ nullptr }
+	, m_frameResources{ nullptr }
+	, m_psoList{}
+	, m_texture{ nullptr }
+{}
+
 CRenderer::~CRenderer() = default;
 
 bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height)

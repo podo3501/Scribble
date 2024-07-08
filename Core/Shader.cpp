@@ -6,6 +6,8 @@ using Microsoft::WRL::ComPtr;
 
 CShader::CShader(std::wstring resPath)
 	: m_resPath(std::move(resPath))
+	, m_shaderList{}
+	, m_inputLayout{}
 {
 	m_shaderList.resize(EtoV(GraphicsPSO::Count));
 }
