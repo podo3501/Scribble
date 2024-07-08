@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 #include <unordered_map>
 
 interface IRenderer;
@@ -15,6 +16,7 @@ struct RenderItem;
 struct InstanceData;
 struct PassConstants;
 enum class eTextureType : int;
+enum class GraphicsPSO : int; 
 
 using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
 using MaterialList = std::vector<std::shared_ptr<Material>>;
@@ -39,8 +41,8 @@ struct ModelProperty
 class CSetupData
 {
 	using MeshProperty = std::unordered_map<std::string, ModelProperty>;
-	using AllModelProperty = std::unordered_map<std::string, MeshProperty>;
-	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
+	using AllModelProperty = std::map<GraphicsPSO, MeshProperty>;
+	using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
 
 public:
 	CSetupData();
@@ -50,14 +52,14 @@ public:
 	CSetupData& operator=(const CSetupData&) = delete;
 
 	bool InsertModelProperty(
-		const std::string& geoName, 
+		GraphicsPSO pso,
 		const std::string& meshName, 
 		ModelProperty&& mProperty, 
 		CMaterial* material);
 	bool LoadMesh(CMesh* mesh, AllRenderItems* renderItems);
 
 private:
-	bool LoadMesh(CMesh* mesh, const std::string& geoName, MeshProperty& meshProp);
+	bool LoadMesh(CMesh* mesh, GraphicsPSO pso, MeshProperty& meshProp);
 	bool FillRenderItems(AllRenderItems* renderItems);
 
 private:

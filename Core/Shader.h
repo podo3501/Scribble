@@ -2,6 +2,7 @@
 
 #include <d3d12.h>
 #include <vector>
+#include <map>
 #include <wrl.h>
 #include <d3dcommon.h>
 #include <array>
@@ -10,25 +11,15 @@
 
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct D3D12_INPUT_ELEMENT_DESC;
-enum class GraphicsPSO;
+enum class GraphicsPSO : int;
+enum class ShaderType : int;
 
 class CShader
 {
-	enum class ShaderType : int
-	{
-		VS,
-		PS,
-		Count,
-	};
-
-	inline static std::string m_shaderVersion[EtoV(ShaderType::Count)] =
-	{
-		"vs_5_1",
-		"ps_5_1",
-	};
+	using ShaderFileList = std::map<GraphicsPSO, std::vector<std::pair<ShaderType, std::wstring>>>;
 
 public:
-	CShader(std::wstring resPath);
+	CShader(const std::wstring& resPath, const ShaderFileList& shaderFileList);
 	~CShader();
 
 	CShader() = delete;
@@ -43,11 +34,12 @@ private:
 	std::wstring GetShaderFilename(GraphicsPSO psoType, ShaderType shaderType);
 
 private:
-	using ShaderList = std::array<Microsoft::WRL::ComPtr<ID3DBlob>, EtoV(ShaderType::Count)>;
+	using ShaderList = std::vector<Microsoft::WRL::ComPtr<ID3DBlob>>;
 
 	std::wstring m_resPath{};
 	std::wstring m_filePath{ L"Shaders/" };
 
+	ShaderFileList m_shaderFileList;
 	std::vector<ShaderList> m_shaderList;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout;
 };

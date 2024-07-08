@@ -12,16 +12,11 @@
 
 class CDirectx3D;
 class CShader;
-class CCamera;
-class CUploadBuffer;
 class CTexture;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
-struct ID3D12Resource;
-enum class GraphicsPSO;
-enum class eBufferType;
 
 class CRenderer : public IRenderer
 {
@@ -41,7 +36,7 @@ public:
 	virtual bool Draw(AllRenderItems& renderItem) override;
 	virtual void Set4xMsaaState(HWND hwnd, int widht, int height, bool value) override;
 
-	bool Initialize(const std::wstring& resPath, HWND hwnd, int width, int height);
+	bool Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList);
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
 
 	inline ID3D12Device* GetDevice() const;
@@ -76,7 +71,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
 
 	std::unique_ptr<CFrameResources> m_frameResources;
-	std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList;
+	std::map<GraphicsPSO, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList;
 
 	std::unique_ptr<CTexture> m_texture;
 

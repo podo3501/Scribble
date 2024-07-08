@@ -29,32 +29,32 @@ bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 	return true;
 }
 
-bool CSetupData::InsertModelProperty(const std::string& geoName, const std::string& meshName, ModelProperty&& mProperty, CMaterial* material)
+bool CSetupData::InsertModelProperty(GraphicsPSO pso, const std::string& meshName, ModelProperty&& mProperty, CMaterial* material)
 {
 	if (mProperty.meshData != nullptr && mProperty.meshData->vertices.empty()) return false;
 
 	material->SetMaterialList(mProperty.materialList);
 
-	auto& mesh = m_allModelProperty[geoName];
+	auto& mesh = m_allModelProperty[pso];
 	if (mesh.find(meshName) != mesh.end())
 		return false;
 
-	m_allModelProperty[geoName].insert(std::make_pair(meshName, std::move(mProperty)));
+	m_allModelProperty[pso].insert(std::make_pair(meshName, std::move(mProperty)));
 
 	return true;
 }
 
-bool CSetupData::LoadMesh(CMesh* mesh, const std::string& geoName, MeshProperty& meshProp)
+bool CSetupData::LoadMesh(CMesh* mesh, GraphicsPSO pso, MeshProperty& meshProp)
 {
-	return std::ranges::all_of(meshProp, [mesh, &geoName](auto& mProp) {
-		return mesh->LoadGeometry(geoName, mProp.first, &mProp.second);});
+	return std::ranges::all_of(meshProp, [mesh, pso](auto& mProp) {
+		return mesh->LoadGeometry(pso, mProp.first, &mProp.second);});
 }
 
 bool CSetupData::LoadMesh(CMesh* mesh, AllRenderItems* renderItems)
 {
 	ReturnIfFalse( std::ranges::all_of(m_allModelProperty, [this, mesh](auto& geoProp) {
-		auto& geoName = geoProp.first;
-		return LoadMesh(mesh, geoName, geoProp.second); }));
+		auto& pso = geoProp.first;
+		return LoadMesh(mesh, pso, geoProp.second); }));
 
 	return FillRenderItems(renderItems);
 }

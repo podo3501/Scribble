@@ -18,7 +18,7 @@ CMesh::CMesh(std::wstring resPath)
 {}
 CMesh::~CMesh() = default;
 
-bool CMesh::LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty)
+bool CMesh::LoadGeometry(GraphicsPSO pso, const std::string& meshName, ModelProperty* mProperty)
 {
 	std::unique_ptr<MeshData> meshData{ nullptr };
 	switch (mProperty->createType)
@@ -30,7 +30,7 @@ bool CMesh::LoadGeometry(const std::string& geoName, const std::string& meshName
 	if (meshData == nullptr) return false;
 
 	meshData->name = meshName;
-	m_AllMeshDataList[geoName].emplace_back(std::move(meshData));
+	m_AllMeshDataList[pso].emplace_back(std::move(meshData));
 
 	return true;
 }

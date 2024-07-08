@@ -1,11 +1,10 @@
 #include "MainLoop.h"
-#include <ranges>
-#include <algorithm>
 #include <sstream>
 #include "../Include/RendererDefine.h"
 #include "../Include/RenderItem.h"
 #include "../Include/interface.h"
 #include "../Include/FrameResourceData.h"
+#include "../Include/Types.h"
 #include "./Window.h"
 #include "./GameTimer.h"
 #include "./Model.h"
@@ -14,8 +13,6 @@
 #include "./Utility.h"
 #include "./Helper.h"
 #include "./MockData.h"
-
-import std.core;
 
 using namespace DirectX;
 
@@ -73,7 +70,7 @@ bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
 	m_timer = std::make_unique<CGameTimer>();
 	m_model = std::make_unique<CModel>();
 
-	ReturnIfFalse(m_model->Initialize(resourcePath));
+	ReturnIfFalse(m_model->Initialize(resourcePath, MakeMockData));
 
 	return true;
 }
@@ -158,7 +155,7 @@ bool CMainLoop::Run(IRenderer* renderer)
 
 			if (!fps.empty())
 			{
-				SubRenderItem* renderItem = GetSubRenderItem(m_AllRenderItems, "things", "skull");
+				SubRenderItem* renderItem = GetSubRenderItem(m_AllRenderItems, GraphicsPSO::Opaque, "skull");
 				std::wstring caption = SetWindowCaption(renderItem->instanceCount, renderItem->instanceDataList.size());
 				m_window->SetText(caption + fps);
 			}

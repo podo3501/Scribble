@@ -4,6 +4,7 @@
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
 #include "../Include/FrameResourceData.h"
+#include "../Include/Interface.h"
 #include "./Material.h"
 #include "./SetupData.h"
 #include "./GeometryGenerator.h"
@@ -36,6 +37,8 @@ std::unique_ptr<MeshData> Generator(std::string&& meshName)
 		genMeshData = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	else if(meshName == "grid")
 		genMeshData = geoGen.CreateGrid(20.0f, 30.0f, 60, 40);
+	else if(meshName == "cylinder")
+		genMeshData = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 	meshData->name = std::move(meshName);
 
 	std::ranges::transform(genMeshData.Vertices, std::back_inserter(meshData->vertices),
@@ -86,6 +89,31 @@ InstanceDataList CreateSkullInstanceData(const std::vector<std::string>& materia
 		}
 	}
 
+	return instances;
+}
+
+InstanceDataList CreateCylinderInstanceData(const std::vector<std::string>& materialNameList)
+{
+	InstanceDataList instances{};
+	
+	for (auto i{ 0 }; i < 2; ++i)
+	{
+		auto instance = std::make_unique<InstanceData>();
+		instance->world = DirectX::XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i * 20.0f);;
+		instances.emplace_back(std::move(instance));
+	}
+
+	for (auto i{ 0 }; i < 2; ++i)
+	{
+		auto instance = std::make_unique<InstanceData>();
+		instance->world = DirectX::XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i * 20.0f);
+		instances.emplace_back(std::move(instance));
+	}
+	
+	std::ranges::for_each(instances, [&materialNameList](auto& instance) {
+		instance->texTransform = DirectX::XMMatrixScaling(1.5f, 2.0f, 1.0f);
+		instance->matName = *materialNameList.begin(); });
+	
 	return instances;
 }
 
@@ -140,8 +168,6 @@ ModelProperty CreateSkullMock()
 {
 	MaterialList materialList;
 	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-	materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Common, L"bricks2.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-	materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Common, L"bricks3.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
 	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Common, L"stone.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
 	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Common, L"tile.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
 	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Common, L"WoodCrate01.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
@@ -184,6 +210,26 @@ ModelProperty CreateGridMock()
 	return modelProp;
 }
 
+ModelProperty CreateCylinderMock()
+{
+	MaterialList materialList;
+	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+
+	std::vector<std::string> materialNameList{};
+	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
+		return mat->name; });
+
+	ModelProperty  modelProp{};
+	modelProp.createType = ModelProperty::CreateType::Generator;
+	modelProp.meshData = Generator("cylinder");
+	modelProp.cullingFrustum = false;
+	modelProp.filename = {};
+	modelProp.instanceDataList = CreateCylinderInstanceData(materialNameList);
+	modelProp.materialList = materialList;
+
+	return modelProp;
+}
+
 ModelProperty CreateMock(const std::string& meshName)
 {
 	if (meshName == "cube")
@@ -192,15 +238,18 @@ ModelProperty CreateMock(const std::string& meshName)
 		return CreateSkullMock();
 	else if (meshName == "grid")
 		return CreateGridMock();
+	else if (meshName == "cylinder")
+		return CreateCylinderMock();
 
 	return ModelProperty{};
 }
 
 bool MakeMockData(CSetupData* setupData, CMaterial* material)
 {
-	ReturnIfFalse(setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), material));
-	ReturnIfFalse(setupData->InsertModelProperty("things", "skull", CreateMock("skull"), material));
-	ReturnIfFalse(setupData->InsertModelProperty("things", "grid", CreateMock("grid"), material));
+	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Sky, "cube", CreateMock("cube"), material));
+	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "skull", CreateMock("skull"), material));
+	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "grid", CreateMock("grid"), material));
+	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "cylinder", CreateMock("cylinder"), material));
 
 	return true;
 }
@@ -216,4 +265,18 @@ void GetMockLight(PassConstants* outPc)
 	(*outPc).lights[1].strength = { 0.4f, 0.4f, 0.4f };
 	(*outPc).lights[2].direction = { 0.0f, -0.707f, -0.707f };
 	(*outPc).lights[2].strength = { 0.2f, 0.2f, 0.2f };
+}
+
+ShaderFileList GetShaderFileList()
+{
+	ShaderFileList shaderFileList{};
+	auto InsertShaderFile = [&shaderFileList](GraphicsPSO pso, ShaderType type, const std::wstring filename) {
+		shaderFileList[pso].emplace_back(std::make_pair(type, filename)); };
+
+	InsertShaderFile(GraphicsPSO::Sky, ShaderType::VS, L"SkyVS.hlsl");
+	InsertShaderFile(GraphicsPSO::Sky, ShaderType::PS, L"SkyPS.hlsl");
+	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::VS, L"VertexShader.hlsl");
+	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::PS, L"PixelShader.hlsl");
+
+	return shaderFileList;
 }

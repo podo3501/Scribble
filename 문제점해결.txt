@@ -36,3 +36,14 @@ C1189: #error:  "No Target Architecture" include <windows.h> 하자
 구조로 가게 되어 있고, 새로운 구조로 가고(리팩토링후) 테스트 코드를 작성한 후에 통과되는지 확인한다.
 
 matrix 초기화를 0.0로 다 해서 좌표가 다 날라갔다. 초기화를 대각선으로 1.0을 하자
+
+1>C:\Test\C++\Modules\main.cpp(1,16): warning C5050: Possible incompatible environment while importing module 'std.core': _GUARDOVERFLOW_CRT_ALLOCATORS=1 is defined in current command line and not in module command line
+1>C:\Test\C++\Modules\main.cpp(1,16): warning C5050: Possible incompatible environment while importing module 'std.core': _DEBUG is defined in current command line and not in module command line
+1>C:\Test\C++\Modules\main.cpp(1,16): warning C5050: Possible incompatible environment while importing module 'std.core': _M_FP_PRECISE is defined in current command line and not in module command line
+To solve the first warning change SDL Checks to No (/sdl-).
+To solve the second warning, remove the _DEBUG preprocessor definition.
+To solve the third warning, delete the value of the Floating Point Model (which was, by default, set to /fp:precise in my case).
+모듈을 적용시키고 싶었으나 아직까지는 시기 상조인것 같다.
+
+ C2855: '/std:c++' 명령줄 옵션이 미리 컴파일된 헤더와 일치하지 않습니다. 
+ 옵션을 맞춰도 계속 이런 에러가 나오면 해당 cpp를 프로젝트에서 제거후 정리 및 재컴파일 후 cpp를 다시 불러와서 컴파일 한다.

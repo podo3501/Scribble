@@ -5,8 +5,7 @@
 #include "../SecondPage/Window.h"
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/Utility.h"
-
-import std.core;
+#include "../SecondPage/MockData.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -23,12 +22,18 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 
 		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(hInstance);
 		window->Initialize(true);
-		auto renderer = CreateRenderer(resPath, window->GetHandle(), window->GetWidth(), window->GetHeight());
-
+		auto renderer = CreateRenderer(
+			resPath, 
+			window->GetHandle(), 
+			window->GetWidth(), 
+			window->GetHeight(),
+			GetShaderFileList());
+		assert(renderer);
+		
 		bool bResult{ true };
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
-		bResult = mainLoop->Initialize(resPath, window.get(), renderer.get());
-		bResult = mainLoop->Run(renderer.get());
+		assert(mainLoop->Initialize(resPath, window.get(), renderer.get()));
+		assert(mainLoop->Run(renderer.get()));
 	}
 	catch (CException e)
 	{

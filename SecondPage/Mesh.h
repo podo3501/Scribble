@@ -2,7 +2,7 @@
 
 #include <wrl.h>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <memory>
 #include <string>
 #include <DirectXCollision.h>
@@ -13,6 +13,7 @@ struct InstanceData;
 struct Vertex;
 struct RenderItem;
 struct ModelProperty;
+enum class GraphicsPSO : int;
 
 enum class CreateType : int
 {
@@ -57,10 +58,10 @@ struct MeshData
 
 class CMesh
 {
-	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
+	using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
 	using Offsets = std::pair<UINT, UINT>;
 	using MeshDataList = std::vector<std::unique_ptr<MeshData>>;
-	using AllMeshDataList = std::unordered_map<std::string, MeshDataList>;
+	using AllMeshDataList = std::map<GraphicsPSO, MeshDataList>;
 
 public:
 	CMesh(std::wstring resPath);
@@ -70,7 +71,7 @@ public:
 	CMesh(const CMesh&) = delete;
 	CMesh& operator=(const CMesh&) = delete;
 
-	bool LoadGeometry(const std::string& geoName, const std::string& meshName, ModelProperty* mProperty);
+	bool LoadGeometry(GraphicsPSO pso, const std::string& meshName, ModelProperty* mProperty);
 	bool LoadMeshIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems);
 
 private:

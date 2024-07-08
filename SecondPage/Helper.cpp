@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <ranges>
 #include "../Include/RenderItem.h"
+#include "../Include/Types.h"
 #include "./GameTimer.h"
 
 std::wstring CalculateFrameStats(CGameTimer* timer)
@@ -26,17 +27,17 @@ std::wstring CalculateFrameStats(CGameTimer* timer)
 	return std::wstring(L"    fps: " + fpsStr + L"   mspf: " + mspfStr);
 }
 
-RenderItem* GetRenderItem(AllRenderItems& allRenderItems, const std::string& geoName)
+RenderItem* GetRenderItem(AllRenderItems& allRenderItems, GraphicsPSO pso)
 {
 	RenderItem* pRenderItem = nullptr;
-	auto findGeo = allRenderItems.find(geoName);
+	auto findGeo = allRenderItems.find(pso);
 	if (findGeo != allRenderItems.end())
 		pRenderItem = findGeo->second.get();
 	else
 	{
 		auto renderItem = std::make_unique<RenderItem>();
 		pRenderItem = renderItem.get();
-		allRenderItems.insert(std::make_pair(geoName, std::move(renderItem)));
+		allRenderItems.insert(std::make_pair(pso, std::move(renderItem)));
 	}
 
 	return pRenderItem;
@@ -53,8 +54,8 @@ SubRenderItem* GetSubRenderItem(RenderItem* renderItem, const std::string& meshN
 	return &subRItems[meshName];
 }
 
-SubRenderItem* GetSubRenderItem(AllRenderItems& allRenderItems, const std::string& geoName, const std::string& meshName)
+SubRenderItem* GetSubRenderItem(AllRenderItems& allRenderItems, GraphicsPSO pso, const std::string& meshName)
 {
-	RenderItem* renderItem = GetRenderItem(allRenderItems, geoName);
+	RenderItem* renderItem = GetRenderItem(allRenderItems, pso);
 	return GetSubRenderItem(renderItem, meshName);
 }

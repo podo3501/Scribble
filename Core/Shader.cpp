@@ -1,17 +1,29 @@
 #include "Shader.h"
+#include <ranges>
+#include <algorithm>
 #include "../Core/d3dUtil.h"
 #include "../Include/RendererDefine.h"
+#include "../Include/Types.h"
 
 using Microsoft::WRL::ComPtr;
 
-CShader::CShader(std::wstring resPath)
+CShader::CShader(const std::wstring& resPath, const ShaderFileList& shaderFileList)
 	: m_resPath(std::move(resPath))
+	, m_shaderFileList(shaderFileList)
 	, m_shaderList{}
 	, m_inputLayout{}
 {
 	m_shaderList.resize(EtoV(GraphicsPSO::Count));
+	std::ranges::for_each(m_shaderList, [](auto& shader) {
+		shader.resize(EtoV(ShaderType::Count)); });
 }
 CShader::~CShader() = default;
+
+inline static std::string m_shaderVersion[EtoV(ShaderType::Count)] =
+{
+	"vs_5_1",
+	"ps_5_1",
+};
 
 bool CShader::InsertShaderList(GraphicsPSO psoType, ShaderType shaderType, std::wstring&& filename)
 {
@@ -30,12 +42,12 @@ inline D3D12_SHADER_BYTECODE CShader::GetShaderBytecode(GraphicsPSO psoType, Sha
 
 std::wstring CShader::GetShaderFilename(GraphicsPSO psoType, ShaderType shaderType)
 {
-	static std::wstring shaderFilename[EtoV(GraphicsPSO::Count)][EtoV(ShaderType::Count)] =
-	{
-		{ L"SkyVS.hlsl", L"SkyPS.hlsl"},
-		{ L"VertexShader.hlsl", L"PixelShader.hlsl"},
-	};
-	return m_resPath + m_filePath + shaderFilename[EtoV(psoType)][EtoV(shaderType)];
+	const auto& psoFileList = m_shaderFileList[psoType];
+	auto find = std::ranges::find_if(psoFileList, [shaderType](auto& file) {
+		return file.first == shaderType; });
+	if (find == psoFileList.end()) return {};
+	
+	return m_resPath + m_filePath + find->second;
 }
 
 bool CShader::SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)

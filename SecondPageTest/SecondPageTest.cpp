@@ -7,6 +7,7 @@
 #include <functional>
 #include "./InterfaceTest.h"
 #include "../Include/RenderItem.h"
+#include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/types.h"
 #include "../SecondPage/Window.h"
@@ -19,6 +20,7 @@
 #include "../SecondPage/SetupData.h"
 #include "../SecondPage/MockData.h"
 #include "../SecondPage/Helper.h"
+#include "../SecondPage/Utility.h"
 
 namespace MainLoop
 {
@@ -32,17 +34,18 @@ namespace MainLoop
 		{
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 			EXPECT_EQ(m_window->Initialize(false), true);
-			m_renderer = CreateRenderer(m_resourcePath, m_window->GetHandle(), m_window->GetWidth(), m_window->GetHeight());
+			
+			m_renderer = CreateRenderer(
+				m_resourcePath, 
+				m_window->GetHandle(), 
+				m_window->GetWidth(), 
+				m_window->GetHeight(),
+				GetShaderFileList());
 			EXPECT_EQ(m_renderer != nullptr, true);
-
-			m_material = std::make_unique<CMaterial>();
-			m_setupData = std::make_unique<CSetupData>();
-			EXPECT_EQ(m_setupData->InsertModelProperty("nature", "cube", CreateMock("cube"), m_material.get()), true);
 		}
 
 		void TearDown() override
 		{
-			m_setupData.reset();
 			m_renderer.reset();
 			m_window.reset();
 		}
@@ -51,8 +54,6 @@ namespace MainLoop
 		std::wstring m_resourcePath{ L"../Resource/" };
 		std::unique_ptr<CWindow> m_window{ nullptr };
 		std::unique_ptr<IRenderer> m_renderer{ nullptr };
-		std::unique_ptr<CMaterial> m_material{ nullptr };
-		std::unique_ptr<CSetupData> m_setupData{ nullptr };
 	};
 
 	TEST_F(MainLoopClassTest, CameraUpdate)
@@ -121,8 +122,8 @@ namespace MainLoop
 	{
 		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
 		std::unique_ptr<CSetupData> setupData = std::make_unique<CSetupData>();
-		setupData->InsertModelProperty("nature", "cube1", TestCreateMock(), material.get());
-		setupData->InsertModelProperty("nature", "cube2", TestCreateMock(), material.get());
+		setupData->InsertModelProperty(GraphicsPSO::Opaque, "cube1", TestCreateMock(), material.get());
+		setupData->InsertModelProperty(GraphicsPSO::Opaque, "cube2", TestCreateMock(), material.get());
 
 		std::unique_ptr<IRenderer> mockRenderer = std::make_unique<GMockTestRenderer>();
 		EXPECT_EQ(material->LoadTextureIntoVRAM(mockRenderer.get()), true);
@@ -145,12 +146,21 @@ namespace MainLoop
 			return true;
 		}
 	};
-	//데이터 넣는 부분을 테스트용으로 교체하자.
+
+	bool MakeTestMockData(CSetupData* setupData, CMaterial* material)
+	{
+																		
+		ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Sky, "cube", CreateMock("cube"), material));
+		ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "skull", CreateMock("skull"), material));
+		ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "grid", CreateMock("grid"), material));
+
+		return true;
+	}
 	TEST_F(MainLoopClassTest, Instance)
 	{
 		AllRenderItems allRenderItems{};
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
-		EXPECT_EQ(model->Initialize(m_resourcePath), true);
+		EXPECT_EQ(model->Initialize(m_resourcePath, MakeTestMockData), true);
 		EXPECT_EQ(model->LoadMemory(m_renderer.get(), allRenderItems), true);
 
 		GInstanceRenderer renderer{};
@@ -159,7 +169,7 @@ namespace MainLoop
 		camera->Update(0.1f);
 		model->Update(&renderer, camera.get(), allRenderItems);
 
-		SubRenderItem* subItem = GetSubRenderItem(allRenderItems, "things", "grid");
+		SubRenderItem* subItem = GetSubRenderItem(allRenderItems, GraphicsPSO::Opaque, "grid");
 		EXPECT_EQ(subItem->instanceCount, 1);
 		EXPECT_EQ(subItem->startSubIndexInstance, 115);
 	}
@@ -167,7 +177,7 @@ namespace MainLoop
 
 class GTestRenderer : public ITestRenderer
 {
-	virtual bool Draw(std::unordered_map<std::string, std::unique_ptr<RenderItem>>& renderItem) override
+	virtual bool Draw(AllRenderItems& renderItem) override
 	{
 		EXPECT_EQ(renderItem.empty(), false);
 		PostQuitMessage(0);
@@ -183,7 +193,12 @@ namespace A_SecondPage
 
 		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 		window->Initialize(true);
-		auto renderer = CreateRenderer(resPath, window->GetHandle(), window->GetWidth(), window->GetHeight());
+		auto renderer = CreateRenderer(
+			resPath, 
+			window->GetHandle(), 
+			window->GetWidth(), 
+			window->GetHeight(),
+			GetShaderFileList());
 
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
 		EXPECT_EQ(mainLoop->Initialize(resPath, window.get(), renderer.get()), true);

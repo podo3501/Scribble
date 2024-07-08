@@ -9,13 +9,14 @@
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
+#include "../Include/Types.h"
 
 using Microsoft::WRL::ComPtr;
 
-std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int width, int height)
+std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
 	std::unique_ptr<CRenderer> renderer = std::make_unique<CRenderer>();
-	bool bResult = renderer->Initialize(resPath, hwnd, width, height);
+	bool bResult = renderer->Initialize(resPath, hwnd, width, height, shaderFileList);
 	if (bResult != true)
 		return nullptr;
 
@@ -34,9 +35,9 @@ CRenderer::CRenderer()
 
 CRenderer::~CRenderer() = default;
 
-bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height)
+bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
-	m_shader = std::make_unique<CShader>(resPath);
+	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_directx3D = std::make_unique<CDirectx3D>();
 	m_texture = std::make_unique<CTexture>(resPath);
 
@@ -45,7 +46,6 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 	m_device = m_directx3D->GetDevice();
 	m_cmdList = m_directx3D->GetCommandList();
 
-	m_psoList.resize(EtoV(GraphicsPSO::Count));
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
 	ReturnIfFalse(BuildPSOs());
@@ -237,8 +237,7 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	default: assert(!"wrong type");
 	}
 	
-	ReturnIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, 
-		IID_PPV_ARGS(&m_psoList[EtoV(psoType)])));
+	ReturnIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_psoList[psoType])));
 
 	return true;
 }
@@ -299,11 +298,10 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Sky)].Get());
-	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["nature"].get());
-
-	m_cmdList->SetPipelineState(m_psoList[EtoV(GraphicsPSO::Opaque)].Get());
-	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem["things"].get());
+	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
+		auto pso = curRenderItem.first;
+		m_cmdList->SetPipelineState(m_psoList[pso].Get());
+		DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem[pso].get()); });
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));

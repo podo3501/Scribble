@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include <Windows.h>
-#include <unordered_map>
+#include <map>
 
 interface IRenderer;
 class CWindow;
@@ -14,10 +14,11 @@ class CKeyInputManager;
 class CGameTimer;
 struct RenderItem;
 struct InstanceData;
+enum class GraphicsPSO : int;
 
 class CMainLoop
 {
-	using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
+	using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
 	using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
 
 public:

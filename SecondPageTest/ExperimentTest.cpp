@@ -3,8 +3,6 @@
 #include <ranges>
 #include <numeric>
 
-import std.core;
-
 namespace Experiment
 {
 	class TestRenderer
@@ -76,8 +74,6 @@ namespace Experiment
 	}
 }
 
-import std.core;
-
 namespace STDTest
 {
 	TEST(STD, all_of)
@@ -128,14 +124,12 @@ namespace STDTest
 		auto rng = std::ranges::views::all(v)
 			| std::ranges::views::filter([](int a) {
 			return a % 2 == 0; }); // 짝수만 필터링
+		for (auto& t : rng)
+		{
+			int a = 1;
+		}
 
 		auto view{ std::views::transform(v, [](int i) { return i * i; }) };
 		auto sumsq {std::accumulate(view.begin(), view.end(), 0)};
-	}
-
-
-	TEST(STD20, modules)
-	{
-
 	}
 }

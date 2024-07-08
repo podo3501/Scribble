@@ -4,6 +4,7 @@
 #include <d3dcommon.h>
 #include <DirectXCollision.h>
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <memory>
 #include <string>
@@ -13,6 +14,7 @@ struct Material;
 struct Geometry;
 struct InstanceBuffer;
 struct SubmeshGeometry;
+enum class GraphicsPSO : int;
 
 struct InstanceData
 {
@@ -75,4 +77,4 @@ struct RenderItem
 	}
 };
 
-using AllRenderItems = std::unordered_map<std::string, std::unique_ptr<RenderItem>>;
+using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
