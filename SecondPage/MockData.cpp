@@ -272,10 +272,10 @@ ShaderFileList GetShaderFileList()
 	auto InsertShaderFile = [&shaderFileList](GraphicsPSO pso, ShaderType type, const std::wstring filename) {
 		shaderFileList[pso].emplace_back(std::make_pair(type, filename)); };
 
-	InsertShaderFile(GraphicsPSO::Sky, ShaderType::VS, L"SkyVS.hlsl");
-	InsertShaderFile(GraphicsPSO::Sky, ShaderType::PS, L"SkyPS.hlsl");
-	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::VS, L"VertexShader.hlsl");
-	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::PS, L"PixelShader.hlsl");
+	InsertShaderFile(GraphicsPSO::Sky, ShaderType::VS, L"Cube/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::Sky, ShaderType::PS, L"Cube/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::VS, L"Opaque/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::PS, L"Opaque/PS.hlsl");
 
 	return shaderFileList;
 }

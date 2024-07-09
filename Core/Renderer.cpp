@@ -37,7 +37,7 @@ CRenderer::~CRenderer() = default;
 
 bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
-	
+	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_directx3D = std::make_unique<CDirectx3D>();
 	m_texture = std::make_unique<CTexture>(resPath);
 
@@ -48,10 +48,8 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
-	ReturnIfFalse(MakeFrameResource());
-
-	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	ReturnIfFalse(BuildPSOs());
+	ReturnIfFalse(MakeFrameResource());
 
 	m_isInitialize = true;
 

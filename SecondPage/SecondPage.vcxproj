@@ -112,6 +112,7 @@
       <EnableModules>false</EnableModules>
       <FloatingPointModel>Precise</FloatingPointModel>
       <BuildStlModules>false</BuildStlModules>
+      <AdditionalIncludeDirectories>$(SolutionDir)Resource\Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -172,26 +173,33 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Resource\Shaders\Common.hlsli" />
-    <None Include="..\Resource\Shaders\GraphicsHeader.hlsli" />
+    <None Include="..\Resource\Shaders\Cube\Type.hlsli" />
+    <None Include="..\Resource\Shaders\Opaque\Type.hlsli" />
+    <None Include="..\Resource\Shaders\Register.hlsli">
+      <FileType>Document</FileType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ShaderType>
+    </None>
     <None Include="..\Resource\Shaders\LightingUtil.hlsli" />
-    <None Include="..\Resource\Shaders\VertexInout.hlsli" />
-    <None Include="..\Resource\Shaders\VertexInout_Sky.hlsli" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\Resource\Shaders\PixelShader.hlsl">
+    <FxCompile Include="..\Resource\Shaders\Cube\PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\SkyPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\SkyVS.hlsl">
+    <FxCompile Include="..\Resource\Shaders\Cube\VS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)Resource\Shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\VertexShader.hlsl">
+    <FxCompile Include="..\Resource\Shaders\Opaque\PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Opaque\VS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>

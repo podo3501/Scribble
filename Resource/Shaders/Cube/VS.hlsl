@@ -1,5 +1,5 @@
-#include "GraphicsHeader.hlsli"
-#include "VertexInout_Sky.hlsli"
+#include "../Register.hlsli"
+#include "Type.hlsli"
 
 VertexOut main(VertexIn vin, uint instanceID : SV_InstanceID)
 {

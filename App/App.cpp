@@ -18,7 +18,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 
 	try
 	{
-		std::wstring resPath = L"../Resource/";
+		std::wstring resPath = L"D:/ProgrammingStudy/Scribble/Resource/";
 
 		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(hInstance);
 		window->Initialize(true);
