@@ -244,14 +244,13 @@ ModelProperty CreateMock(const std::string& meshName)
 	return ModelProperty{};
 }
 
-bool MakeMockData(CSetupData* setupData, CMaterial* material)
+CreateModelNames MakeMockData()
 {
-	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Sky, "cube", CreateMock("cube"), material));
-	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "skull", CreateMock("skull"), material));
-	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "grid", CreateMock("grid"), material));
-	ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "cylinder", CreateMock("cylinder"), material));
-
-	return true;
+	return CreateModelNames
+	{
+		{GraphicsPSO::Sky, { "cube" } },
+		{GraphicsPSO::Opaque, { "skull", "grid", "cylinder" }},
+	};
 }
 
 void GetMockLight(PassConstants* outPc)

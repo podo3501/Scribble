@@ -16,7 +16,7 @@
 #include "../SecondPage/Mesh.h"
 #include "../SecondPage/Material.h"
 #include "../SecondPage/MainLoop.h"
-#include "../SecondPage/KeyInputManager.h"
+#include "../SecondPage/KeyInput.h"
 #include "../SecondPage/SetupData.h"
 #include "../SecondPage/MockData.h"
 #include "../SecondPage/Helper.h"
@@ -60,7 +60,7 @@ namespace MainLoop
 	{
 		auto deltaTime = 0.1f;
 
-		CKeyInputManager keyInput(m_window->GetHandle());
+		CKeyInput keyInput(m_window->GetHandle());
 		CCamera camera;
 		camera.SetPosition(0.0f, 0.0f, 0.0f);
 		camera.SetSpeed(eMove::Forward, 10.0f);
@@ -147,20 +147,19 @@ namespace MainLoop
 		}
 	};
 
-	bool MakeTestMockData(CSetupData* setupData, CMaterial* material)
+	CreateModelNames MakeTestMockData()
 	{
-																		
-		ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Sky, "cube", CreateMock("cube"), material));
-		ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "skull", CreateMock("skull"), material));
-		ReturnIfFalse(setupData->InsertModelProperty(GraphicsPSO::Opaque, "grid", CreateMock("grid"), material));
-
-		return true;
+		return CreateModelNames
+		{
+			{GraphicsPSO::Sky, { "cube" } },
+			{GraphicsPSO::Opaque, { "skull", "grid" } },
+		};
 	}
 	TEST_F(MainLoopClassTest, Instance)
 	{
 		AllRenderItems allRenderItems{};
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
-		EXPECT_EQ(model->Initialize(m_resourcePath, MakeTestMockData), true);
+		EXPECT_EQ(model->Initialize(m_resourcePath, MakeTestMockData()), true);
 		EXPECT_EQ(model->LoadMemory(m_renderer.get(), allRenderItems), true);
 
 		GInstanceRenderer renderer{};

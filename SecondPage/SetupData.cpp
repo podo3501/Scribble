@@ -44,9 +44,9 @@ bool CSetupData::InsertModelProperty(GraphicsPSO pso, const std::string& meshNam
 	return true;
 }
 
-bool CSetupData::LoadMesh(CMesh* mesh, GraphicsPSO pso, MeshProperty& meshProp)
+bool CSetupData::LoadMesh(CMesh* mesh, GraphicsPSO pso, ModelProperties& modelProp)
 {
-	return std::ranges::all_of(meshProp, [mesh, pso](auto& mProp) {
+	return std::ranges::all_of(modelProp, [mesh, pso](auto& mProp) {
 		return mesh->LoadGeometry(pso, mProp.first, &mProp.second);});
 }
 

@@ -4,18 +4,18 @@
 #include<functional>
 #include<Windows.h>
 
-class CKeyInputManager
+class CKeyInput
 {
 public:
 	using KeyListener = std::function<void(std::vector<int>)>;
 	using MouseListener = std::function<void(float, float)>;
 
-	CKeyInputManager(HWND hwnd);
-	~CKeyInputManager();
+	CKeyInput(HWND hwnd);
+	~CKeyInput();
 
-	CKeyInputManager() = delete;
-	CKeyInputManager(const CKeyInputManager&) = delete;
-	CKeyInputManager& operator=(const CKeyInputManager&) = delete;
+	CKeyInput() = delete;
+	CKeyInput(const CKeyInput&) = delete;
+	CKeyInput& operator=(const CKeyInput&) = delete;
 
 	bool CALLBACK MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 

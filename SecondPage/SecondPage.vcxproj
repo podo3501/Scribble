@@ -144,7 +144,7 @@
     <ClCompile Include="SetupData.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
-    <ClCompile Include="KeyInputManager.cpp" />
+    <ClCompile Include="KeyInput.cpp" />
     <ClCompile Include="MainLoop.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Utility.cpp" />
@@ -160,7 +160,7 @@
     <ClInclude Include="SetupData.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
-    <ClInclude Include="KeyInputManager.h" />
+    <ClInclude Include="KeyInput.h" />
     <ClInclude Include="MainLoop.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Utility.h" />

@@ -151,15 +151,15 @@ bool CMesh::Convert(const MeshDataList& meshDataList,
 bool CMesh::LoadMeshIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems)
 {
 	return std::ranges::all_of(m_AllMeshDataList, [&outRenderItems, renderer, this](auto& iter) {
-		auto pRenderItem = GetRenderItem(*outRenderItems, iter.first);
+		auto pso = iter.first;
+		auto pRenderItem = GetRenderItem(*outRenderItems, pso);
 
-		//데이터를 채워 넣는다.
 		std::vector<Vertex> totalVertices{};
 		std::vector<std::int32_t> totalIndices{};
 		ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
 
 		//그래픽 메모리에 올린다.
-		ReturnIfFalse(renderer->LoadMesh(totalVertices, totalIndices, pRenderItem));
+		ReturnIfFalse(renderer->LoadMesh(pso, totalVertices, totalIndices, pRenderItem));
 
 		return true;	}); 	
 }

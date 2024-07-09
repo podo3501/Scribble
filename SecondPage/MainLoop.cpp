@@ -9,7 +9,7 @@
 #include "./GameTimer.h"
 #include "./Model.h"
 #include "./Camera.h"
-#include "./KeyInputManager.h"
+#include "./KeyInput.h"
 #include "./Utility.h"
 #include "./Helper.h"
 #include "./MockData.h"
@@ -41,7 +41,7 @@ RenderItem::RenderItem()
 CMainLoop::CMainLoop()
 	: m_camera{ nullptr }
 	, m_timer{ nullptr }
-	, m_keyInputManager{ nullptr }
+	, m_keyInput{ nullptr }
 	, m_model{ nullptr }
 	, m_AllRenderItems{}
 {}
@@ -65,12 +65,12 @@ bool CMainLoop::Initialize(const std::wstring& resourcePath, CWindow* window, IR
 
 bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
 {
-	m_keyInputManager = std::make_unique<CKeyInputManager>(m_window->GetHandle());
+	m_keyInput = std::make_unique<CKeyInput>(m_window->GetHandle());
 	m_camera = std::make_unique<CCamera>();
 	m_timer = std::make_unique<CGameTimer>();
 	m_model = std::make_unique<CModel>();
 
-	ReturnIfFalse(m_model->Initialize(resourcePath, MakeMockData));
+	ReturnIfFalse(m_model->Initialize(resourcePath, MakeMockData()));
 
 	return true;
 }
@@ -79,16 +79,16 @@ void CMainLoop::AddKeyListener()
 {
 	m_window->AddWndProcListener([this](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
 		return MsgProc(wnd, msg, wp, lp, lr); });
-	m_window->AddWndProcListener([&keyMng = m_keyInputManager](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
-		return keyMng->MsgProc(wnd, msg, wp, lp, lr); });
+	m_window->AddWndProcListener([&keyInput = m_keyInput](HWND wnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT& lr)->bool {
+		return keyInput->MsgProc(wnd, msg, wp, lp, lr); });
 	m_window->AddOnResizeListener([this](int width, int height)->bool {
 		return OnResize(width, height); });
 	m_window->AddAppPauseListener([this](bool pause)->void {
 		return SetAppPause(pause); });
 
-	m_keyInputManager->AddKeyListener([&cam = m_camera](std::vector<int> keyList) {
+	m_keyInput->AddKeyListener([&cam = m_camera](std::vector<int> keyList) {
 		cam->PressedKey(keyList); });
-	m_keyInputManager->AddMouseListener([&cam = m_camera](float dx, float dy) {
+	m_keyInput->AddMouseListener([&cam = m_camera](float dx, float dy) {
 		cam->Move(dx, dy);	 });
 }
 
@@ -160,7 +160,7 @@ bool CMainLoop::Run(IRenderer* renderer)
 				m_window->SetText(caption + fps);
 			}
 			
-			m_keyInputManager->CheckInput();
+			m_keyInput->CheckInput();
 			ReturnIfFalse(m_iRenderer->PrepareFrame());
 
 			m_camera->Update(m_timer->DeltaTime());

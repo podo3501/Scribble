@@ -52,6 +52,13 @@ std::wstring CShader::GetShaderFilename(GraphicsPSO psoType, ShaderType shaderTy
 
 bool CShader::SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
+	auto count = std::ranges::count_if(m_shaderFileList[psoType], [](auto& fileList) {
+		auto isVS = fileList.first == ShaderType::VS && !fileList.second.empty();
+		auto isPS = fileList.first == ShaderType::PS && !fileList.second.empty();
+		return isVS || isPS; });
+
+	if (count < 2) return true;	//vs, ps가 없는 경우는 pipeline을 만들지 않는다.
+
 	ReturnIfFalse(InsertShaderList(psoType, ShaderType::VS, GetShaderFilename(psoType, ShaderType::VS)));
 	ReturnIfFalse(InsertShaderList(psoType, ShaderType::PS, GetShaderFilename(psoType, ShaderType::PS)));
 

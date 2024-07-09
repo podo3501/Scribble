@@ -19,13 +19,20 @@ CModel::CModel()
 {}
 CModel::~CModel() = default;
 
-bool CModel::Initialize(const std::wstring& resPath, std::function<bool(CSetupData*, CMaterial*)> data)
+bool CModel::Initialize(const std::wstring& resPath, const CreateModelNames& createModelNames)
 {
 	m_material = std::make_unique<CMaterial>();
 	m_setupData = std::make_unique<CSetupData>();
 	m_mesh = std::make_unique<CMesh>(resPath);
 
-	return data(m_setupData.get(), m_material.get());
+	return std::ranges::all_of(createModelNames, [this](auto& name) {
+		const auto& pso = name.first;
+		for (auto& meshName : name.second)
+		{
+			ReturnIfFalse(m_setupData->InsertModelProperty(
+				pso, meshName, CreateMock(meshName), m_material.get()));
+		}
+		return true; });
 }
 
 bool CModel::LoadMemory(IRenderer* renderer, AllRenderItems& allRenderItems)

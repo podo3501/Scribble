@@ -37,7 +37,7 @@ CRenderer::~CRenderer() = default;
 
 bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
-	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
+	
 	m_directx3D = std::make_unique<CDirectx3D>();
 	m_texture = std::make_unique<CTexture>(resPath);
 
@@ -48,8 +48,10 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
-	ReturnIfFalse(BuildPSOs());
 	ReturnIfFalse(MakeFrameResource());
+
+	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
+	ReturnIfFalse(BuildPSOs());
 
 	m_isInitialize = true;
 
@@ -99,8 +101,11 @@ bool CRenderer::LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLis
 	return true;
 }
 
-bool CRenderer::LoadMesh(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
+bool CRenderer::LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
 {
+	if (m_psoList.find(pso) == m_psoList.end())
+		return false;	//renderer에서 PSO가 준비되지 않았다.
+	
 	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 		return LoadMesh(device, cmdList, totalVertices, totalIndices, renderItem); });
 }
@@ -144,7 +149,6 @@ bool CRenderer::OnResize(int width, int height)
 
 bool CRenderer::WaitUntilGpuFinished(UINT64 fenceCount)
 {
-	//fence를 renderer로 올린다.
 	return m_directx3D->WaitUntilGpuFinished(fenceCount);
 }
 
@@ -163,7 +167,7 @@ enum class ParamType : int
 //남아서 넘치는 건 상관없지만 셰이더 데이터에 빈공간이 있으면 안된다.
 //텍스춰는 빈공간이 있어도 상관없다.
 constexpr UINT CubeCount{ 1u };
-constexpr UINT TextureCount{ 20u };
+constexpr UINT TextureCount{ 35u };
 constexpr UINT TotalHeapCount = CubeCount + TextureCount;
 bool CRenderer::BuildRootSignature()
 {
@@ -228,6 +232,10 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 	ReturnIfFalse(m_shader->SetPipelineStateDesc(psoType, &psoDesc));
+	
+	if (psoDesc.VS.BytecodeLength == 0 && psoDesc.PS.BytecodeLength == 0)
+		return true;
+
 	MakeBasicDesc(&psoDesc);
 
 	switch (psoType)

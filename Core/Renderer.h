@@ -29,7 +29,7 @@ public:
 
 	virtual bool IsInitialize() override { return m_isInitialize; };
 	virtual bool OnResize(int width, int height) override;
-	virtual bool LoadMesh(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
+	virtual bool LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
 	virtual bool LoadTexture(const TextureList& textureList) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
 	virtual bool PrepareFrame() override;

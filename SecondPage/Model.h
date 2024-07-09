@@ -21,7 +21,8 @@ class CModel
 {
 	using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
 	using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;
-
+	using CreateModelNames = std::map<GraphicsPSO, std::vector<std::string>>;
+	
 public:
 	CModel();
 	~CModel();
@@ -29,7 +30,7 @@ public:
 	CModel(const CModel&) = delete;
 	CModel& operator =(const CModel&) = delete;
 
-	bool Initialize(const std::wstring& resPath, std::function<bool(CSetupData*, CMaterial*)> data);
+	bool Initialize(const std::wstring& resPath, const CreateModelNames& createModelNames );
 	bool LoadMemory(IRenderer* renderer, AllRenderItems& allRenderItems);
 	void Update(IRenderer* renderer, CCamera* camera, AllRenderItems& allRenderItems);
 

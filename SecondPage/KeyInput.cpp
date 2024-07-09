@@ -1,11 +1,11 @@
-#include "KeyInputManager.h"
+#include "KeyInput.h"
 #include <windows.h>
 #include <windowsx.h>
 #include <algorithm>
 #include <ranges>
 #include <DirectXMath.h>
 
-bool CKeyInputManager::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
+bool CKeyInput::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
 {
 	switch (msg)
 	{
@@ -27,34 +27,34 @@ bool CKeyInputManager::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 	return false;
 }
 
-CKeyInputManager::CKeyInputManager(HWND hwnd)
+CKeyInput::CKeyInput(HWND hwnd)
 	: m_hwnd(hwnd)
 {}
-CKeyInputManager::~CKeyInputManager() = default;
+CKeyInput::~CKeyInput() = default;
 
-void CKeyInputManager::AddKeyListener(KeyListener listener)
+void CKeyInput::AddKeyListener(KeyListener listener)
 {
 	m_keyListenerList.emplace_back(std::move(listener));
 }
 
-void CKeyInputManager::AddMouseListener(MouseListener listener)
+void CKeyInput::AddMouseListener(MouseListener listener)
 {
 	m_mouseListenerList.emplace_back(std::move(listener));
 }
 
-void CKeyInputManager::PressedKeyList(std::function<std::vector<int>()> keyList)
+void CKeyInput::PressedKeyList(std::function<std::vector<int>()> keyList)
 {
 	for (auto listener : m_keyListenerList)
 		listener(keyList());
 }
 
-void CKeyInputManager::DraggedMouse(float dx, float dy)
+void CKeyInput::DraggedMouse(float dx, float dy)
 {
 	for (auto listener : m_mouseListenerList)
 		listener(dx, dy);
 }
 
-void CKeyInputManager::CheckInput()
+void CKeyInput::CheckInput()
 {
 	//임시로 GetAsyncKeyState로 키 눌림을 구현했다. 나중에 다른 input으로 바꿀 예정
 	PressedKeyList([]()->std::vector<int> {
@@ -65,7 +65,7 @@ void CKeyInputManager::CheckInput()
 		return pressedKeyList; });
 }
 
-void CKeyInputManager::OnMouseDown(WPARAM btnState, int x, int y)
+void CKeyInput::OnMouseDown(WPARAM btnState, int x, int y)
 {
 	m_lastMousePos.x = x;
 	m_lastMousePos.y = y;
@@ -73,12 +73,12 @@ void CKeyInputManager::OnMouseDown(WPARAM btnState, int x, int y)
 	SetCapture(m_hwnd);
 }
 
-void CKeyInputManager::OnMouseUp(WPARAM btnState, int x, int y)
+void CKeyInput::OnMouseUp(WPARAM btnState, int x, int y)
 {
 	ReleaseCapture();
 }
 
-void CKeyInputManager::OnMouseMove(WPARAM btnState, int x, int y)
+void CKeyInput::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
 	{

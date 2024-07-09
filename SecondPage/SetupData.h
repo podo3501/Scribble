@@ -40,8 +40,8 @@ struct ModelProperty
 
 class CSetupData
 {
-	using MeshProperty = std::unordered_map<std::string, ModelProperty>;
-	using AllModelProperty = std::map<GraphicsPSO, MeshProperty>;
+	using ModelProperties = std::unordered_map<std::string, ModelProperty>;
+	using AllModelProperty = std::map<GraphicsPSO, ModelProperties>;
 	using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
 
 public:
@@ -59,7 +59,7 @@ public:
 	bool LoadMesh(CMesh* mesh, AllRenderItems* renderItems);
 
 private:
-	bool LoadMesh(CMesh* mesh, GraphicsPSO pso, MeshProperty& meshProp);
+	bool LoadMesh(CMesh* mesh, GraphicsPSO pso, ModelProperties& modelProp);
 	bool FillRenderItems(AllRenderItems* renderItems);
 
 private:

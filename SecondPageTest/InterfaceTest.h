@@ -8,7 +8,7 @@ interface ITestRenderer : public IRenderer
 
 	virtual bool IsInitialize() { return false; };
 	virtual bool OnResize(int wndWidth, int wndHeight) { return true; };
-	virtual bool LoadMesh(Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) { return true; };
+	virtual bool LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) { return true; };
 	virtual bool LoadTexture(const TextureList& textureList) { return true; };
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) { return true; };
 	virtual bool PrepareFrame() { return true; };
