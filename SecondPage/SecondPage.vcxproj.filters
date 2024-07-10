@@ -21,6 +21,9 @@
     <Filter Include="리소스 파일\Shaders\Opaque">
       <UniqueIdentifier>{918a8d1f-9e50-44a9-97ee-2515f86926e5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="리소스 파일\Shaders\NormalOpaque">
+      <UniqueIdentifier>{b010056a-024a-4802-9d2b-10e4612ffb73}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -123,6 +126,12 @@
     <None Include="..\Resource\Shaders\Common.hlsli">
       <Filter>리소스 파일\Shaders</Filter>
     </None>
+    <None Include="..\Resource\Shaders\Opaque\Type.hlsli">
+      <Filter>리소스 파일\Shaders\Opaque</Filter>
+    </None>
+    <None Include="..\Resource\Shaders\NormalOpaque\Type.hlsli">
+      <Filter>리소스 파일\Shaders\NormalOpaque</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Resource\Shaders\Cube\PS.hlsl">
@@ -137,8 +146,11 @@
     <FxCompile Include="..\Resource\Shaders\Opaque\VS.hlsl">
       <Filter>리소스 파일\Shaders\Opaque</Filter>
     </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\Opaque\Type.hlsli">
-      <Filter>리소스 파일\Shaders\Opaque</Filter>
+    <FxCompile Include="..\Resource\Shaders\NormalOpaque\VS.hlsl">
+      <Filter>리소스 파일\Shaders\NormalOpaque</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\NormalOpaque\PS.hlsl">
+      <Filter>리소스 파일\Shaders\NormalOpaque</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

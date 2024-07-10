@@ -26,20 +26,21 @@ public:
 	CShader(const CShader&) = delete;
 	CShader& operator=(const CShader&) = delete;
 
+	std::vector<GraphicsPSO> GetPSOList();
 	bool SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 private:
 	bool InsertShaderList(GraphicsPSO psoType, ShaderType shaderType, std::wstring&& filename);
-	inline D3D12_SHADER_BYTECODE GetShaderBytecode(GraphicsPSO psoType, ShaderType shaderType) const;
+	inline D3D12_SHADER_BYTECODE GetShaderBytecode(GraphicsPSO psoType, ShaderType shaderType);
 	std::wstring GetShaderFilename(GraphicsPSO psoType, ShaderType shaderType);
 
 private:
-	using ShaderList = std::vector<Microsoft::WRL::ComPtr<ID3DBlob>>;
+	using ShaderList = std::map<ShaderType, Microsoft::WRL::ComPtr<ID3DBlob>>;
 
 	std::wstring m_resPath{};
 	std::wstring m_filePath{ L"Shaders/" };
 
 	ShaderFileList m_shaderFileList;
-	std::vector<ShaderList> m_shaderList;
+	std::map<GraphicsPSO, ShaderList> m_shaderList;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout;
 };

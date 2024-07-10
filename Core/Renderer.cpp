@@ -223,16 +223,13 @@ bool CRenderer::BuildDescriptorHeaps()
 
 bool CRenderer::BuildPSOs()
 {
-	return std::ranges::all_of(GraphicsPSO_ALL, [this](auto pso) { return MakePSOPipelineState(pso); });
+	return std::ranges::all_of(m_shader->GetPSOList(), [this](auto pso) { return MakePSOPipelineState(pso); });
 }
 
 bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 	ReturnIfFalse(m_shader->SetPipelineStateDesc(psoType, &psoDesc));
-	
-	if (psoDesc.VS.BytecodeLength == 0 && psoDesc.PS.BytecodeLength == 0)
-		return true;
 
 	MakeBasicDesc(&psoDesc);
 

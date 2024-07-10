@@ -6,39 +6,51 @@
 #include "../Include/Types.h"
 
 using Microsoft::WRL::ComPtr;
+using enum ShaderType;
 
 CShader::CShader(const std::wstring& resPath, const ShaderFileList& shaderFileList)
-	: m_resPath(std::move(resPath))
+	: m_resPath(resPath)
 	, m_shaderFileList(shaderFileList)
 	, m_shaderList{}
 	, m_inputLayout{}
-{
-	m_shaderList.resize(EtoV(GraphicsPSO::Count));
-	std::ranges::for_each(m_shaderList, [](auto& shader) {
-		shader.resize(EtoV(ShaderType::Count)); });
-}
+{}
 CShader::~CShader() = default;
 
-inline static std::string m_shaderVersion[EtoV(ShaderType::Count)] =
+std::vector<GraphicsPSO> CShader::GetPSOList()
 {
-	"vs_5_1",
-	"ps_5_1",
-};
+	std::vector<GraphicsPSO> psoList{};
+	std::ranges::copy(m_shaderFileList | std::views::keys, std::back_inserter(psoList));
+	
+	return psoList;
+}
+
+std::string GetShaderVersion(ShaderType shaderType)
+{
+	switch (shaderType)
+	{
+	case VS: return "vs_5_1";
+	case PS: return "ps_5_1";
+	}
+
+	return "";
+}
 
 bool CShader::InsertShaderList(GraphicsPSO psoType, ShaderType shaderType, std::wstring&& filename)
 {
-	const D3D_SHADER_MACRO defines[] = { "DIR", "1", NULL, NULL};
+	Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob{ nullptr };
 
 	ReturnIfFalse(CoreUtil::CompileShader(
-		std::move(filename), defines, "main", m_shaderVersion[EtoV(shaderType)],
-		&m_shaderList[EtoV(psoType)][EtoV(shaderType)]));
+		std::move(filename), nullptr, "main", GetShaderVersion(shaderType),
+		&shaderBlob));
+
+	m_shaderList[psoType][shaderType] = std::move(shaderBlob);
 
 	return true;
 }
 
-inline D3D12_SHADER_BYTECODE CShader::GetShaderBytecode(GraphicsPSO psoType, ShaderType shaderType) const
+inline D3D12_SHADER_BYTECODE CShader::GetShaderBytecode(GraphicsPSO psoType, ShaderType shaderType) 
 {
-	auto shader = m_shaderList[EtoV(psoType)][EtoV(shaderType)].Get();
+	const auto& shader = m_shaderList[psoType][shaderType];
 	return { shader->GetBufferPointer(), shader->GetBufferSize() };
 }
 
@@ -55,14 +67,14 @@ std::wstring CShader::GetShaderFilename(GraphicsPSO psoType, ShaderType shaderTy
 bool CShader::SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
 	auto count = std::ranges::count_if(m_shaderFileList[psoType], [](auto& fileList) {
-		auto isVS = fileList.first == ShaderType::VS && !fileList.second.empty();
-		auto isPS = fileList.first == ShaderType::PS && !fileList.second.empty();
+		auto isVS = fileList.first == VS && !fileList.second.empty();
+		auto isPS = fileList.first == PS && !fileList.second.empty();
 		return isVS || isPS; });
 
 	if (count < 2) return true;	//vs, ps가 없는 경우는 pipeline을 만들지 않는다.
 
-	ReturnIfFalse(InsertShaderList(psoType, ShaderType::VS, GetShaderFilename(psoType, ShaderType::VS)));
-	ReturnIfFalse(InsertShaderList(psoType, ShaderType::PS, GetShaderFilename(psoType, ShaderType::PS)));
+	ReturnIfFalse(InsertShaderList(psoType, VS, GetShaderFilename(psoType, VS)));
+	ReturnIfFalse(InsertShaderList(psoType, PS, GetShaderFilename(psoType, PS)));
 
 	m_inputLayout =
 	{
@@ -71,8 +83,8 @@ bool CShader::SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	inoutDesc->VS = GetShaderBytecode(psoType, ShaderType::VS);
-	inoutDesc->PS = GetShaderBytecode(psoType, ShaderType::PS);
+	inoutDesc->VS = GetShaderBytecode(psoType, VS);
+	inoutDesc->PS = GetShaderBytecode(psoType, PS);
 	inoutDesc->InputLayout = { m_inputLayout.data(), static_cast<UINT>(m_inputLayout.size()) };
 
 	return true;
