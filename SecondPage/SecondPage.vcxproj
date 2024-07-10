@@ -173,8 +173,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Resource\Shaders\Common.hlsli" />
     <None Include="..\Resource\Shaders\Cube\Type.hlsli" />
-    <None Include="..\Resource\Shaders\Opaque\Type.hlsli" />
+    <FxCompile Include="..\Resource\Shaders\Opaque\Type.hlsli">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
     <None Include="..\Resource\Shaders\Register.hlsli">
       <FileType>Document</FileType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

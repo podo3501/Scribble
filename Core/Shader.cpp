@@ -27,8 +27,10 @@ inline static std::string m_shaderVersion[EtoV(ShaderType::Count)] =
 
 bool CShader::InsertShaderList(GraphicsPSO psoType, ShaderType shaderType, std::wstring&& filename)
 {
+	const D3D_SHADER_MACRO defines[] = { "DIR", "1", NULL, NULL};
+
 	ReturnIfFalse(CoreUtil::CompileShader(
-		std::move(filename), nullptr, "main", m_shaderVersion[EtoV(shaderType)],
+		std::move(filename), defines, "main", m_shaderVersion[EtoV(shaderType)],
 		&m_shaderList[EtoV(psoType)][EtoV(shaderType)]));
 
 	return true;

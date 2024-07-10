@@ -117,10 +117,10 @@
     <None Include="..\Resource\Shaders\Cube\Type.hlsli">
       <Filter>리소스 파일\Shaders\Cube</Filter>
     </None>
-    <None Include="..\Resource\Shaders\Opaque\Type.hlsli">
-      <Filter>리소스 파일\Shaders\Opaque</Filter>
-    </None>
     <None Include="..\Resource\Shaders\Register.hlsli">
+      <Filter>리소스 파일\Shaders</Filter>
+    </None>
+    <None Include="..\Resource\Shaders\Common.hlsli">
       <Filter>리소스 파일\Shaders</Filter>
     </None>
   </ItemGroup>
@@ -135,6 +135,9 @@
       <Filter>리소스 파일\Shaders\Opaque</Filter>
     </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Opaque\VS.hlsl">
+      <Filter>리소스 파일\Shaders\Opaque</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Opaque\Type.hlsli">
       <Filter>리소스 파일\Shaders\Opaque</Filter>
     </FxCompile>
   </ItemGroup>

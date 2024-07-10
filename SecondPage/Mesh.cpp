@@ -34,16 +34,17 @@ bool CMesh::LoadGeometry(GraphicsPSO pso, const std::string& meshName, ModelProp
 
 	return true;
 }
-
+#include <filesystem>
 std::unique_ptr<MeshData> CMesh::ReadFile(const std::wstring& filename)
 {
+	auto path = std::filesystem::current_path();
 	std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
 
 	std::wstring fullFilename = m_resPath + m_filePath + filename;
 	std::ifstream fin(fullFilename);
 	if (fin.fail())
 		return nullptr;
-
+	
 	UINT vCount = 0;
 	UINT iCount = 0;
 	std::string ignore;

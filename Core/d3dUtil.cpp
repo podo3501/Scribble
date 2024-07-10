@@ -1,6 +1,7 @@
 ﻿#include "./d3dUtil.h"
 #include <comdef.h>
 #include <fstream>
+#include <stack>
 #include "../Core/DirectXTK12Inc/WICTextureLoader.h"
 
 using Microsoft::WRL::ComPtr;
@@ -89,6 +90,70 @@ bool CoreUtil::CreateDefaultBuffer(
     return true;
 }
 
+std::wstring GetWstring(LPCSTR pFileName)
+{
+    std::string str = std::string(pFileName);
+    return std::wstring().assign(str.begin(), str.end());
+}
+
+std::wstring SplitPath(const std::wstring& fullFilename)
+{
+    std::wstring fullname{ fullFilename };
+    auto find = fullname.rfind(L"/");
+    return fullname.substr(0, find + 1);
+}
+
+class IncludeProcessor : public ID3DInclude
+{
+public:
+    IncludeProcessor(const std::wstring path)
+    {
+        m_stackPath.push(path);
+    }
+
+    ~IncludeProcessor()
+    {
+        m_stackPath.pop();
+        assert(m_stackPath.empty());
+    }
+
+private:
+    std::stack<std::wstring> m_stackPath{};
+
+public:
+    HRESULT STDMETHODCALLTYPE Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes) noexcept override
+    {
+        std::wstring path = m_stackPath.top();
+        std::wstring fullFilename = path + GetWstring(pFileName);
+        std::wstring parentPath = SplitPath(fullFilename);
+        m_stackPath.push(parentPath);
+
+        std::ifstream ifs(fullFilename);
+        if (ifs.fail()) return E_FAIL;
+
+        std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        ifs.close();
+
+        UINT numBytes = static_cast<UINT>(str.size());
+
+        char* pData;
+        pData = new char[numBytes + 1]; // (char*)malloc( numBytes+1 ); // Add 1 for the null terminator that is appended by strncpy_s.
+        strncpy_s(pData, numBytes + 1, str.data(), str.size());
+
+        *ppData = (LPCVOID)pData;
+        *pBytes = numBytes;
+
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE Close(LPCVOID pData) noexcept override
+    {
+        delete[](char*)pData;
+        m_stackPath.pop();
+        return S_OK;
+    }
+};
+
 bool CoreUtil::CompileShader(
 	const std::wstring& filename,
 	const D3D_SHADER_MACRO* defines,
@@ -103,9 +168,10 @@ bool CoreUtil::CompileShader(
 
 	HRESULT hr = S_OK;
     
-	ComPtr<ID3DBlob> byteCode = nullptr;
-	ComPtr<ID3DBlob> errors;
-	hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+    IncludeProcessor includeProcessor(SplitPath(filename));
+	ComPtr<ID3DBlob> byteCode{ nullptr };
+    ComPtr<ID3DBlob> errors{ nullptr };
+	hr = D3DCompileFromFile(filename.c_str(), defines, &includeProcessor,
 		entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
 
 	if(errors != nullptr)
