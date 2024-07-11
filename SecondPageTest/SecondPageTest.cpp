@@ -22,8 +22,27 @@
 #include "../SecondPage/Helper.h"
 #include "../SecondPage/Utility.h"
 
+using enum GraphicsPSO;
+using enum ShaderType;
+
 namespace MainLoop
 {
+	ShaderFileList GetShaderTestFileList()
+	{
+		ShaderFileList shaderFileList{};
+		auto InsertShaderFile = [&shaderFileList](GraphicsPSO pso, ShaderType type, const std::wstring filename) {
+			shaderFileList[pso].emplace_back(std::make_pair(type, filename)); };
+
+		InsertShaderFile(Sky, VS, L"Cube/VS.hlsl");
+		InsertShaderFile(Sky, PS, L"Cube/PS.hlsl");
+		InsertShaderFile(Opaque, VS, L"Opaque/VS.hlsl");
+		InsertShaderFile(Opaque, PS, L"Opaque/PS.hlsl");
+		InsertShaderFile(NormalOpaque, VS, L"NormalOpaque/VS.hlsl");
+		InsertShaderFile(NormalOpaque, PS, L"NormalOpaque/PS.hlsl");
+
+		return shaderFileList;
+	}
+
 	class MainLoopClassTest : public ::testing::Test
 	{
 	public:
@@ -33,15 +52,15 @@ namespace MainLoop
 		void SetUp() override
 		{
 			m_window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-			EXPECT_EQ(m_window->Initialize(false), true);
-			
+			EXPECT_TRUE(m_window->Initialize(false));
+
 			m_renderer = CreateRenderer(
-				m_resourcePath, 
-				m_window->GetHandle(), 
-				m_window->GetWidth(), 
+				m_resourcePath,
+				m_window->GetHandle(),
+				m_window->GetWidth(),
 				m_window->GetHeight(),
-				GetShaderFileList());
-			EXPECT_EQ(m_renderer != nullptr, true);
+				GetShaderTestFileList());
+			EXPECT_TRUE(m_renderer != nullptr);
 		}
 
 		void TearDown() override
@@ -49,7 +68,7 @@ namespace MainLoop
 			m_renderer.reset();
 			m_window.reset();
 		}
-		
+
 	protected:
 		std::wstring m_resourcePath{ L"../Resource/" };
 		std::unique_ptr<CWindow> m_window{ nullptr };
@@ -91,11 +110,11 @@ namespace MainLoop
 	ModelProperty TestCreateMock()
 	{
 		MaterialList materialList;
-		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds", {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Common, L"bricks.dds", {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Common, L"bricks2.dds", {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, { L"bricks.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, { L"grasscube1024.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, { L"bricks.dds", L"bricks2_nmap.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Common, { L"bricks.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Common, { L"bricks2.dds", L"bricks2_nmap.dds" }, {}, {}, 0.1f));
 
 		ModelProperty  modelProp{};
 		modelProp.createType = ModelProperty::CreateType::Generator;
@@ -112,23 +131,24 @@ namespace MainLoop
 	{
 		virtual bool LoadTexture(const TextureList& textureList) override
 		{
-			EXPECT_EQ(textureList.size(), 3);
+			EXPECT_EQ(textureList.size(), 4);
 
 			return true;
 		}
 	};
 
-	TEST_F(MainLoopClassTest, MockData)
+	TEST_F(MainLoopClassTest, Material)
 	{
 		std::unique_ptr<CMaterial> material = std::make_unique<CMaterial>();
 		std::unique_ptr<CSetupData> setupData = std::make_unique<CSetupData>();
-		setupData->InsertModelProperty(GraphicsPSO::Opaque, "cube1", TestCreateMock(), material.get());
-		setupData->InsertModelProperty(GraphicsPSO::Opaque, "cube2", TestCreateMock(), material.get());
+		setupData->InsertModelProperty(Opaque, "cube1", TestCreateMock(), material.get());
+		setupData->InsertModelProperty(Opaque, "cube2", TestCreateMock(), material.get());
 
 		std::unique_ptr<IRenderer> mockRenderer = std::make_unique<GMockTestRenderer>();
-		EXPECT_EQ(material->LoadTextureIntoVRAM(mockRenderer.get()), true);
-		EXPECT_EQ(material->GetDiffuseIndex(L"bricks.dds"), 0);
-		EXPECT_EQ(material->GetDiffuseIndex(L"brickddddd"), -1);
+		EXPECT_TRUE(material->LoadTextureIntoVRAM(mockRenderer.get()));
+		EXPECT_EQ(material->GetTextureIndex(L"bricks.dds"), 0);
+		EXPECT_EQ(material->GetTextureIndex(L"brickddddd"), -1);
+		EXPECT_EQ(material->GetTextureIndex(L"bricks2_nmap.dds"), 3);
 		EXPECT_EQ(material->GetMaterialIndex("bricks1"), 2);
 		EXPECT_EQ(material->GetMaterialIndex("bricks2"), 3);
 	}
@@ -151,16 +171,17 @@ namespace MainLoop
 	{
 		return CreateModelNames
 		{
-			{GraphicsPSO::Sky, { "cube" } },
-			{GraphicsPSO::Opaque, { "skull", "grid" } },
+			{Sky, { "cube" } },
+			{Opaque, { "skull" } },
+			{NormalOpaque, { "grid" } },
 		};
 	}
 	TEST_F(MainLoopClassTest, Instance)
 	{
 		AllRenderItems allRenderItems{};
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
-		EXPECT_EQ(model->Initialize(m_resourcePath, MakeTestMockData()), true);
-		EXPECT_EQ(model->LoadMemory(m_renderer.get(), allRenderItems), true);
+		EXPECT_TRUE(model->Initialize(m_resourcePath, MakeTestMockData()));
+		EXPECT_TRUE(model->LoadMemory(m_renderer.get(), allRenderItems));
 
 		GInstanceRenderer renderer{};
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
@@ -168,9 +189,9 @@ namespace MainLoop
 		camera->Update(0.1f);
 		model->Update(&renderer, camera.get(), allRenderItems);
 
-		SubRenderItem* subItem = GetSubRenderItem(allRenderItems, GraphicsPSO::Opaque, "grid");
+		SubRenderItem* subItem = GetSubRenderItem(allRenderItems, NormalOpaque, "grid");
 		EXPECT_EQ(subItem->instanceCount, 1);
-		EXPECT_EQ(subItem->startSubIndexInstance, 115);
+		EXPECT_EQ(subItem->startSubIndexInstance, 0);
 	}
 } //SecondPage
 
@@ -200,9 +221,9 @@ namespace A_SecondPage
 			GetShaderFileList());
 
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
-		EXPECT_EQ(mainLoop->Initialize(resPath, window.get(), renderer.get()), true);
+		EXPECT_TRUE(mainLoop->Initialize(resPath, window.get(), renderer.get()));
 
 		GTestRenderer testRenderer{};
-		EXPECT_EQ(mainLoop->Run(&testRenderer), true);
+		EXPECT_TRUE(mainLoop->Run(&testRenderer));
 	}
 }

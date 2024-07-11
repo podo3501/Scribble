@@ -34,11 +34,7 @@ RenderItem* GetRenderItem(AllRenderItems& allRenderItems, GraphicsPSO pso)
 	if (findGeo != allRenderItems.end())
 		pRenderItem = findGeo->second.get();
 	else
-	{
-		auto renderItem = std::make_unique<RenderItem>();
-		pRenderItem = renderItem.get();
-		allRenderItems.insert(std::make_pair(pso, std::move(renderItem)));
-	}
+		return nullptr;
 
 	return pRenderItem;
 }
@@ -54,8 +50,23 @@ SubRenderItem* GetSubRenderItem(RenderItem* renderItem, const std::string& meshN
 	return &subRItems[meshName];
 }
 
+SubRenderItem* MakeSubRenderItem(AllRenderItems& allRenderItems, GraphicsPSO pso, const std::string& meshName)
+{
+	auto* rItem = GetRenderItem(allRenderItems, pso);
+	if (rItem != nullptr) 
+		return GetSubRenderItem(rItem, meshName);
+	
+	auto renderItem = std::make_unique<RenderItem>();
+	RenderItem* pRenderItem = renderItem.get();
+	allRenderItems.insert(std::make_pair(pso, std::move(renderItem)));
+	
+	return GetSubRenderItem(pRenderItem, meshName);
+}
+
 SubRenderItem* GetSubRenderItem(AllRenderItems& allRenderItems, GraphicsPSO pso, const std::string& meshName)
 {
 	RenderItem* renderItem = GetRenderItem(allRenderItems, pso);
+	if (renderItem == nullptr) return nullptr;
+
 	return GetSubRenderItem(renderItem, meshName);
 }

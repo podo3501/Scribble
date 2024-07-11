@@ -66,7 +66,7 @@ struct MaterialBuffer
     DirectX::XMFLOAT4X4 matTransform{};
 
     UINT diffuseMapIndex{ 0u };
-    UINT materialPad0{ 0u };
+    UINT NormalMapIndex{ 0u };
     UINT materialPad1{ 0u };
     UINT materialPad2{ 0u };
 };
@@ -78,12 +78,14 @@ struct Vertex
     Vertex(
         const DirectX::XMFLOAT3& p,
         const DirectX::XMFLOAT3& n,
-        const DirectX::XMFLOAT2& t)
-        : pos(p), normal(n), texC(t) {}
+        const DirectX::XMFLOAT2& u,
+        const DirectX::XMFLOAT3& t)
+        : pos(p), normal(n), texC(u) ,tangentU(t) {}
 
     DirectX::XMFLOAT3 pos{};
     DirectX::XMFLOAT3 normal{};
     DirectX::XMFLOAT2 texC{};
+    DirectX::XMFLOAT3 tangentU{};
 };
 
 using Vertices = std::vector<Vertex>;

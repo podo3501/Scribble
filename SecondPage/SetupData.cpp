@@ -20,7 +20,7 @@ bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 {
 	std::ranges::for_each(m_allModelProperty, [renderItems](auto& geoProp) {
 		std::ranges::for_each(geoProp.second, [renderItems, &geoProp](auto& meshProp) {
-			SubRenderItem* subRenderItem = GetSubRenderItem((*renderItems), geoProp.first, meshProp.first);
+			SubRenderItem* subRenderItem = MakeSubRenderItem((*renderItems), geoProp.first, meshProp.first);
 			subRenderItem->instanceDataList = meshProp.second.instanceDataList;
 			subRenderItem->cullingFrustum = meshProp.second.cullingFrustum;
 			});

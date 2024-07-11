@@ -11,14 +11,19 @@
 #include "./Mesh.h"
 #include "./Utility.h"
 
-std::unique_ptr<Material> MakeMaterial(std::string&& name, eTextureType type, std::wstring&& filename,
+std::wstring GetFilename(std::vector<std::wstring>& fileList, int index)
+{
+	return fileList.size() >= index + 1 ? fileList[index] : L"";
+}
+
+std::unique_ptr<Material> MakeMaterial(std::string&& name, eTextureType type, std::vector<std::wstring> texFilenames,
 	DirectX::XMFLOAT4 diffuseAlbedo, DirectX::XMFLOAT3 fresnelR0, float rough)
 {
 	std::unique_ptr<Material> material = std::make_unique<Material>();
 	material->name = std::move(name);
 	material->type = type;
-	material->filename = std::move(filename);
-	material->normalSrvHeapIndex = 0;
+	material->diffuseName = GetFilename(texFilenames, 0);
+	material->normalName = GetFilename(texFilenames, 1);
 	material->diffuseAlbedo = diffuseAlbedo;
 	material->fresnelR0 = fresnelR0;
 	material->roughness = rough;
@@ -42,7 +47,7 @@ std::unique_ptr<MeshData> Generator(std::string&& meshName)
 	meshData->name = std::move(meshName);
 
 	std::ranges::transform(genMeshData.Vertices, std::back_inserter(meshData->vertices),
-		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC); });
+		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC, gen.TangentU); });
 	meshData->indices.insert(meshData->indices.end(), genMeshData.Indices32.begin(), genMeshData.Indices32.end());
 
 	return std::move(meshData);
@@ -96,14 +101,14 @@ InstanceDataList CreateCylinderInstanceData(const std::vector<std::string>& mate
 {
 	InstanceDataList instances{};
 	
-	for (auto i{ 0 }; i < 2; ++i)
+	for(auto i : std::views::iota(0, 2))
 	{
 		auto instance = std::make_unique<InstanceData>();
 		instance->world = DirectX::XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i * 20.0f);;
 		instances.emplace_back(std::move(instance));
 	}
 
-	for (auto i{ 0 }; i < 2; ++i)
+	for (auto i : std::views::iota(0, 2))
 	{
 		auto instance = std::make_unique<InstanceData>();
 		instance->world = DirectX::XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i * 20.0f);
@@ -146,7 +151,7 @@ InstanceDataList CreateGridInstanceData(const std::vector<std::string>& material
 ModelProperty CreateCubeMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, L"grasscube1024.dds",
+	materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, { L"grasscube1024.dds" },
 		{ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f));
 
 	std::vector<std::string> materialNameList{};
@@ -167,13 +172,13 @@ ModelProperty CreateCubeMock()
 ModelProperty CreateSkullMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Common, L"stone.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Common, L"tile.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Common, L"WoodCrate01.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Common, L"ice.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
-	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Common, L"grass.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Common, L"white1x1.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));
+	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, { L"bricks.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Common, { L"stone.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Common, { L"tile.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Common, { L"WoodCrate01.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Common, { L"ice.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
+	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Common, { L"grass.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Common, { L"white1x1.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -193,7 +198,7 @@ ModelProperty CreateSkullMock()
 ModelProperty CreateGridMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Common, L"tile.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("nTile", eTextureType::Common, { L"tile.dds", L"tile_nmap.dds" }, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f));
 	
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -213,7 +218,7 @@ ModelProperty CreateGridMock()
 ModelProperty CreateCylinderMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, L"bricks.dds", { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("nBricks2", eTextureType::Common, { L"bricks.dds", L"bricks_nmap.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -248,8 +253,9 @@ CreateModelNames MakeMockData()
 {
 	return CreateModelNames
 	{
-		{GraphicsPSO::Sky, { "cube" } },
-		{GraphicsPSO::Opaque, { "skull", "grid", "cylinder" }},
+		{GraphicsPSO::Sky, { "cube" }},
+		{GraphicsPSO::Opaque, { "skull" }},
+		{GraphicsPSO::NormalOpaque, { "grid", "cylinder" }},
 	};
 }
 
@@ -276,6 +282,8 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::Sky, ShaderType::PS, L"Cube/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::VS, L"Opaque/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::PS, L"Opaque/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::VS, L"NormalOpaque/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::PS, L"NormalOpaque/PS.hlsl");
 
 	return shaderFileList;
 }

@@ -1,5 +1,6 @@
 ﻿#include "./FrameResources.h"
 #include <d3d12.h>
+#include <ranges>
 #include "./d3dUtil.h"
 #include "./UploadBuffer.h"
 #include "./Renderer.h"
@@ -40,7 +41,7 @@ bool CFrameResources::Resource::CreateUpdateBuffer(
 bool CFrameResources::BuildFrameResources(ID3D12Device* device,
 	UINT passCount, UINT instanceCount, UINT matCount)
 {
-	for (auto i{ 0 }; i < gFrameResourceCount; ++i)
+	for (auto i : std::views::iota(0, gFrameResourceCount))
 	{
 		auto frameRes = std::make_unique<Resource>();
 		ReturnIfFalse(frameRes->CreateUpdateBuffer(device, passCount, instanceCount, matCount));

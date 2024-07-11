@@ -237,6 +237,7 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	{
 	case GraphicsPSO::Sky:				MakeSkyDesc(&psoDesc);				break;
 	case GraphicsPSO::Opaque:		MakeOpaqueDesc(&psoDesc);		break;
+	case GraphicsPSO::NormalOpaque:		MakeNormalOpaqueDesc(&psoDesc);		break;
 	default: assert(!"wrong type");
 	}
 	
@@ -266,6 +267,9 @@ void CRenderer::MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 }
 
 void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{}
+
+void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {}
 
 bool CRenderer::Draw(AllRenderItems& renderItem)

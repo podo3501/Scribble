@@ -156,8 +156,11 @@ bool CMainLoop::Run(IRenderer* renderer)
 			if (!fps.empty())
 			{
 				SubRenderItem* renderItem = GetSubRenderItem(m_AllRenderItems, GraphicsPSO::Opaque, "skull");
-				std::wstring caption = SetWindowCaption(renderItem->instanceCount, renderItem->instanceDataList.size());
-				m_window->SetText(caption + fps);
+				if (renderItem != nullptr)
+				{
+					std::wstring caption = SetWindowCaption(renderItem->instanceCount, renderItem->instanceDataList.size());
+					m_window->SetText(caption + fps);
+				}
 			}
 			
 			m_keyInput->CheckInput();

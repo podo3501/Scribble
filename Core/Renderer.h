@@ -56,6 +56,7 @@ private:
 	void MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 

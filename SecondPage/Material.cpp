@@ -19,10 +19,15 @@ CMaterial::CMaterial()
 {}
 CMaterial::~CMaterial() = default;
 
-bool CMaterial::CheckSameFilename(const std::wstring& filename)
+void CMaterial::InsertTexture(eTextureType type, const std::wstring& filename)
 {
-	return std::ranges::count_if(m_textureList, [&filename](auto& tex) {
+	if (filename.empty()) return;
+
+	auto find = std::ranges::find_if(m_textureList, [&filename](auto& tex) {
 		return tex.second == filename; });
+	if (find != m_textureList.end()) return;
+
+	m_textureList.emplace_back(std::make_pair(type, filename));
 }
 
 void CMaterial::SetMaterialList(const MaterialList& materialList)
@@ -32,11 +37,9 @@ void CMaterial::SetMaterialList(const MaterialList& materialList)
 			return mMat->name == mat->name; });
 		return (find == m_materialList.end()); });
 
-	auto uniqNameMatList = m_materialList |
-		std::views::filter([this](auto& iter) { return CheckSameFilename(iter->filename) == false; });
-
-	std::ranges::transform(uniqNameMatList, std::back_inserter(m_textureList), [this](auto& mat) {
-		return std::make_pair(mat->type, mat->filename); });
+	std::ranges::for_each(m_materialList, [this](auto& mat) {
+		InsertTexture(mat->type, mat->diffuseName);
+		InsertTexture(mat->type, mat->normalName); });
 }
 
 bool CMaterial::LoadTextureIntoVRAM(IRenderer* renderer)
@@ -46,7 +49,7 @@ bool CMaterial::LoadTextureIntoVRAM(IRenderer* renderer)
 	return true;
 }
 
-int CMaterial::GetDiffuseIndex(const std::wstring& filename)
+int CMaterial::GetTextureIndex(const std::wstring& filename)
 {
 	auto find = std::ranges::find_if(m_textureList, [&filename](auto& tex) {
 		return tex.second == filename; });
@@ -67,10 +70,11 @@ int CMaterial::GetMaterialIndex(const std::string& matName)
 	return static_cast<int>(std::distance(m_materialList.begin(), find));
 }
 
-MaterialBuffer CMaterial::ConvertUploadBuffer(UINT diffuseIndex, Material* material)
+MaterialBuffer CMaterial::ConvertUploadBuffer(Material* material)
 {
 	MaterialBuffer matData;
-	matData.diffuseMapIndex = diffuseIndex;
+	matData.diffuseMapIndex = GetTextureIndex(material->diffuseName);
+	matData.NormalMapIndex = GetTextureIndex(material->normalName);
 	matData.diffuseAlbedo = material->diffuseAlbedo;
 	matData.fresnelR0 = material->fresnelR0;
 	matData.roughness = material->roughness;
@@ -86,8 +90,7 @@ void CMaterial::MakeMaterialBuffer(IRenderer* renderer)
 		Material* mat = m.get();
 		if (mat->numFramesDirty <= 0) return;
 
-		int diffuseIndex = GetDiffuseIndex(mat->filename);
-		materialBufferDatas.emplace_back(ConvertUploadBuffer(diffuseIndex, mat));
+		materialBufferDatas.emplace_back(ConvertUploadBuffer(mat));
 		mat->numFramesDirty--; });
 
 	if (materialBufferDatas.empty())

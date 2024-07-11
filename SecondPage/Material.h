@@ -18,9 +18,10 @@ struct Material
 
 	std::string name{};
 	eTextureType type;
-	std::wstring filename{};
-	UINT diffuseIndex{ 0 };
-	UINT normalSrvHeapIndex{ 0 };	//normal map
+	std::wstring diffuseName{};
+	std::wstring normalName{};
+	//UINT diffuseIndex{ 0 };
+	//UINT normalSrvHeapIndex{ 0 };	//normal map
 
 	DirectX::XMFLOAT4 diffuseAlbedo{ 1.0f, 1.0f, 1.0f, 1.0f };
 	DirectX::XMFLOAT3 fresnelR0{ 0.01f, 0.01f, 0.01f };
@@ -48,12 +49,12 @@ public:
 	bool LoadTextureIntoVRAM(IRenderer* renderer);
 	void MakeMaterialBuffer(IRenderer* renderer);
 
-	int GetDiffuseIndex(const std::wstring& filename);
+	int GetTextureIndex(const std::wstring& filename);
 	int GetMaterialIndex(const std::string& matName);
 
 private:
-	MaterialBuffer ConvertUploadBuffer(UINT diffuseIndex, Material* material);
-	bool CheckSameFilename(const std::wstring& filename);
+	MaterialBuffer ConvertUploadBuffer(Material* material);
+	void InsertTexture(eTextureType type, const std::wstring& filename);
 
 private:
 	MaterialList m_materialList;

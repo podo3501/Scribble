@@ -64,6 +64,22 @@ std::wstring CShader::GetShaderFilename(GraphicsPSO psoType, ShaderType shaderTy
 	return m_resPath + m_filePath + find->second;
 }
 
+std::vector<D3D12_INPUT_ELEMENT_DESC> GetLayout(GraphicsPSO psoType)
+{
+	std::vector<D3D12_INPUT_ELEMENT_DESC> layout =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+
+	/*if(psoType == GraphicsPSO::NormalOpaque)
+		layout.push_back({ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });*/
+
+	return layout; 
+}
+
 bool CShader::SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
 	auto count = std::ranges::count_if(m_shaderFileList[psoType], [](auto& fileList) {
@@ -71,17 +87,12 @@ bool CShader::SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_
 		auto isPS = fileList.first == PS && !fileList.second.empty();
 		return isVS || isPS; });
 
-	if (count < 2) return true;	//vs, ps가 없는 경우는 pipeline을 만들지 않는다.
+	if (count < 2) return false;	//vs, ps가 없는 경우는 pipeline을 만들지 않는다.
 
 	ReturnIfFalse(InsertShaderList(psoType, VS, GetShaderFilename(psoType, VS)));
 	ReturnIfFalse(InsertShaderList(psoType, PS, GetShaderFilename(psoType, PS)));
 
-	m_inputLayout =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
+	m_inputLayout = GetLayout(psoType);
 
 	inoutDesc->VS = GetShaderBytecode(psoType, VS);
 	inoutDesc->PS = GetShaderBytecode(psoType, PS);
