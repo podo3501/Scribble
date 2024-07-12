@@ -4,8 +4,9 @@
 enum class eTextureType : int
 {
 	None = 0,
-	Cube,
-	Common,
+	ShadowMap,
+	TextureCube,
+	Texture2D,
 };
 
 enum class ShaderType : int

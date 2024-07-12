@@ -255,7 +255,7 @@ bool CDirectx3D::CreateRtvAndDsvDescriptorHeaps()
 	ReturnIfFalse(CreateDescriptorHeap(
 		SwapChainBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_rtvHeap.GetAddressOf()));
 	ReturnIfFalse(CreateDescriptorHeap(
-		1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_dsvHeap.GetAddressOf()));
+		2, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_dsvHeap.GetAddressOf()));
 
 	return true;
 }
@@ -321,7 +321,7 @@ bool CDirectx3D::OnResize(int width, int height)
 		IID_PPV_ARGS(m_depthStencilBuffer.GetAddressOf())));
 
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
-	m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, DepthStencilView());
+	CreateDepthStencilView(0, m_depthStencilBuffer.Get(), nullptr);
 
 	// Transition the resource from its initial state to be used as a depth buffer.
 	CD3DX12_RESOURCE_BARRIER barrier(CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(),
@@ -400,6 +400,15 @@ void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutD
 	inoutDesc->SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
 }
 
+void CDirectx3D::CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc)
+{
+	static UINT dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ m_dsvHeap->GetCPUDescriptorHandleForHeapStart() };
+	hCpuDesc.Offset(dsvOffset, dsvDescriptorSize);
+	m_device->CreateDepthStencilView(pRes, pDesc, hCpuDesc);
+}
+
 bool CDirectx3D::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 {
 	if (m_4xMsaaState == value)
@@ -410,10 +419,5 @@ bool CDirectx3D::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 	ReturnIfFalse(OnResize(width, height));
 
 	return true;
-}
-
-inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
-{
-	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 

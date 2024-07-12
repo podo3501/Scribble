@@ -44,20 +44,16 @@ void CMaterial::SetMaterialList(const MaterialList& materialList)
 
 bool CMaterial::LoadTextureIntoVRAM(IRenderer* renderer)
 {
-	renderer->LoadTexture(m_textureList);
-
-	return true;
+	return renderer->LoadTexture(m_textureList, &m_srvTextureList);
 }
 
-int CMaterial::GetTextureIndex(const std::wstring& filename)
+int CMaterial::GetSrvTextureIndex(const std::wstring& filename)
 {
-	auto find = std::ranges::find_if(m_textureList, [&filename](auto& tex) {
-		return tex.second == filename; });
-	
-	if (find == m_textureList.end())
+	auto find = std::ranges::find(m_srvTextureList, filename);
+	if (find == m_srvTextureList.end())
 		return -1;
 
-	return static_cast<int>(std::distance(m_textureList.begin(), find));
+	return static_cast<int>(std::distance(m_srvTextureList.begin(), find));
 }
 
 int CMaterial::GetMaterialIndex(const std::string& matName)
@@ -73,8 +69,8 @@ int CMaterial::GetMaterialIndex(const std::string& matName)
 MaterialBuffer CMaterial::ConvertUploadBuffer(Material* material)
 {
 	MaterialBuffer matData;
-	matData.diffuseMapIndex = GetTextureIndex(material->diffuseName);
-	matData.NormalMapIndex = GetTextureIndex(material->normalName);
+	matData.diffuseMapIndex = GetSrvTextureIndex(material->diffuseName);
+	matData.NormalMapIndex = GetSrvTextureIndex(material->normalName);
 	matData.diffuseAlbedo = material->diffuseAlbedo;
 	matData.fresnelR0 = material->fresnelR0;
 	matData.roughness = material->roughness;

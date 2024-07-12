@@ -58,6 +58,8 @@ public:
 	bool Set4xMsaaState(HWND hwnd, int width, int height, bool value);
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;
+	void CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, 
+		const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc);
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
@@ -120,4 +122,8 @@ inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::CurrentBackBufferView() const
 		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_currBackBuffer,
 		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+}
+inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
+{
+	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 }

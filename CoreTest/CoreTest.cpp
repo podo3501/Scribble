@@ -40,8 +40,8 @@ namespace Core
 			GetShaderShadowTestFileList()));
 
 		std::vector<std::wstring> srvFilename{};
-		//renderer->LoadTexture({}, &srvFilename);
-		EXPECT_TRUE(std::ranges::find(srvFilename, L"SHADOWMAPSRV") != srvFilename.end());
+		renderer->LoadTexture({}, &srvFilename);
+		EXPECT_TRUE(std::ranges::find(srvFilename, L"SHADOWMAP") != srvFilename.end());
 	}
 	TEST(CShader, Load)
 	{

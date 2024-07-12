@@ -26,23 +26,24 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
 		auto& type = tex.first;
 		auto& filename = tex.second;
 		auto texMemory = std::make_unique<TextureMemory>();
-		texMemory->filename = m_resPath + m_filePath + filename;
+
+		texMemory->path = m_resPath + m_filePath;
+		texMemory->filename = filename;
+		std::wstring fullFilename = texMemory->path + texMemory->filename;
+
 		ReturnIfFailed(CreateDDSTextureFromFile12(device, cmdList,
-			texMemory->filename.c_str(), texMemory->resource, texMemory->uploadHeap));
+			fullFilename.c_str(), texMemory->resource, texMemory->uploadHeap));
 		m_textureMemories.emplace_back(std::make_pair(type, std::move(texMemory)));
 		return true; });
 }
 
 void CTexture::CreateShaderResourceView(CRenderer* renderer)
 {
-	auto device = renderer->GetDevice();
-	UINT cbvSrvUavDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	auto srvDescHeap = renderer->GetSrvDescriptorHeap();
-
 	std::ranges::for_each(m_textureMemories,
-		[this, srvDescHeap, cbvSrvUavDescSize, device, offsetIndex{ 0 }](auto& curTex) mutable {
+		[renderer](auto& curTex) mutable {
 			auto& type = curTex.first;
-			auto& curTexRes = curTex.second->resource;
+			auto& curTexMemory = curTex.second;
+			auto& curTexRes = curTexMemory->resource;
 
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 			srvDesc.Format = curTexRes->GetDesc().Format;
@@ -52,18 +53,15 @@ void CTexture::CreateShaderResourceView(CRenderer* renderer)
 			srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
-			if (type == eTextureType::Cube)
+			if (type == eTextureType::TextureCube)
 			{
 				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 				srvDesc.TextureCube.MostDetailedMip = 0;
 				srvDesc.TextureCube.MipLevels = curTexRes->GetDesc().MipLevels;
 				srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 				srvDesc.Format = curTexRes->GetDesc().Format;
-				m_skyTexHeapIndex = offsetIndex;
 			}
 
-			CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-			hCpuDesc.Offset(offsetIndex++, cbvSrvUavDescSize);
-			device->CreateShaderResourceView(curTexRes.Get(), &srvDesc, hCpuDesc);
+			renderer->CreateShaderResourceView(curTexMemory->filename, curTexRes.Get(), &srvDesc);
 		});
 }

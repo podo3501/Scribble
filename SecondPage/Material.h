@@ -49,7 +49,7 @@ public:
 	bool LoadTextureIntoVRAM(IRenderer* renderer);
 	void MakeMaterialBuffer(IRenderer* renderer);
 
-	int GetTextureIndex(const std::wstring& filename);
+	int GetSrvTextureIndex(const std::wstring& filename);
 	int GetMaterialIndex(const std::string& matName);
 
 private:
@@ -59,4 +59,5 @@ private:
 private:
 	MaterialList m_materialList;
 	TextureList m_textureList;
+	std::vector<std::wstring> m_srvTextureList{};
 };

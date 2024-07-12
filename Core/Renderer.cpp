@@ -5,6 +5,7 @@
 #include "./d3dUtil.h"
 #include "./Shader.h"
 #include "./Texture.h"
+#include "./ShadowMap.h"
 #include "./FrameResources.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
@@ -26,30 +27,32 @@ std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int 
 CRenderer::CRenderer()
 	: m_directx3D{ nullptr }
 	, m_shader{ nullptr }
+	, m_texture{ nullptr }
+	, m_shadowMap{ nullptr }
 	, m_rootSignature{ nullptr }
 	, m_srvDescHeap{ nullptr }
 	, m_frameResources{ nullptr }
 	, m_psoList{}
-	, m_texture{ nullptr }
 {}
 
 CRenderer::~CRenderer() = default;
 
 bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
-	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_directx3D = std::make_unique<CDirectx3D>();
-	m_texture = std::make_unique<CTexture>(resPath);
-
 	ReturnIfFalse(m_directx3D->Initialize(hwnd, width, height));
-
 	m_device = m_directx3D->GetDevice();
 	m_cmdList = m_directx3D->GetCommandList();
+
+	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
+	m_texture = std::make_unique<CTexture>(resPath);
+	m_shadowMap = std::make_unique<CShadowMap>(this, 2048, 2048);
 
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
 	ReturnIfFalse(BuildPSOs());
 	ReturnIfFalse(MakeFrameResource());
+	ReturnIfFalse(m_shadowMap->Initialize());
 
 	m_isInitialize = true;
 
@@ -119,20 +122,15 @@ bool CRenderer::LoadTexture(const TextureList& textureList)
 	return true;
 }
 
-bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wstring> srvFilename)
+bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename)
 {
-	//if (m_shader->IsShadowMap())
-	//{
-	//	ReturnIfFalse(LoadData(
-	//		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-	//			return (m_shadowMap->Upload(device, cmdList)); }));
-	//}
-
 	ReturnIfFalse(LoadData(
 		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 			return (m_texture->Upload(device, cmdList, textureList)); }));
 
 	m_texture->CreateShaderResourceView(this);
+
+	(*srvFilename) = m_srvFilename;
 
 	return true;
 }
@@ -174,8 +172,8 @@ enum class ParamType : int
 	Pass = 0,
 	Material,
 	Instance,
-	Cube,
 	Shadow,
+	Cube,
 	Diffuse,
 	Count,
 };
@@ -334,9 +332,9 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	auto passCBRes = m_frameResources->GetResource(eBufferType::PassCB);
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), passCBRes->GetGPUVirtualAddress());
 
+	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Cube), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
@@ -380,6 +378,19 @@ void CRenderer::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 {
 	m_directx3D->Set4xMsaaState(hwnd, width, height, value);
 }
+
+void CRenderer::CreateShaderResourceView(const std::wstring& filename, 
+	ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc)
+{
+	static UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ m_srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
+	hCpuDesc.Offset(m_srvOffsetIndex++, cbvSrvUavDescSize);
+	m_device->CreateShaderResourceView(pRes, pDesc, hCpuDesc);
+	
+	m_srvFilename.emplace_back(filename);
+}
+
 
 
 

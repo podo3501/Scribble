@@ -37,7 +37,8 @@ private:
 		TextureMemory();
 		~TextureMemory();
 
-		std::string name{};// Unique material name for lookup.
+		//std::string name{};// Unique material name for lookup.
+		std::wstring path{};
 		std::wstring filename{};
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> resource;
@@ -49,7 +50,5 @@ private:
 	const std::wstring m_filePath;
 
 	std::vector<std::pair<eTextureType, std::unique_ptr<TextureMemory>>> m_textureMemories;
-
-	int m_skyTexHeapIndex{ 0 };
 };
 

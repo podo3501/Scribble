@@ -178,7 +178,7 @@ InstanceDataList CreateSphereInstanceData(const std::vector<std::string>& materi
 ModelProperty CreateCubeMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("sky", eTextureType::Cube, { L"grasscube1024.dds" },
+	materialList.emplace_back(MakeMaterial("sky", eTextureType::TextureCube, { L"grasscube1024.dds" },
 		{ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f));
 
 	std::vector<std::string> materialNameList{};
@@ -199,13 +199,13 @@ ModelProperty CreateCubeMock()
 ModelProperty CreateSkullMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Common, { L"bricks.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Common, { L"stone.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Common, { L"tile.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Common, { L"WoodCrate01.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Common, { L"ice.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
-	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Common, { L"grass.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Common, { L"white1x1.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));
+	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Texture2D, { L"bricks.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Texture2D, { L"stone.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Texture2D, { L"tile.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Texture2D, { L"WoodCrate01.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Texture2D, { L"ice.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
+	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Texture2D, { L"grass.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Texture2D, { L"white1x1.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -225,7 +225,7 @@ ModelProperty CreateSkullMock()
 ModelProperty CreateGridMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("nTile", eTextureType::Common, { L"tile.dds", L"tile_nmap.dds" }, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("nTile", eTextureType::Texture2D, { L"tile.dds", L"tile_nmap.dds" }, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -245,7 +245,7 @@ ModelProperty CreateGridMock()
 ModelProperty CreateCylinderMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("nBricks2", eTextureType::Common, { L"bricks.dds", L"bricks_nmap.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("nBricks2", eTextureType::Texture2D, { L"bricks.dds", L"bricks_nmap.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -265,7 +265,7 @@ ModelProperty CreateCylinderMock()
 ModelProperty CreateSphereMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("mirror0", eTextureType::Common, { L"white1x1.dds", L"default_nmap.dds" }, 
+	materialList.emplace_back(MakeMaterial("mirror0", eTextureType::Texture2D, { L"white1x1.dds", L"default_nmap.dds" },
 		{ 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f));
 
 	std::vector<std::string> materialNameList{};

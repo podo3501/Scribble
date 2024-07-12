@@ -143,6 +143,7 @@
     <ClInclude Include="headerUtility.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>
@@ -153,6 +154,7 @@
     <ClCompile Include="FrameResources.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="UploadBuffer.cpp" />
   </ItemGroup>
