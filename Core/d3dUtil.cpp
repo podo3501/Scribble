@@ -228,16 +228,31 @@ HRESULT CoreUtil::LoadTextureFromFile(
     return S_OK;
 }
 
+D3D12_STATIC_SAMPLER_DESC ShadowSampler(UINT registerIdx)
+{
+    return CD3DX12_STATIC_SAMPLER_DESC(
+        registerIdx, // shaderRegister
+        D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
+        D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
+        D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
+        D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
+        0.0f,                               // mipLODBias
+        16,                                 // maxAnisotropy
+        D3D12_COMPARISON_FUNC_LESS_EQUAL,
+        D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
+}
+
 std::vector<D3D12_STATIC_SAMPLER_DESC> CoreUtil::GetStaticSamplers()
 {
     std::vector<D3D12_STATIC_SAMPLER_DESC> samplers;
 
-    auto MakeSampler = [&samplers, count{ 0u }](D3D12_FILTER filter,
-        D3D12_TEXTURE_ADDRESS_MODE addressUVW, FLOAT mipLODBias = 0.0f, UINT maxAnisotropy = 16) mutable
+    UINT idx{ 0 };
+    auto MakeSampler = [&samplers, &idx](D3D12_FILTER filter,
+        D3D12_TEXTURE_ADDRESS_MODE addressUVW, FLOAT mipLODBias = 0.0f, UINT maxAnisotropy = 16)
         {
             samplers.emplace_back(CD3DX12_STATIC_SAMPLER_DESC
                 {
-                    count++, filter,
+                    idx++, filter,
                     addressUVW, addressUVW, addressUVW,
                     mipLODBias,
                     maxAnisotropy
@@ -250,6 +265,7 @@ std::vector<D3D12_STATIC_SAMPLER_DESC> CoreUtil::GetStaticSamplers()
     MakeSampler(D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
     MakeSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP, 0.0f, 8);
     MakeSampler(D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 0.0f, 8);
+    samplers.emplace_back(ShadowSampler(idx++));
 
     return samplers;
 }

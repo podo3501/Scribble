@@ -22,7 +22,6 @@ enum class eBufferType : int
     PassCB,
     Instance,
     Material,
-    Count,
 };
 
 struct PassConstants

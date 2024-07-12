@@ -119,6 +119,24 @@ bool CRenderer::LoadTexture(const TextureList& textureList)
 	return true;
 }
 
+bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wstring> srvFilename)
+{
+	//if (m_shader->IsShadowMap())
+	//{
+	//	ReturnIfFalse(LoadData(
+	//		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+	//			return (m_shadowMap->Upload(device, cmdList)); }));
+	//}
+
+	ReturnIfFalse(LoadData(
+		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+			return (m_texture->Upload(device, cmdList, textureList)); }));
+
+	m_texture->CreateShaderResourceView(this);
+
+	return true;
+}
+
 bool CRenderer::SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize)
 {
 	return m_frameResources->SetUploadBuffer(bufferType, bufferData, dataSize);
@@ -157,6 +175,7 @@ enum class ParamType : int
 	Material,
 	Instance,
 	Cube,
+	Shadow,
 	Diffuse,
 	Count,
 };
@@ -165,24 +184,29 @@ enum class ParamType : int
 //남아서 넘치는 건 상관없지만 셰이더 데이터에 빈공간이 있으면 안된다.
 //텍스춰는 빈공간이 있어도 상관없다.
 constexpr UINT CubeCount{ 1u };
+constexpr UINT ShadowCount{ 1u };
 constexpr UINT TextureCount{ 35u };
-constexpr UINT TotalHeapCount = CubeCount + TextureCount;
+constexpr UINT TotalHeapCount = CubeCount + ShadowCount + TextureCount;
 bool CRenderer::BuildRootSignature()
 {
-	CD3DX12_DESCRIPTOR_RANGE cubeTexTable{}, texTable{};
-	
-	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 0, 0);	//t0
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 1, 0);	//t1...t10(세번째인자)
+	using enum ParamType;
 
-	std::array<CD3DX12_ROOT_PARAMETER, EtoV(ParamType::Count)> slotRootParameter;
+	CD3DX12_DESCRIPTOR_RANGE shadowTexTable{}, cubeTexTable{}, texTable{};
+	
+	shadowTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ShadowCount, 0, 0); //t1
+	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 1, 0);	//t0
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 2, 0);	//t2...t10(세번째인자)
+
+	std::array<CD3DX12_ROOT_PARAMETER, EtoV(Count)> slotRootParameter;
 	auto GetRootParameter = [&slotRootParameter](ParamType type) {
 		return &slotRootParameter[EtoV(type)];	};
 
-	GetRootParameter(ParamType::Pass)->InitAsConstantBufferView(0);
-	GetRootParameter(ParamType::Material)->InitAsShaderResourceView(0, 1);
-	GetRootParameter(ParamType::Instance)->InitAsShaderResourceView(1, 1);
-	GetRootParameter(ParamType::Cube)->InitAsDescriptorTable(1, &cubeTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	GetRootParameter(ParamType::Diffuse)->InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(Pass)->InitAsConstantBufferView(0);
+	GetRootParameter(Material)->InitAsShaderResourceView(0, 1);
+	GetRootParameter(Instance)->InitAsShaderResourceView(1, 1);
+	GetRootParameter(Shadow)->InitAsDescriptorTable(1, &shadowTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(Cube)->InitAsDescriptorTable(1, &cubeTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(Diffuse)->InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	auto staticSamplers = CoreUtil::GetStaticSamplers();
 
@@ -238,6 +262,7 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	case GraphicsPSO::Sky:				MakeSkyDesc(&psoDesc);				break;
 	case GraphicsPSO::Opaque:		MakeOpaqueDesc(&psoDesc);		break;
 	case GraphicsPSO::NormalOpaque:		MakeNormalOpaqueDesc(&psoDesc);		break;
+	case GraphicsPSO::ShadowMap:		MakeShadowDesc(&psoDesc);		break;
 	default: assert(!"wrong type");
 	}
 	
@@ -271,6 +296,15 @@ void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 
 void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {}
+
+void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	inoutDesc->RasterizerState.DepthBias = 1000000;
+	inoutDesc->RasterizerState.DepthBiasClamp = 0.0f;
+	inoutDesc->RasterizerState.SlopeScaledDepthBias = 1.0f;
+	inoutDesc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	inoutDesc->NumRenderTargets = 0;
+}
 
 bool CRenderer::Draw(AllRenderItems& renderItem)
 {

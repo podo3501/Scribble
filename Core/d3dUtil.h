@@ -175,8 +175,12 @@ _Tp& RvToLv(_Tp&& __value)
 
 #ifndef ReturnIfFalse
 #define ReturnIfFalse(x)                       \
-{                                                             \
-    if(!x) return false;                          \
+{                                                               \
+    if(!x)                                                      \
+    {                                               \
+        assert(false);                          \
+        return false;                          \
+    }                                                       \
 }
 #endif
 

@@ -26,6 +26,7 @@ public:
 	CShader(const CShader&) = delete;
 	CShader& operator=(const CShader&) = delete;
 
+	bool IsShadowMap();
 	std::vector<GraphicsPSO> GetPSOList();
 	bool SetPipelineStateDesc(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 

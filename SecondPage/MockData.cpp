@@ -44,6 +44,8 @@ std::unique_ptr<MeshData> Generator(std::string&& meshName)
 		genMeshData = geoGen.CreateGrid(20.0f, 30.0f, 60, 40);
 	else if(meshName == "cylinder")
 		genMeshData = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
+	else if(meshName == "sphere")
+		genMeshData = geoGen.CreateSphere(0.5f, 20, 20);
 	meshData->name = std::move(meshName);
 
 	std::ranges::transform(genMeshData.Vertices, std::back_inserter(meshData->vertices),
@@ -148,6 +150,31 @@ InstanceDataList CreateGridInstanceData(const std::vector<std::string>& material
 	return instances;
 }
 
+InstanceDataList CreateSphereInstanceData(const std::vector<std::string>& materialNameList)
+{
+	InstanceDataList instances{};
+
+	for (auto i : std::views::iota(0, 2))
+	{
+		auto instance = std::make_unique<InstanceData>();
+		instance->world = DirectX::XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 20.0f);
+		instances.emplace_back(std::move(instance));
+	}
+
+	for (auto i : std::views::iota(0, 2))
+	{
+		auto instance = std::make_unique<InstanceData>();
+		instance->world = DirectX::XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 20.0f);
+		instances.emplace_back(std::move(instance));
+	}
+
+	std::ranges::for_each(instances, [&materialNameList](auto& instance) {
+		instance->texTransform = DirectX::XMMatrixIdentity();
+		instance->matName = *materialNameList.begin(); });
+
+	return instances;
+}
+
 ModelProperty CreateCubeMock()
 {
 	MaterialList materialList;
@@ -199,7 +226,7 @@ ModelProperty CreateGridMock()
 {
 	MaterialList materialList;
 	materialList.emplace_back(MakeMaterial("nTile", eTextureType::Common, { L"tile.dds", L"tile_nmap.dds" }, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f));
-	
+
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
 		return mat->name; });
@@ -235,6 +262,27 @@ ModelProperty CreateCylinderMock()
 	return modelProp;
 }
 
+ModelProperty CreateSphereMock()
+{
+	MaterialList materialList;
+	materialList.emplace_back(MakeMaterial("mirror0", eTextureType::Common, { L"white1x1.dds", L"default_nmap.dds" }, 
+		{ 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f));
+
+	std::vector<std::string> materialNameList{};
+	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
+		return mat->name; });
+
+	ModelProperty  modelProp{};
+	modelProp.createType = ModelProperty::CreateType::Generator;
+	modelProp.meshData = Generator("sphere");
+	modelProp.cullingFrustum = false;
+	modelProp.filename = {};
+	modelProp.instanceDataList = CreateSphereInstanceData(materialNameList);
+	modelProp.materialList = materialList;
+
+	return modelProp;
+}
+
 ModelProperty CreateMock(const std::string& meshName)
 {
 	if (meshName == "cube")
@@ -245,6 +293,8 @@ ModelProperty CreateMock(const std::string& meshName)
 		return CreateGridMock();
 	else if (meshName == "cylinder")
 		return CreateCylinderMock();
+	else if (meshName == "sphere")
+		return CreateSphereMock();
 
 	return ModelProperty{};
 }
@@ -255,7 +305,7 @@ CreateModelNames MakeMockData()
 	{
 		{GraphicsPSO::Sky, { "cube" }},
 		{GraphicsPSO::Opaque, { "skull" }},
-		{GraphicsPSO::NormalOpaque, { "grid", "cylinder" }},
+		{GraphicsPSO::NormalOpaque, { "grid", "cylinder", "sphere" }},
 	};
 }
 

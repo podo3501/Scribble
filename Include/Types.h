@@ -19,4 +19,5 @@ enum class GraphicsPSO : int
 	Sky,
 	Opaque,
 	NormalOpaque,
+	ShadowMap,
 };

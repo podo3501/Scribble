@@ -16,6 +16,11 @@ CShader::CShader(const std::wstring& resPath, const ShaderFileList& shaderFileLi
 {}
 CShader::~CShader() = default;
 
+bool CShader::IsShadowMap()
+{
+	return m_shaderFileList.contains(GraphicsPSO::ShadowMap);
+}
+
 std::vector<GraphicsPSO> CShader::GetPSOList()
 {
 	std::vector<GraphicsPSO> psoList{};
@@ -73,9 +78,6 @@ std::vector<D3D12_INPUT_ELEMENT_DESC> GetLayout(GraphicsPSO psoType)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-
-	/*if(psoType == GraphicsPSO::NormalOpaque)
-		layout.push_back({ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });*/
 
 	return layout; 
 }

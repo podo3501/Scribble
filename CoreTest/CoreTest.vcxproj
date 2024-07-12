@@ -112,6 +112,9 @@
     <ProjectReference Include="..\Core\Core.vcxproj">
       <Project>{a867a4cd-56a7-4622-967c-9424ac2fa000}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\SecondPage\SecondPage.vcxproj">
+      <Project>{a402abf0-ff19-406a-a922-0760bdabaf03}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

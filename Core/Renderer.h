@@ -38,6 +38,7 @@ public:
 
 	bool Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList);
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
+	bool LoadTexture(const TextureList& textureList, std::vector<std::wstring> srvFilename);
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
@@ -57,6 +58,7 @@ private:
 	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 
