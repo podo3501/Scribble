@@ -22,6 +22,8 @@ VertexOut main(VertexIn vin, uint instanceID : SV_InstanceID)
 	
     float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), texTransform);
     vout.TexC = mul(texC, matData.MatTransform).xy;
+    
+    vout.ShadowPosH = mul(posW, gShadowTransform);
 	
     return vout;
 }

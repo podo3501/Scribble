@@ -1,4 +1,5 @@
 #include "./ShadowMap.h"
+#include "../Include/types.h"
 #include "./d3dUtil.h"
 #include "./Renderer.h"
 #include "./Directx3D.h"
@@ -61,7 +62,7 @@ void CShadowMap::BuildDescriptors()
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	srvDesc.Texture2D.PlaneSlice = 0;
-	m_renderer->CreateShaderResourceView(L"SHADOWMAP", m_shadowMap.Get(), &srvDesc);
+	m_renderer->CreateShaderResourceView(eTextureType::ShadowMap, L"SHADOWMAP", m_shadowMap.Get(), &srvDesc);
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;

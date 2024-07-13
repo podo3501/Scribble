@@ -103,17 +103,17 @@ InstanceDataList CreateCylinderInstanceData(const std::vector<std::string>& mate
 {
 	InstanceDataList instances{};
 	
-	for(auto i : std::views::iota(0, 2))
+	for(auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i * 20.0f);;
+		instance->world = DirectX::XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 
-	for (auto i : std::views::iota(0, 2))
+	for (auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i * 20.0f);
+		instance->world = DirectX::XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 	
@@ -154,17 +154,17 @@ InstanceDataList CreateSphereInstanceData(const std::vector<std::string>& materi
 {
 	InstanceDataList instances{};
 
-	for (auto i : std::views::iota(0, 2))
+	for (auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 20.0f);
+		instance->world = DirectX::XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 
-	for (auto i : std::views::iota(0, 2))
+	for (auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 20.0f);
+		instance->world = DirectX::XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 
@@ -334,6 +334,8 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::PS, L"Opaque/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::VS, L"NormalOpaque/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::PS, L"NormalOpaque/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::VS, L"Shadow/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::PS, L"Shadow/PS.hlsl");
 
 	return shaderFileList;
 }

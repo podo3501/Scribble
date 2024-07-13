@@ -9,11 +9,13 @@
 interface IRenderer;
 class CWindow;
 class CCamera;
+class CShadow;
 class CModel;
 class CKeyInput;
 class CGameTimer;
 struct RenderItem;
 struct InstanceData;
+struct PassConstants;
 enum class GraphicsPSO : int;
 
 class CMainLoop
@@ -33,7 +35,8 @@ public:
 
 private:
 	bool InitializeClass(const std::wstring& resourcePath);
-	void UpdateMainPassCB();
+	void UpdatePassCB();
+	PassConstants UpdateMainPassCB();
 
 	bool CALLBACK MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr);
 	void CALLBACK SetAppPause(bool pause);
@@ -45,9 +48,10 @@ private:
 	CWindow* m_window{ nullptr };
 	IRenderer* m_iRenderer{ nullptr };
 
+	std::unique_ptr<CKeyInput> m_keyInput;
 	std::unique_ptr<CCamera> m_camera;
 	std::unique_ptr<CGameTimer> m_timer;
-	std::unique_ptr<CKeyInput> m_keyInput;
+	std::unique_ptr<CShadow> m_shadow;
 	
 	//데이터를 불러와서 렌더링에 보여줄 데이터를 만드는 부분
 	std::unique_ptr<CModel> m_model;

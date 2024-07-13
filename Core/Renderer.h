@@ -46,13 +46,17 @@ public:
 	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 	inline CDirectx3D* GetDirectx3D() const;
 
-	void CreateShaderResourceView(const std::wstring& filename,
+	void CreateShaderResourceView(eTextureType type, const std::wstring& filename,
 		ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc);
 
 private:
 	bool BuildRootSignature();
 	bool BuildDescriptorHeaps();
 	bool BuildPSOs();
+
+	UINT GetSrvIndex(eTextureType type);
+	D3D12_GPU_DESCRIPTOR_HANDLE GetSrvGpuDescripterHandle(eTextureType type);
+	D3D12_GPU_VIRTUAL_ADDRESS GetFrameResourceAddress(eBufferType bufType);
 
 	bool LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
@@ -65,6 +69,7 @@ private:
 	void MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
+	void DrawSceneToShadowMap(AllRenderItems& renderItem);
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 
 private:
@@ -79,8 +84,8 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
-	UINT m_srvOffsetIndex{ 0u };
-	std::vector<std::wstring> m_srvFilename{};
+	UINT m_srvOffsetTexture2D{ 0u };
+	std::vector<std::wstring> m_srvTexture2DFilename{};
 
 	std::unique_ptr<CFrameResources> m_frameResources;
 	std::map<GraphicsPSO, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList;

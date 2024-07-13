@@ -62,6 +62,6 @@ void CTexture::CreateShaderResourceView(CRenderer* renderer)
 				srvDesc.Format = curTexRes->GetDesc().Format;
 			}
 
-			renderer->CreateShaderResourceView(curTexMemory->filename, curTexRes.Get(), &srvDesc);
+			renderer->CreateShaderResourceView(type, curTexMemory->filename, curTexRes.Get(), &srvDesc);
 		});
 }

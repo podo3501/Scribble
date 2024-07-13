@@ -9,10 +9,11 @@ struct VertexIn
 struct VertexOut
 {
     float4 PosH : SV_POSITION;
-    float3 PosW : POSITION;
+    float4 ShadowPosH : POSITION0;
+    float3 PosW : POSITION1;
     float3 NormalW : NORMAL;
     float3 TangentW : TANGENT;
     float2 TexC : TEXCOORD;
-    
+        
     nointerpolation uint MatIndex : MATINDEX;
 };

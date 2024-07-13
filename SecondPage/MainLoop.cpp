@@ -10,6 +10,7 @@
 #include "./Model.h"
 #include "./Camera.h"
 #include "./KeyInput.h"
+#include "./Shadow.h"
 #include "./Utility.h"
 #include "./Helper.h"
 #include "./MockData.h"
@@ -39,9 +40,10 @@ RenderItem::RenderItem()
 {}
 
 CMainLoop::CMainLoop()
-	: m_camera{ nullptr }
+	: m_keyInput{ nullptr }
+	, m_camera{ nullptr }
 	, m_timer{ nullptr }
-	, m_keyInput{ nullptr }
+	, m_shadow{ nullptr }
 	, m_model{ nullptr }
 	, m_AllRenderItems{}
 {}
@@ -68,6 +70,7 @@ bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
 	m_keyInput = std::make_unique<CKeyInput>(m_window->GetHandle());
 	m_camera = std::make_unique<CCamera>();
 	m_timer = std::make_unique<CGameTimer>();
+	m_shadow = std::make_unique<CShadow>();
 	m_model = std::make_unique<CModel>();
 
 	ReturnIfFalse(m_model->Initialize(resourcePath, MakeMockData()));
@@ -92,20 +95,30 @@ void CMainLoop::AddKeyListener()
 		cam->Move(dx, dy);	 });
 }
 
-void CMainLoop::UpdateMainPassCB()
+void CMainLoop::UpdatePassCB()
 {	
+	std::vector<PassConstants> passCBList{};
+	passCBList.emplace_back(UpdateMainPassCB());
+	passCBList.emplace_back(m_shadow->UpdatePassCB());
+
+	m_iRenderer->SetUploadBuffer(eBufferType::PassCB, passCBList.data(), passCBList.size());
+}
+
+PassConstants CMainLoop::UpdateMainPassCB()
+{
 	PassConstants pc;
 	m_camera->GetPassCB(&pc);
 	m_timer->GetPassCB(&pc);
-	GetMockLight(&pc);
+	m_shadow->GetPassCB(&pc);
 
 	float width = (float)m_window->GetWidth();
 	float height = (float)m_window->GetHeight();
 	pc.renderTargetSize = { width, height };
 	pc.invRenderTargetSize = { 1.0f / width, 1.0f / height };
 
-	m_iRenderer->SetUploadBuffer(eBufferType::PassCB, &pc, 1);
+	return pc;
 }
+
 
 void CMainLoop::SetAppPause(bool pause)
 {
@@ -168,7 +181,9 @@ bool CMainLoop::Run(IRenderer* renderer)
 
 			m_camera->Update(m_timer->DeltaTime());
 			m_model->Update(m_iRenderer, m_camera.get(), m_AllRenderItems);
-			UpdateMainPassCB();
+			m_shadow->Update(m_timer->DeltaTime());
+			
+			UpdatePassCB();
 
 			ReturnIfFalse(renderer->Draw(m_AllRenderItems));
 		}

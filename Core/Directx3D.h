@@ -67,7 +67,7 @@ public:
 
 	inline ID3D12Resource* CurrentBackBuffer() const;
 	inline D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
-	inline D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuDsvHandle(UINT dsvOffset);
 
 private:
 	bool InitDirect3D(HWND hwnd, int width, int height);
@@ -122,8 +122,4 @@ inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::CurrentBackBufferView() const
 		m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_currBackBuffer,
 		m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
-}
-inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::DepthStencilView() const
-{
-	return m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
 }

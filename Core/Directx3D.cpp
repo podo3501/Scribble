@@ -1,6 +1,7 @@
 #include "Directx3D.h"
 #include "d3dUtil.h"
 #include <WindowsX.h>
+#include "./CoreDefine.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
@@ -321,7 +322,7 @@ bool CDirectx3D::OnResize(int width, int height)
 		IID_PPV_ARGS(m_depthStencilBuffer.GetAddressOf())));
 
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
-	CreateDepthStencilView(0, m_depthStencilBuffer.Get(), nullptr);
+	m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, GetCpuDsvHandle(DsvCommon));
 
 	// Transition the resource from its initial state to be used as a depth buffer.
 	CD3DX12_RESOURCE_BARRIER barrier(CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(),
@@ -400,13 +401,19 @@ void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutD
 	inoutDesc->SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
 }
 
-void CDirectx3D::CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc)
+CD3DX12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuDsvHandle(UINT dsvOffset)
 {
 	static UINT dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ m_dsvHeap->GetCPUDescriptorHandleForHeapStart() };
-	hCpuDesc.Offset(dsvOffset, dsvDescriptorSize);
-	m_device->CreateDepthStencilView(pRes, pDesc, hCpuDesc);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_dsvHeap->GetCPUDescriptorHandleForHeapStart() };
+	cpuDesc.Offset(dsvOffset, dsvDescriptorSize);
+
+	return cpuDesc;
+}
+
+void CDirectx3D::CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc)
+{
+	m_device->CreateDepthStencilView(pRes, pDesc, GetCpuDsvHandle(dsvOffset));
 }
 
 bool CDirectx3D::Set4xMsaaState(HWND hwnd, int width, int height, bool value)

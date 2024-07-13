@@ -7,6 +7,7 @@
 #include "./Texture.h"
 #include "./ShadowMap.h"
 #include "./FrameResources.h"
+#include "./CoreDefine.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
@@ -130,7 +131,7 @@ bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wst
 
 	m_texture->CreateShaderResourceView(this);
 
-	(*srvFilename) = m_srvFilename;
+	(*srvFilename) = m_srvTexture2DFilename;
 
 	return true;
 }
@@ -178,13 +179,17 @@ enum class ParamType : int
 	Count,
 };
 
-//셰이더의 내용물은 늘 자료가 있다고 가정한다.
-//남아서 넘치는 건 상관없지만 셰이더 데이터에 빈공간이 있으면 안된다.
-//텍스춰는 빈공간이 있어도 상관없다.
-constexpr UINT CubeCount{ 1u };
-constexpr UINT ShadowCount{ 1u };
-constexpr UINT TextureCount{ 35u };
-constexpr UINT TotalHeapCount = CubeCount + ShadowCount + TextureCount;
+UINT GetSrvStartIndex(eTextureType type)
+{
+	switch (type)
+	{
+	case eTextureType::ShadowMap:		return SrvShadowMapStartOffset;
+	case eTextureType::TextureCube:		return SrvTextureCubeStartOffset;
+	case eTextureType::Texture2D:			return SrvTexture2DStartOffset;
+	}
+	return -1;
+}
+
 bool CRenderer::BuildRootSignature()
 {
 	using enum ParamType;
@@ -297,11 +302,27 @@ void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDe
 
 void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
-	inoutDesc->RasterizerState.DepthBias = 1000000;
+	inoutDesc->RasterizerState.DepthBias = 10000;
 	inoutDesc->RasterizerState.DepthBiasClamp = 0.0f;
 	inoutDesc->RasterizerState.SlopeScaledDepthBias = 1.0f;
 	inoutDesc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
 	inoutDesc->NumRenderTargets = 0;
+}
+
+
+D3D12_GPU_DESCRIPTOR_HANDLE CRenderer::GetSrvGpuDescripterHandle(eTextureType type)
+{
+	static UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	UINT srvStartIndex = GetSrvStartIndex(type);
+	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandle{ m_srvDescHeap->GetGPUDescriptorHandleForHeapStart() };
+	gpuDescHandle.Offset(srvStartIndex, cbvSrvUavDescSize);
+	return gpuDescHandle;
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS CRenderer::GetFrameResourceAddress(eBufferType bufType)
+{
+	return m_frameResources->GetResource(bufType)->GetGPUVirtualAddress();
 }
 
 bool CRenderer::Draw(AllRenderItems& renderItem)
@@ -311,6 +332,15 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, nullptr));
 
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
+	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Material), GetFrameResourceAddress(eBufferType::Material));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), GetSrvGpuDescripterHandle(eTextureType::Texture2D));
+
+	DrawSceneToShadowMap(renderItem);
+
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -318,24 +348,14 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
 	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-	m_cmdList->ClearDepthStencilView(m_directx3D->DepthStencilView(),
+	m_cmdList->ClearDepthStencilView(m_directx3D->GetCpuDsvHandle(DsvCommon),
 		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->DepthStencilView()));
+	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvCommon)));
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
-	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
-	auto matBufRes = m_frameResources->GetResource(eBufferType::Material);
-	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Material), matBufRes->GetGPUVirtualAddress());
-
-	auto passCBRes = m_frameResources->GetResource(eBufferType::PassCB);
-	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), passCBRes->GetGPUVirtualAddress());
-
-	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Cube), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
-
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), m_srvDescHeap->GetGPUDescriptorHandleForHeapStart());
+	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Shadow), GetSrvGpuDescripterHandle(eTextureType::ShadowMap));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Cube), GetSrvGpuDescripterHandle(eTextureType::TextureCube));
 
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;
@@ -352,6 +372,31 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	m_frameResources->SetFence(curFenceIdx);
 
 	return true;
+}
+
+void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
+{
+	m_cmdList->RSSetViewports(1, &RvToLv(m_shadowMap->Viewport()));
+	m_cmdList->RSSetScissorRects(1, &RvToLv(m_shadowMap->ScissorRect()));
+
+	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
+		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE)));
+
+	m_cmdList->ClearDepthStencilView(m_directx3D->GetCpuDsvHandle(DsvShadowMap),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	m_cmdList->OMSetRenderTargets(0, nullptr, false, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvShadowMap)));
+
+	UINT passCBByteSize = CoreUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = GetFrameResourceAddress(eBufferType::PassCB) + 1 * passCBByteSize;
+	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), passCBAddress);
+
+	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::ShadowMap].Get());
+
+	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem[GraphicsPSO::NormalOpaque].get());
+
+	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ)));
 }
 
 void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem)
@@ -379,16 +424,29 @@ void CRenderer::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 	m_directx3D->Set4xMsaaState(hwnd, width, height, value);
 }
 
-void CRenderer::CreateShaderResourceView(const std::wstring& filename, 
+UINT CRenderer::GetSrvIndex(eTextureType type)
+{
+	UINT srvStartIndex = GetSrvStartIndex(type);
+	UINT srvOffset{ 0 };
+	if (type == eTextureType::Texture2D)
+		srvOffset = m_srvOffsetTexture2D++;
+
+	return srvStartIndex + srvOffset;
+}
+
+void CRenderer::CreateShaderResourceView(eTextureType type, const std::wstring& filename, 
 	ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc)
 {
 	static UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+	UINT index = GetSrvIndex(type);
+
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ m_srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-	hCpuDesc.Offset(m_srvOffsetIndex++, cbvSrvUavDescSize);
+	hCpuDesc.Offset(index, cbvSrvUavDescSize);
 	m_device->CreateShaderResourceView(pRes, pDesc, hCpuDesc);
 	
-	m_srvFilename.emplace_back(filename);
+	if(type == eTextureType::Texture2D)
+		m_srvTexture2DFilename.emplace_back(filename);
 }
 
 

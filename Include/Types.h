@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <wrl.h>
 
 enum class eTextureType : int
 {

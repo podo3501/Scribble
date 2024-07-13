@@ -32,6 +32,7 @@ struct PassConstants
     DirectX::XMFLOAT4X4 invProj{};
     DirectX::XMFLOAT4X4 viewProj{};
     DirectX::XMFLOAT4X4 invViewProj{};
+    DirectX::XMFLOAT4X4 shadowTransform{};
     DirectX::XMFLOAT3 eyePosW = { 0.0f, 0.0f, 0.0f };
     float cbPerObjectPad1{ 0.0f };
     DirectX::XMFLOAT2 renderTargetSize = { 0.0f, 0.0f };
@@ -60,7 +61,7 @@ struct MaterialBuffer
 {
     DirectX::XMFLOAT4 diffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
     DirectX::XMFLOAT3 fresnelR0 = { 0.01f, 0.01f, 0.01f };
-    float roughness = 64.0f;
+    float roughness = 0.5f;
 
     DirectX::XMFLOAT4X4 matTransform{};
 

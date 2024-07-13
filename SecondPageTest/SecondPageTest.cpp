@@ -5,6 +5,7 @@
 #include <memory>
 #include <unordered_map>
 #include <functional>
+#include <ranges>
 #include "./InterfaceTest.h"
 #include "../Include/RenderItem.h"
 #include "../Include/RendererDefine.h"
@@ -15,6 +16,7 @@
 #include "../SecondPage/Model.h"
 #include "../SecondPage/Mesh.h"
 #include "../SecondPage/Material.h"
+#include "../SecondPage/Shadow.h"
 #include "../SecondPage/MainLoop.h"
 #include "../SecondPage/KeyInput.h"
 #include "../SecondPage/SetupData.h"
@@ -202,6 +204,16 @@ namespace MainLoop
 		SubRenderItem* subItem = GetSubRenderItem(allRenderItems, NormalOpaque, "grid");
 		EXPECT_EQ(subItem->instanceCount, 1);
 		EXPECT_EQ(subItem->startSubIndexInstance, 0);
+	}
+
+	TEST_F(MainLoopClassTest, Shadow)
+	{
+		std::unique_ptr<CShadow> shadow = std::make_unique<CShadow>();
+		shadow->Update(0.1f);
+
+		PassConstants pc;
+		shadow->GetPassCB(&pc);
+		EXPECT_TRUE(pc.lights[0].direction.x != 0.57735f);
 	}
 } //SecondPage
 
