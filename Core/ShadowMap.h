@@ -10,8 +10,7 @@ struct ID3D12Resource;
 class CShadowMap
 {
 public:
-	CShadowMap(CRenderer* renderer,
-		UINT width, UINT height);
+	CShadowMap(CRenderer* renderer);
 	~CShadowMap();
 
 	CShadowMap() = delete;

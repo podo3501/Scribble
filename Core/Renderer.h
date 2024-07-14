@@ -51,6 +51,8 @@ public:
 
 private:
 	bool BuildRootSignature();
+	bool BuildMainRootSignature();
+	bool BuildSsaoRootSignature();
 	bool BuildDescriptorHeaps();
 	bool BuildPSOs();
 
@@ -68,6 +70,8 @@ private:
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 	void DrawSceneToShadowMap(AllRenderItems& renderItem);
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
@@ -83,6 +87,7 @@ private:
 	ID3D12GraphicsCommandList* m_cmdList{ nullptr };
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_ssaoRootSignature;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
 	UINT m_srvOffsetTexture2D{ 0u };
 	std::vector<std::wstring> m_srvTexture2DFilename{};

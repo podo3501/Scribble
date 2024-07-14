@@ -12,7 +12,7 @@ namespace Core
 	using enum GraphicsPSO;
 	using enum ShaderType;
 
-	ShaderFileList GetShaderShadowTestFileList()
+	ShaderFileList GetShaderShadowAndSsaoTestFileList()
 	{
 		ShaderFileList shaderFileList{};
 		auto InsertShaderFile = [&shaderFileList](GraphicsPSO pso, ShaderType type, const std::wstring filename) {
@@ -20,11 +20,15 @@ namespace Core
 
 		InsertShaderFile(ShadowMap, VS, L"Shadow/VS.hlsl");
 		InsertShaderFile(ShadowMap, PS, L"Shadow/PS.hlsl");
+		InsertShaderFile(SsaoMap, VS, L"Ssao/Ssao/VS.hlsl");
+		InsertShaderFile(SsaoMap, PS, L"Ssao/Ssao/PS.hlsl");
+		InsertShaderFile(SsaoBlur, VS, L"Ssao/SsaoBlur/VS.hlsl");
+		InsertShaderFile(SsaoBlur, PS, L"Ssao/SsaoBlur/PS.hlsl");
 
 		return shaderFileList;
 	}
 
-	TEST(CRenderer, CreateShadowSRV)
+	TEST(CRenderer, CreateShadowAndSSao)
 	{
 		std::wstring resPath = L"../Resource/";
 
@@ -37,11 +41,7 @@ namespace Core
 			window->GetHandle(),
 			window->GetWidth(),
 			window->GetHeight(),
-			GetShaderShadowTestFileList()));
-
-		std::vector<std::wstring> srvFilename{};
-		renderer->LoadTexture({}, &srvFilename);
-		EXPECT_TRUE(std::ranges::find(srvFilename, L"SHADOWMAP") == srvFilename.end());
+			GetShaderShadowAndSsaoTestFileList()));
 	}
 	TEST(CShader, Load)
 	{

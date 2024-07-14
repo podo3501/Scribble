@@ -1,6 +1,7 @@
 #include "Shadow.h"
 #include <ranges>
 #include "../Include/FrameResourceData.h"
+#include "../Include/RendererDefine.h"
 
 using namespace DirectX;
 
@@ -63,8 +64,8 @@ void CShadow::UpdateTransform()
 
 PassConstants CShadow::UpdatePassCB()
 {
-	float width = 2048.0f;
-	float height = 2048.0f;
+	float width = static_cast<float>(gShadowMapWidth);
+	float height = static_cast<float>(gShadowMapHeight);
 
 	XMMATRIX viewProj = XMMatrixMultiply(m_view, m_proj);
 

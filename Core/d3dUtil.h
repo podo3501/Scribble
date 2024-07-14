@@ -138,6 +138,7 @@ public:
         Microsoft::WRL::ComPtr<ID3D12Resource>& uploadHeaps);
 
     static std::vector<D3D12_STATIC_SAMPLER_DESC> GetStaticSamplers();
+    static std::vector<D3D12_STATIC_SAMPLER_DESC> GetSsaoSamplers();
 };
 
 struct MaterialConstants

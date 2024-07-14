@@ -1,20 +1,21 @@
 #include "./ShadowMap.h"
 #include "../Include/types.h"
+#include "../Include/RendererDefine.h"
 #include "./d3dUtil.h"
 #include "./Renderer.h"
 #include "./Directx3D.h"
 
 CShadowMap::~CShadowMap() = default;
-CShadowMap::CShadowMap(CRenderer* renderer, UINT width, UINT height)
+CShadowMap::CShadowMap(CRenderer* renderer)
 	: m_shadowMap{ nullptr }
 {
 	m_renderer = renderer;
 
-	m_mapWidth = width;
-	m_mapHeight = height;
+	m_mapWidth = gShadowMapWidth;
+	m_mapHeight = gShadowMapHeight;
 
-	m_viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
-	m_scissorRect = { 0, 0, (int)width, (int)height };
+	m_viewport = { 0.0f, 0.0f, (float)m_mapWidth, (float)m_mapHeight, 0.0f, 1.0f };
+	m_scissorRect = { 0, 0, (int)m_mapWidth, (int)m_mapHeight };
 }
 
 UINT CShadowMap::Width() const		{	return m_mapWidth;	}

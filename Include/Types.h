@@ -22,4 +22,6 @@ enum class GraphicsPSO : int
 	Opaque,
 	NormalOpaque,
 	ShadowMap,
+	SsaoMap,
+	SsaoBlur,
 };

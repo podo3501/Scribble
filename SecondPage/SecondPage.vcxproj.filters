@@ -27,6 +27,15 @@
     <Filter Include="리소스 파일\Shaders\Shadow">
       <UniqueIdentifier>{f3a798bc-daa1-4d63-a407-87c1c1191a13}</UniqueIdentifier>
     </Filter>
+    <Filter Include="리소스 파일\Shaders\Ssao">
+      <UniqueIdentifier>{54fadfa1-4856-48a6-ab93-00aa4ffded02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="리소스 파일\Shaders\Ssao\Ssao">
+      <UniqueIdentifier>{df3584ca-1a31-431b-a6c4-55521862e618}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="리소스 파일\Shaders\Ssao\SsaoBlur">
+      <UniqueIdentifier>{ecf39fcf-65c4-4dcc-b571-2c5afe7c8478}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -144,6 +153,18 @@
     <None Include="..\Resource\Shaders\Shadow\Type.hlsli">
       <Filter>리소스 파일\Shaders\Shadow</Filter>
     </None>
+    <None Include="..\Resource\Shaders\Ssao\Ssao\Type.hlsli">
+      <Filter>리소스 파일\Shaders\Ssao\Ssao</Filter>
+    </None>
+    <None Include="..\Resource\Shaders\Ssao\Register.hlsli">
+      <Filter>리소스 파일\Shaders\Ssao</Filter>
+    </None>
+    <None Include="..\Resource\Shaders\Ssao\SsaoBlur\Type.hlsli">
+      <Filter>리소스 파일\Shaders\Ssao\SsaoBlur</Filter>
+    </None>
+    <None Include="..\Resource\Shaders\Ssao\Utility.hlsli">
+      <Filter>리소스 파일\Shaders\Ssao</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Resource\Shaders\Cube\PS.hlsl">
@@ -169,6 +190,18 @@
     </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Shadow\VS.hlsl">
       <Filter>리소스 파일\Shaders\Shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Ssao\Ssao\PS.hlsl">
+      <Filter>리소스 파일\Shaders\Ssao\Ssao</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Ssao\Ssao\VS.hlsl">
+      <Filter>리소스 파일\Shaders\Ssao\Ssao</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Ssao\SsaoBlur\PS.hlsl">
+      <Filter>리소스 파일\Shaders\Ssao\SsaoBlur</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Ssao\SsaoBlur\VS.hlsl">
+      <Filter>리소스 파일\Shaders\Ssao\SsaoBlur</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

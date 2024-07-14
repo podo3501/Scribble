@@ -3,15 +3,16 @@
 #include "./Directx3D.h"
 #include "./d3dx12.h"
 #include "./d3dUtil.h"
-#include "./Shader.h"
-#include "./Texture.h"
-#include "./ShadowMap.h"
-#include "./FrameResources.h"
-#include "./CoreDefine.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
+#include "./CoreDefine.h"
+#include "./Shader.h"
+#include "./Texture.h"
+#include "./ShadowMap.h"
+#include "./FrameResources.h"
+#include "./SsaoMap.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -31,6 +32,7 @@ CRenderer::CRenderer()
 	, m_texture{ nullptr }
 	, m_shadowMap{ nullptr }
 	, m_rootSignature{ nullptr }
+	, m_ssaoRootSignature{ nullptr }
 	, m_srvDescHeap{ nullptr }
 	, m_frameResources{ nullptr }
 	, m_psoList{}
@@ -47,7 +49,7 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 
 	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_texture = std::make_unique<CTexture>(resPath);
-	m_shadowMap = std::make_unique<CShadowMap>(this, 2048, 2048);
+	m_shadowMap = std::make_unique<CShadowMap>(this);
 
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
@@ -168,15 +170,15 @@ bool CRenderer::WaitUntilGpuFinished(UINT64 fenceCount)
 }
 
 
-enum class ParamType : int
+enum class MainRegisterType : int
 {
 	Pass = 0,
 	Material,
 	Instance,
 	Shadow,
+	Ssao,
 	Cube,
 	Diffuse,
-	Count,
 };
 
 UINT GetSrvStartIndex(eTextureType type)
@@ -192,30 +194,44 @@ UINT GetSrvStartIndex(eTextureType type)
 
 bool CRenderer::BuildRootSignature()
 {
-	using enum ParamType;
+	ReturnIfFalse(BuildMainRootSignature());
+	ReturnIfFalse(BuildSsaoRootSignature());
 
-	CD3DX12_DESCRIPTOR_RANGE shadowTexTable{}, cubeTexTable{}, texTable{};
-	
-	shadowTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ShadowCount, 0, 0); //t1
-	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 1, 0);	//t0
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 2, 0);	//t2...t10(세번째인자)
+	return true;
+}
 
-	std::array<CD3DX12_ROOT_PARAMETER, EtoV(Count)> slotRootParameter;
-	auto GetRootParameter = [&slotRootParameter](ParamType type) {
-		return &slotRootParameter[EtoV(type)];	};
+template<typename T>
+CD3DX12_ROOT_PARAMETER* GetRootParameter(
+	std::vector<CD3DX12_ROOT_PARAMETER>& rootParameter, T type)
+{
+	rootParameter.resize(rootParameter.size() + 1);
+	return &rootParameter[EtoV(type)];
+};
 
-	GetRootParameter(Pass)->InitAsConstantBufferView(0);
-	GetRootParameter(Material)->InitAsShaderResourceView(0, 1);
-	GetRootParameter(Instance)->InitAsShaderResourceView(1, 1);
-	GetRootParameter(Shadow)->InitAsDescriptorTable(1, &shadowTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	GetRootParameter(Cube)->InitAsDescriptorTable(1, &cubeTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	GetRootParameter(Diffuse)->InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+bool CRenderer::BuildMainRootSignature()
+{
+	using enum MainRegisterType;
+
+	CD3DX12_DESCRIPTOR_RANGE shadowTexTable{}, ssaoTexTable{}, cubeTexTable{}, texTable{};
+
+	shadowTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ShadowCount, 0, 0); //t0
+	ssaoTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoCount, 1, 0); //t1
+	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 2, 0);	//t2
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 3, 0);	//t3...t10(세번째인자)
+
+	std::vector<CD3DX12_ROOT_PARAMETER> rp{};
+	GetRootParameter(rp, Pass)->InitAsConstantBufferView(0);
+	GetRootParameter(rp, Material)->InitAsShaderResourceView(0, 1);
+	GetRootParameter(rp, Instance)->InitAsShaderResourceView(1, 1);
+	GetRootParameter(rp, Shadow)->InitAsDescriptorTable(1, &shadowTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(rp, Ssao)->InitAsDescriptorTable(1, &ssaoTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(rp, Cube)->InitAsDescriptorTable(1, &cubeTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(rp, Diffuse)->InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	auto staticSamplers = CoreUtil::GetStaticSamplers();
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
-		static_cast<UINT>(slotRootParameter.size()), slotRootParameter.data(),
-		static_cast<UINT>(staticSamplers.size()), staticSamplers.data(),
+		static_cast<UINT>(rp.size()), rp.data(), static_cast<UINT>(staticSamplers.size()), staticSamplers.data(),
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> serialized = nullptr;
@@ -235,6 +251,54 @@ bool CRenderer::BuildRootSignature()
 	return true;
 }
 
+enum class SsaoRegisterType : int
+{
+	Pass = 0,
+	Constants,
+	Normal,
+	Depth,
+	RandomVec,
+};
+
+bool CRenderer::BuildSsaoRootSignature()
+{
+	using enum SsaoRegisterType;
+
+	CD3DX12_DESCRIPTOR_RANGE normalTexTable{}, depthTexTable{}, randomVecTable{};
+
+	normalTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ShadowCount, 0, 0); //t0
+	depthTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoCount, 1, 0); //t1
+	randomVecTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 2, 0);	//t2
+
+	std::vector<CD3DX12_ROOT_PARAMETER> rp{};
+	GetRootParameter(rp, Pass)->InitAsConstantBufferView(0);
+	GetRootParameter(rp, Constants)->InitAsConstants(1, 1);
+	GetRootParameter(rp, Normal)->InitAsDescriptorTable(1, &normalTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(rp, Depth)->InitAsDescriptorTable(1, &depthTexTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	GetRootParameter(rp, RandomVec)->InitAsDescriptorTable(1, &randomVecTable, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	auto ssaoSamplers = CoreUtil::GetSsaoSamplers();
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(
+		static_cast<UINT>(rp.size()), rp.data(), static_cast<UINT>(ssaoSamplers.size()), ssaoSamplers.data(),
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	ComPtr<ID3DBlob> serialized = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+		serialized.GetAddressOf(), errorBlob.GetAddressOf());
+
+	if (errorBlob != nullptr)
+	{
+		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	}
+	ReturnIfFailed(hr);
+
+	ReturnIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
+		IID_PPV_ARGS(&m_ssaoRootSignature)));
+
+	return true;
+}
 
 bool CRenderer::BuildDescriptorHeaps()
 {
@@ -262,10 +326,12 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 
 	switch (psoType)
 	{
-	case GraphicsPSO::Sky:				MakeSkyDesc(&psoDesc);				break;
-	case GraphicsPSO::Opaque:		MakeOpaqueDesc(&psoDesc);		break;
-	case GraphicsPSO::NormalOpaque:		MakeNormalOpaqueDesc(&psoDesc);		break;
-	case GraphicsPSO::ShadowMap:		MakeShadowDesc(&psoDesc);		break;
+	case GraphicsPSO::Sky:						MakeSkyDesc(&psoDesc);							break;
+	case GraphicsPSO::Opaque:				MakeOpaqueDesc(&psoDesc);					break;
+	case GraphicsPSO::NormalOpaque:	MakeNormalOpaqueDesc(&psoDesc);		break;
+	case GraphicsPSO::ShadowMap:		MakeShadowDesc(&psoDesc);					break;
+	case GraphicsPSO::SsaoMap:			MakeSsaoDesc(&psoDesc);						break;
+	case GraphicsPSO::SsaoBlur:				MakeSsaoBlurDesc(&psoDesc);				break;
 	default: assert(!"wrong type");
 	}
 	
@@ -309,6 +375,22 @@ void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	inoutDesc->NumRenderTargets = 0;
 }
 
+void CRenderer::MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	inoutDesc->InputLayout = { nullptr, 0 };
+	inoutDesc->pRootSignature = m_ssaoRootSignature.Get();
+	inoutDesc->DepthStencilState.DepthEnable = false;
+	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	//inoutDesc->RTVFormats[0] = Ssao::AmbientMapFormat;
+	inoutDesc->SampleDesc.Count = 1;
+	inoutDesc->SampleDesc.Quality = 0;
+	inoutDesc->DSVFormat = DXGI_FORMAT_UNKNOWN;
+}
+
+void CRenderer::MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	MakeSsaoDesc(inoutDesc);
+}
 
 D3D12_GPU_DESCRIPTOR_HANDLE CRenderer::GetSrvGpuDescripterHandle(eTextureType type)
 {
@@ -336,8 +418,8 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
 	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Material), GetFrameResourceAddress(eBufferType::Material));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Diffuse), GetSrvGpuDescripterHandle(eTextureType::Texture2D));
+	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(eBufferType::Material));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), GetSrvGpuDescripterHandle(eTextureType::Texture2D));
 
 	DrawSceneToShadowMap(renderItem);
 
@@ -353,9 +435,9 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 
 	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvCommon)));
 
-	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Shadow), GetSrvGpuDescripterHandle(eTextureType::ShadowMap));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(ParamType::Cube), GetSrvGpuDescripterHandle(eTextureType::TextureCube));
+	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), GetSrvGpuDescripterHandle(eTextureType::ShadowMap));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), GetSrvGpuDescripterHandle(eTextureType::TextureCube));
 
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;
@@ -389,7 +471,7 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 
 	UINT passCBByteSize = CoreUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = GetFrameResourceAddress(eBufferType::PassCB) + 1 * passCBByteSize;
-	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(ParamType::Pass), passCBAddress);
+	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), passCBAddress);
 
 	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::ShadowMap].Get());
 
@@ -410,7 +492,7 @@ void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderI
 		auto& subRenderItem = ri.second;
 		auto& subItem = subRenderItem.subItem;
 
-		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(ParamType::Instance),
+		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Instance),
 			instanceRes->GetGPUVirtualAddress() + 
 			(renderItem->startIndexInstance + subRenderItem.startSubIndexInstance) * sizeof(InstanceBuffer));
 

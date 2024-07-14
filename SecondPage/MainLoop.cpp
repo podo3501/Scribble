@@ -119,7 +119,6 @@ PassConstants CMainLoop::UpdateMainPassCB()
 	return pc;
 }
 
-
 void CMainLoop::SetAppPause(bool pause)
 {
 	pause ? m_timer->Stop() : m_timer->Start();

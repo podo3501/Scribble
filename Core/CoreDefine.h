@@ -9,8 +9,9 @@ const int gMaterialBufferCount = 100;
 //텍스춰는 빈공간이 있어도 상관없다.
 constexpr UINT CubeCount{ 1u };
 constexpr UINT ShadowCount{ 1u };
+constexpr UINT SsaoCount{ 1u };
 constexpr UINT TextureCount{ 35u };
-constexpr UINT TotalHeapCount = CubeCount + ShadowCount + TextureCount;
+constexpr UINT TotalHeapCount = CubeCount + ShadowCount + SsaoCount + TextureCount;
 
 //root signature, shader와 자료구조가 일치해야한다. 
 constexpr UINT SrvShadowMapStartOffset{ 0u };

@@ -20,6 +20,7 @@ class CFrameResources
 		bool CreateUpdateBuffer(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount);
 
 		std::unique_ptr<CUploadBuffer> passCB;
+		std::unique_ptr<CUploadBuffer> ssaoCB;
 		std::unique_ptr<CUploadBuffer> instanceBuffer;
 		std::unique_ptr<CUploadBuffer> materialBuffer;
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdListAlloc;

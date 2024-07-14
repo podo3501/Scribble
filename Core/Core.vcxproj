@@ -145,6 +145,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="SsaoMap.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>
@@ -156,6 +157,7 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
+    <ClCompile Include="SsaoMap.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="UploadBuffer.cpp" />
   </ItemGroup>
