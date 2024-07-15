@@ -50,19 +50,19 @@ struct PassConstants
 
 struct SsaoConstants
 {
-    DirectX::XMFLOAT4X4 Proj{};
-    DirectX::XMFLOAT4X4 InvProj{};
-    DirectX::XMFLOAT4X4 ProjTex{};
-    DirectX::XMFLOAT4 OffsetVectors[14]{};
+    DirectX::XMFLOAT4X4 proj{};
+    DirectX::XMFLOAT4X4 invProj{};
+    DirectX::XMFLOAT4X4 projTex{};
+    DirectX::XMFLOAT4 offsetVectors[14]{};
 
-    DirectX::XMFLOAT4 BlurWeights[3]{};
+    DirectX::XMFLOAT4 blurWeights[3]{};
 
-    DirectX::XMFLOAT2 InvRenderTargetSize = { 0.0f, 0.0f };
+    DirectX::XMFLOAT2 invRenderTargetSize = { 0.0f, 0.0f };
 
-    float OcclusionRadius{ 0.5f };
-    float OcclusionFadeStart{ 0.2f };
-    float OcclusionFadeEnd{ 2.0f };
-    float SurfaceEpsilon{ 0.05f };
+    float occlusionRadius{ 0.5f };
+    float occlusionFadeStart{ 0.2f };
+    float occlusionFadeEnd{ 2.0f };
+    float surfaceEpsilon{ 0.05f };
 };
 
 struct InstanceBuffer

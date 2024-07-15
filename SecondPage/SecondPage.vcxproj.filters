@@ -83,6 +83,9 @@
     <ClCompile Include="Shadow.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Ssao.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -128,6 +131,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Shadow.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Ssao.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

@@ -11,12 +11,25 @@ constexpr UINT CubeCount{ 1u };
 constexpr UINT ShadowCount{ 1u };
 constexpr UINT SsaoCount{ 1u };
 constexpr UINT TextureCount{ 35u };
-constexpr UINT TotalHeapCount = CubeCount + ShadowCount + SsaoCount + TextureCount;
+constexpr UINT TotalShaderResourceViewHeap = CubeCount + ShadowCount + SsaoCount + TextureCount;
 
-//root signature, shader와 자료구조가 일치해야한다. 
-constexpr UINT SrvShadowMapStartOffset{ 0u };
-constexpr UINT SrvTextureCubeStartOffset{ 1u };
-constexpr UINT SrvTexture2DStartOffset{ 2u };
+constexpr UINT SwapChainBufferCount{ 2u };
+constexpr UINT SsaoScreenNormalMap{ 1u };
+constexpr UINT SsaoAmbientMap{ 2u };
+constexpr UINT TotalRenderTargetViewHeap = SwapChainBufferCount + SsaoScreenNormalMap + SsaoAmbientMap;
 
 constexpr UINT DsvCommon{ 0u };
 constexpr UINT DsvShadowMap{ 1u };
+
+constexpr UINT DsvCommonCount{ 1u };
+constexpr UINT DsvShadowMapCount{ 1u };
+constexpr UINT TotalDepthStencilView = DsvCommonCount + DsvShadowMapCount;
+
+enum class RtvOffset : int
+{
+	SwapChain0,
+	SwapChain1,
+	NormalMap,
+	AmbientMap0,
+	AmbientMap1,
+};

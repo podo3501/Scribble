@@ -1,7 +1,9 @@
 #include "Directx3D.h"
 #include "d3dUtil.h"
+#include <ranges>
 #include <WindowsX.h>
 #include "./CoreDefine.h"
+#include "./headerUtility.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace std;
@@ -27,7 +29,11 @@ CDirectx3D::CDirectx3D()
 	, m_rtvHeap{ nullptr }
 	, m_dsvHeap{ nullptr }
 	, m_depthStencilBuffer{ nullptr }
-{}
+{
+	m_swapChainBuffer.resize(SwapChainBufferCount);
+	for (auto i : std::views::iota(0, static_cast<int>(SwapChainBufferCount)))
+		m_swapChainBuffer[i] = nullptr;
+}
 
 CDirectx3D::~CDirectx3D()
 {
@@ -254,9 +260,9 @@ bool CDirectx3D::CreateDescriptorHeap(UINT numDescriptor, D3D12_DESCRIPTOR_HEAP_
 bool CDirectx3D::CreateRtvAndDsvDescriptorHeaps()
 {
 	ReturnIfFalse(CreateDescriptorHeap(
-		SwapChainBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_rtvHeap.GetAddressOf()));
+		TotalRenderTargetViewHeap, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_rtvHeap.GetAddressOf()));
 	ReturnIfFalse(CreateDescriptorHeap(
-		2, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_dsvHeap.GetAddressOf()));
+		TotalDepthStencilView, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_dsvHeap.GetAddressOf()));
 
 	return true;
 }
@@ -286,12 +292,11 @@ bool CDirectx3D::OnResize(int width, int height)
 	m_currBackBuffer = 0;
 	UINT rtvDescHeapSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < SwapChainBufferCount; i++)
 	{
 		ReturnIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_swapChainBuffer[i])));
-		m_device->CreateRenderTargetView(m_swapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
-		rtvHeapHandle.Offset(1, rtvDescHeapSize);
+		CreateRenderTargetView(i == 0 ? RtvOffset::SwapChain0 : RtvOffset::SwapChain1,
+			m_swapChainBuffer[i].Get(), nullptr);
 	}
 
 	// Create the depth/stencil buffer and view.
@@ -411,9 +416,27 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuDsvHandle(UINT dsvOffset)
 	return cpuDesc;
 }
 
+CD3DX12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuRtvHandle(RtvOffset rtvOffset)
+{
+	static UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_rtvHeap->GetCPUDescriptorHandleForHeapStart() };
+	cpuDesc.Offset(EtoV(rtvOffset), rtvDescriptorSize);
+
+	return cpuDesc;
+}
+
 void CDirectx3D::CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc)
 {
 	m_device->CreateDepthStencilView(pRes, pDesc, GetCpuDsvHandle(dsvOffset));
+}
+
+void CDirectx3D::CreateRenderTargetView(RtvOffset offsetType, ID3D12Resource* pRes, const D3D12_RENDER_TARGET_VIEW_DESC* pDesc)
+{
+	static UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle{ m_rtvHeap->GetCPUDescriptorHandleForHeapStart() };
+	rtvHeapHandle.Offset(EtoV(offsetType), rtvDescriptorSize);
+	m_device->CreateRenderTargetView(pRes, pDesc, rtvHeapHandle);
 }
 
 bool CDirectx3D::Set4xMsaaState(HWND hwnd, int width, int height, bool value)

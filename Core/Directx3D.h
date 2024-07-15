@@ -38,6 +38,7 @@ struct ID3D12DescriptorHeap;
 struct ID3D12Resource;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
+enum class RtvOffset : int;
 
 class CDirectx3D
 {
@@ -60,14 +61,18 @@ public:
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;
 	void CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, 
 		const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc);
+	void CreateRenderTargetView(RtvOffset offsetType, ID3D12Resource* pRes,
+		const D3D12_RENDER_TARGET_VIEW_DESC* pDesc);
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
 	inline ID3D12Fence* GetFence() const;
 
+	inline ID3D12Resource* GetDepthStencilBufferResource() const;
 	inline ID3D12Resource* CurrentBackBuffer() const;
 	inline D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuDsvHandle(UINT dsvOffset);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuRtvHandle(RtvOffset rtvOffset);
 
 private:
 	bool InitDirect3D(HWND hwnd, int width, int height);
@@ -100,9 +105,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
-	static const int SwapChainBufferCount = 2;
 	int m_currBackBuffer{ 0 };
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_swapChainBuffer[SwapChainBufferCount]{ nullptr, };
+	std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_swapChainBuffer;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_depthStencilBuffer;
 
 	DXGI_FORMAT m_backBufferFormat{ DXGI_FORMAT_R8G8B8A8_UNORM };
@@ -115,6 +119,7 @@ private:
 inline ID3D12Device* CDirectx3D::GetDevice() const { return m_device.Get(); }
 inline ID3D12GraphicsCommandList* CDirectx3D::GetCommandList() const {	return m_commandList.Get(); }
 inline ID3D12Fence* CDirectx3D::GetFence() const { return m_fence.Get(); }
+inline ID3D12Resource* CDirectx3D::GetDepthStencilBufferResource() const { return m_depthStencilBuffer.Get(); };
 inline ID3D12Resource* CDirectx3D::CurrentBackBuffer() const { return m_swapChainBuffer[m_currBackBuffer].Get(); }
 inline D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::CurrentBackBufferView() const
 {

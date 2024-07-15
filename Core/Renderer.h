@@ -14,6 +14,7 @@ class CDirectx3D;
 class CShader;
 class CTexture;
 class CShadowMap;
+class CSsaoMap;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
@@ -48,6 +49,7 @@ public:
 
 	void CreateShaderResourceView(eTextureType type, const std::wstring& filename,
 		ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc);
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle(eTextureType type);
 
 private:
 	bool BuildRootSignature();
@@ -57,7 +59,6 @@ private:
 	bool BuildPSOs();
 
 	UINT GetSrvIndex(eTextureType type);
-	D3D12_GPU_DESCRIPTOR_HANDLE GetSrvGpuDescripterHandle(eTextureType type);
 	D3D12_GPU_VIRTUAL_ADDRESS GetFrameResourceAddress(eBufferType bufType);
 
 	bool LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
@@ -81,6 +82,7 @@ private:
 	std::unique_ptr<CShader> m_shader;
 	std::unique_ptr<CTexture> m_texture;
 	std::unique_ptr<CShadowMap> m_shadowMap;
+	std::unique_ptr<CSsaoMap> m_ssaoMap;
 
 	bool m_isInitialize{ false };
 	ID3D12Device* m_device{ nullptr };

@@ -31,6 +31,7 @@ CRenderer::CRenderer()
 	, m_shader{ nullptr }
 	, m_texture{ nullptr }
 	, m_shadowMap{ nullptr }
+	, m_ssaoMap{ nullptr }
 	, m_rootSignature{ nullptr }
 	, m_ssaoRootSignature{ nullptr }
 	, m_srvDescHeap{ nullptr }
@@ -50,12 +51,14 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_texture = std::make_unique<CTexture>(resPath);
 	m_shadowMap = std::make_unique<CShadowMap>(this);
+	m_ssaoMap = std::make_unique<CSsaoMap>(this);
 
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
 	ReturnIfFalse(BuildPSOs());
 	ReturnIfFalse(MakeFrameResource());
 	ReturnIfFalse(m_shadowMap->Initialize());
+	ReturnIfFalse(m_ssaoMap->Initialize(m_directx3D->GetDepthStencilBufferResource(), width, height));
 
 	m_isInitialize = true;
 
@@ -161,6 +164,12 @@ bool CRenderer::OnResize(int width, int height)
 
 	m_scissorRect = { 0, 0, width, height };
 
+	if (m_ssaoMap == nullptr)
+		return true;
+
+	ReturnIfFalse(m_ssaoMap->OnResize(width, height));
+	m_ssaoMap->RebuildDescriptors(m_directx3D->GetDepthStencilBufferResource());
+	
 	return true;
 }
 
@@ -180,17 +189,6 @@ enum class MainRegisterType : int
 	Cube,
 	Diffuse,
 };
-
-UINT GetSrvStartIndex(eTextureType type)
-{
-	switch (type)
-	{
-	case eTextureType::ShadowMap:		return SrvShadowMapStartOffset;
-	case eTextureType::TextureCube:		return SrvTextureCubeStartOffset;
-	case eTextureType::Texture2D:			return SrvTexture2DStartOffset;
-	}
-	return -1;
-}
 
 bool CRenderer::BuildRootSignature()
 {
@@ -304,7 +302,7 @@ bool CRenderer::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
 	heapDesc.NodeMask = 0;
-	heapDesc.NumDescriptors = TotalHeapCount;
+	heapDesc.NumDescriptors = TotalShaderResourceViewHeap;
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	ReturnIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvDescHeap)));
@@ -381,7 +379,7 @@ void CRenderer::MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	inoutDesc->pRootSignature = m_ssaoRootSignature.Get();
 	inoutDesc->DepthStencilState.DepthEnable = false;
 	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	//inoutDesc->RTVFormats[0] = Ssao::AmbientMapFormat;
+	inoutDesc->RTVFormats[0] = CSsaoMap::AmbientMapFormat;
 	inoutDesc->SampleDesc.Count = 1;
 	inoutDesc->SampleDesc.Quality = 0;
 	inoutDesc->DSVFormat = DXGI_FORMAT_UNKNOWN;
@@ -392,11 +390,11 @@ void CRenderer::MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	MakeSsaoDesc(inoutDesc);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE CRenderer::GetSrvGpuDescripterHandle(eTextureType type)
+D3D12_GPU_DESCRIPTOR_HANDLE CRenderer::GetGpuSrvHandle(eTextureType type)
 {
 	static UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	UINT srvStartIndex = GetSrvStartIndex(type);
+	UINT srvStartIndex = static_cast<UINT>(EtoV(type));
 	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandle{ m_srvDescHeap->GetGPUDescriptorHandleForHeapStart() };
 	gpuDescHandle.Offset(srvStartIndex, cbvSrvUavDescSize);
 	return gpuDescHandle;
@@ -419,7 +417,7 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(eBufferType::Material));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), GetSrvGpuDescripterHandle(eTextureType::Texture2D));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), GetGpuSrvHandle(eTextureType::Texture2D));
 
 	DrawSceneToShadowMap(renderItem);
 
@@ -436,8 +434,8 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvCommon)));
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), GetSrvGpuDescripterHandle(eTextureType::ShadowMap));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), GetSrvGpuDescripterHandle(eTextureType::TextureCube));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), GetGpuSrvHandle(eTextureType::ShadowMap));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), GetGpuSrvHandle(eTextureType::TextureCube));
 
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;
@@ -508,7 +506,7 @@ void CRenderer::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 
 UINT CRenderer::GetSrvIndex(eTextureType type)
 {
-	UINT srvStartIndex = GetSrvStartIndex(type);
+	UINT srvStartIndex = static_cast<UINT>(EtoV(type));
 	UINT srvOffset{ 0 };
 	if (type == eTextureType::Texture2D)
 		srvOffset = m_srvOffsetTexture2D++;

@@ -11,6 +11,7 @@
 #include "./Camera.h"
 #include "./KeyInput.h"
 #include "./Shadow.h"
+#include "./Ssao.h"
 #include "./Utility.h"
 #include "./Helper.h"
 #include "./MockData.h"
@@ -44,6 +45,7 @@ CMainLoop::CMainLoop()
 	, m_camera{ nullptr }
 	, m_timer{ nullptr }
 	, m_shadow{ nullptr }
+	, m_ssao{ nullptr }
 	, m_model{ nullptr }
 	, m_AllRenderItems{}
 {}
@@ -71,6 +73,7 @@ bool CMainLoop::InitializeClass(const std::wstring& resourcePath)
 	m_camera = std::make_unique<CCamera>();
 	m_timer = std::make_unique<CGameTimer>();
 	m_shadow = std::make_unique<CShadow>();
+	m_ssao = std::make_unique<CSsao>(m_window->GetWidth(), m_window->GetHeight());
 	m_model = std::make_unique<CModel>();
 
 	ReturnIfFalse(m_model->Initialize(resourcePath, MakeMockData()));
@@ -102,6 +105,12 @@ void CMainLoop::UpdatePassCB()
 	passCBList.emplace_back(m_shadow->UpdatePassCB());
 
 	m_iRenderer->SetUploadBuffer(eBufferType::PassCB, passCBList.data(), passCBList.size());
+
+	SsaoConstants ssaoCB{};
+	ssaoCB.proj = passCBList[0].proj;
+	ssaoCB.invProj = passCBList[0].invProj;
+	m_ssao->UpdatePassCB(m_camera.get(), &ssaoCB);
+	m_iRenderer->SetUploadBuffer(eBufferType::SsaoCB, &ssaoCB, 1);
 }
 
 PassConstants CMainLoop::UpdateMainPassCB()
