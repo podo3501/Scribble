@@ -46,6 +46,8 @@ std::unique_ptr<MeshData> Generator(std::string&& meshName)
 		genMeshData = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 	else if(meshName == "sphere")
 		genMeshData = geoGen.CreateSphere(0.5f, 20, 20);
+	else if(meshName == "debug")
+		genMeshData = geoGen.CreateQuad(0.4f, -0.4f, 0.59f, 0.59f, 0.0f);
 	meshData->name = std::move(meshName);
 
 	std::ranges::transform(genMeshData.Vertices, std::back_inserter(meshData->vertices),
@@ -175,6 +177,18 @@ InstanceDataList CreateSphereInstanceData(const std::vector<std::string>& materi
 	return instances;
 }
 
+InstanceDataList CreateDebugInstanceData()
+{
+	InstanceDataList instances{};
+	auto instance = std::make_unique<InstanceData>();
+	instance->world = DirectX::XMMatrixIdentity();
+	instance->texTransform = DirectX::XMMatrixIdentity();
+	instance->matName = {};
+	instances.emplace_back(std::move(instance));
+
+	return instances;
+}
+
 ModelProperty CreateCubeMock()
 {
 	MaterialList materialList;
@@ -283,6 +297,19 @@ ModelProperty CreateSphereMock()
 	return modelProp;
 }
 
+ModelProperty CreateDebugMock()
+{
+	ModelProperty  modelProp{};
+	modelProp.createType = ModelProperty::CreateType::Generator;
+	modelProp.meshData = Generator("debug");
+	modelProp.cullingFrustum = false;
+	modelProp.filename = {};
+	modelProp.instanceDataList = CreateDebugInstanceData();
+	modelProp.materialList = {};
+
+	return modelProp;
+}
+
 ModelProperty CreateMock(const std::string& meshName)
 {
 	if (meshName == "cube")
@@ -295,6 +322,8 @@ ModelProperty CreateMock(const std::string& meshName)
 		return CreateCylinderMock();
 	else if (meshName == "sphere")
 		return CreateSphereMock();
+	else if (meshName == "debug")
+		return CreateDebugMock();
 
 	return ModelProperty{};
 }
@@ -306,6 +335,7 @@ CreateModelNames MakeMockData()
 		{GraphicsPSO::Sky, { "cube" }},
 		{GraphicsPSO::Opaque, { "skull" }},
 		{GraphicsPSO::NormalOpaque, { "grid", "cylinder", "sphere" }},
+		{GraphicsPSO::Debug, { "debug" }},
 	};
 }
 
@@ -336,6 +366,14 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::PS, L"NormalOpaque/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::VS, L"Shadow/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::PS, L"Shadow/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoMap, ShaderType::VS, L"Ssao/Ssao/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoMap, ShaderType::PS, L"Ssao/Ssao/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoBlur, ShaderType::VS, L"Ssao/SsaoBlur/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoBlur, ShaderType::PS, L"Ssao/SsaoBlur/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::VS, L"Ssao/DrawNormals/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::PS, L"Ssao/DrawNormals/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::Debug, ShaderType::VS, L"Debug/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::Debug, ShaderType::PS, L"Debug/PS.hlsl");
 
 	return shaderFileList;
 }

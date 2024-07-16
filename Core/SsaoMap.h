@@ -13,6 +13,16 @@ struct ID3D12GraphicsCommandList;
 struct ID3D12Resource;
 struct ID3D12PipelineState;
 
+enum class SsaoRegisterType : int
+{
+	Pass = 0,
+	Constants,
+	Normal,
+	Depth,
+	RandomVec,
+	SsaoAmbientMap0 = RandomVec,
+};
+
 class CSsaoMap
 {
 public:

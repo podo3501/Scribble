@@ -7,7 +7,6 @@
 //때문에 같을수가 없다.
 enum class eTextureType : int
 {
-	None = 0,
 	ShadowMap,
 	SsaoAmbientMap0,
 	SsaoAmbientMap1,
@@ -29,7 +28,9 @@ enum class GraphicsPSO : int
 	Sky,
 	Opaque,
 	NormalOpaque,
-	ShadowMap,
+	ShadowMap, 
+	SsaoDrawNormals,
 	SsaoMap,
 	SsaoBlur,
+	Debug,
 };

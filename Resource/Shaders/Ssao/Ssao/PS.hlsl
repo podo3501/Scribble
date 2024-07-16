@@ -1,6 +1,5 @@
 #include "Type.hlsli"
 #include "../Register.hlsli"
-#include "../Utility.hlsli"
 
 float OcclusionFunction(float distZ)
 {

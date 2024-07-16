@@ -10,7 +10,7 @@ using namespace DirectX;
 
 Material::Material()
 	: numFramesDirty{ gFrameResourceCount }
-	, type{ eTextureType::None }
+	, type{}
 {}
 
 CMaterial::CMaterial()

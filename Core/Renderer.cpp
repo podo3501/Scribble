@@ -60,6 +60,8 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 	ReturnIfFalse(m_shadowMap->Initialize());
 	ReturnIfFalse(m_ssaoMap->Initialize(m_directx3D->GetDepthStencilBufferResource(), width, height));
 
+	m_ssaoMap->SetPSOs(m_psoList[GraphicsPSO::SsaoMap].Get(), m_psoList[GraphicsPSO::SsaoBlur].Get());
+
 	m_isInitialize = true;
 
 	return true;
@@ -213,7 +215,7 @@ bool CRenderer::BuildMainRootSignature()
 	CD3DX12_DESCRIPTOR_RANGE shadowTexTable{}, ssaoTexTable{}, cubeTexTable{}, texTable{};
 
 	shadowTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ShadowCount, 0, 0); //t0
-	ssaoTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoCount, 1, 0); //t1
+	ssaoTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoAmbientMap0Count, 1, 0); //t1
 	cubeTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 2, 0);	//t2
 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, TextureCount, 3, 0);	//t3...t10(세번째인자)
 
@@ -249,24 +251,15 @@ bool CRenderer::BuildMainRootSignature()
 	return true;
 }
 
-enum class SsaoRegisterType : int
-{
-	Pass = 0,
-	Constants,
-	Normal,
-	Depth,
-	RandomVec,
-};
-
 bool CRenderer::BuildSsaoRootSignature()
 {
 	using enum SsaoRegisterType;
 
 	CD3DX12_DESCRIPTOR_RANGE normalTexTable{}, depthTexTable{}, randomVecTable{};
 
-	normalTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ShadowCount, 0, 0); //t0
-	depthTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoCount, 1, 0); //t1
-	randomVecTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, CubeCount, 2, 0);	//t2
+	normalTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoNormalMapCount, 0, 0); //t0
+	depthTexTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoDepthMapCount, 1, 0); //t1
+	randomVecTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, SsaoRandomVectorCount, 2, 0);	//t2
 
 	std::vector<CD3DX12_ROOT_PARAMETER> rp{};
 	GetRootParameter(rp, Pass)->InitAsConstantBufferView(0);
@@ -324,12 +317,14 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 
 	switch (psoType)
 	{
-	case GraphicsPSO::Sky:						MakeSkyDesc(&psoDesc);							break;
-	case GraphicsPSO::Opaque:				MakeOpaqueDesc(&psoDesc);					break;
-	case GraphicsPSO::NormalOpaque:	MakeNormalOpaqueDesc(&psoDesc);		break;
-	case GraphicsPSO::ShadowMap:		MakeShadowDesc(&psoDesc);					break;
-	case GraphicsPSO::SsaoMap:			MakeSsaoDesc(&psoDesc);						break;
-	case GraphicsPSO::SsaoBlur:				MakeSsaoBlurDesc(&psoDesc);				break;
+	case GraphicsPSO::Sky:								MakeSkyDesc(&psoDesc);							break;
+	case GraphicsPSO::Opaque:						MakeOpaqueDesc(&psoDesc);					break;
+	case GraphicsPSO::NormalOpaque:			MakeNormalOpaqueDesc(&psoDesc);		break;
+	case GraphicsPSO::ShadowMap:				MakeShadowDesc(&psoDesc);					break;
+	case GraphicsPSO::SsaoDrawNormals:		MakeDrawNormals(&psoDesc);				break;
+	case GraphicsPSO::SsaoMap:					MakeSsaoDesc(&psoDesc);						break;
+	case GraphicsPSO::SsaoBlur:						MakeSsaoBlurDesc(&psoDesc);				break;
+	case GraphicsPSO::Debug:							MakeDebugDesc(&psoDesc);					break;
 	default: assert(!"wrong type");
 	}
 	
@@ -373,6 +368,14 @@ void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	inoutDesc->NumRenderTargets = 0;
 }
 
+void CRenderer::MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	inoutDesc->RTVFormats[0] = CSsaoMap::NormalMapFormat;
+	inoutDesc->SampleDesc.Count = 1;
+	inoutDesc->SampleDesc.Quality = 0;
+	inoutDesc->DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+}
+
 void CRenderer::MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
 	inoutDesc->InputLayout = { nullptr, 0 };
@@ -390,6 +393,9 @@ void CRenderer::MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 	MakeSsaoDesc(inoutDesc);
 }
 
+void CRenderer::MakeDebugDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{}
+
 D3D12_GPU_DESCRIPTOR_HANDLE CRenderer::GetGpuSrvHandle(eTextureType type)
 {
 	static UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -398,6 +404,16 @@ D3D12_GPU_DESCRIPTOR_HANDLE CRenderer::GetGpuSrvHandle(eTextureType type)
 	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandle{ m_srvDescHeap->GetGPUDescriptorHandleForHeapStart() };
 	gpuDescHandle.Offset(srvStartIndex, cbvSrvUavDescSize);
 	return gpuDescHandle;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE CRenderer::GetCpuSrvHandle(eTextureType type)
+{
+	static UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	UINT srvStartIndex = static_cast<UINT>(EtoV(type));
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDescHandle{ m_srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
+	cpuDescHandle.Offset(srvStartIndex, cbvSrvUavDescSize);
+	return cpuDescHandle;
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS CRenderer::GetFrameResourceAddress(eBufferType bufType)
@@ -420,6 +436,14 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), GetGpuSrvHandle(eTextureType::Texture2D));
 
 	DrawSceneToShadowMap(renderItem);
+	DrawNormalsAndDepth(renderItem);
+
+	m_cmdList->SetGraphicsRootSignature(m_ssaoRootSignature.Get());
+	m_ssaoMap->ComputeSsao(m_cmdList, m_frameResources.get(), 3);
+
+	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(eBufferType::Material));
 
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
@@ -435,6 +459,7 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), GetGpuSrvHandle(eTextureType::ShadowMap));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Ssao), GetGpuSrvHandle(eTextureType::SsaoDepthMap));
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), GetGpuSrvHandle(eTextureType::TextureCube));
 
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
@@ -478,6 +503,33 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ)));
 }
+
+void CRenderer::DrawNormalsAndDepth(AllRenderItems& renderItem)
+{
+	m_cmdList->RSSetViewports(1, &m_screenViewport);
+	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
+
+	auto normalMap = m_ssaoMap->NormalMap();
+	auto normalMapRtv = m_directx3D->GetCpuRtvHandle(RtvOffset::NormalMap);
+
+	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(normalMap,
+		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET)));
+
+	float clearValue[] = { 0.0f, 0.0f, 1.0f, 0.0f };
+	m_cmdList->ClearRenderTargetView(normalMapRtv, clearValue, 0, nullptr);
+	m_cmdList->ClearDepthStencilView(m_directx3D->GetCpuDsvHandle(DsvCommon),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	m_cmdList->OMSetRenderTargets(1, &normalMapRtv, true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvCommon)));
+	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
+	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SsaoDrawNormals].Get());
+
+	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem[GraphicsPSO::NormalOpaque].get());
+
+	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(normalMap,
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ)));
+}
+
 
 void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem)
 {

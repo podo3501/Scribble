@@ -24,6 +24,8 @@ namespace Core
 		InsertShaderFile(SsaoMap, PS, L"Ssao/Ssao/PS.hlsl");
 		InsertShaderFile(SsaoBlur, VS, L"Ssao/SsaoBlur/VS.hlsl");
 		InsertShaderFile(SsaoBlur, PS, L"Ssao/SsaoBlur/PS.hlsl");
+		InsertShaderFile(SsaoDrawNormals, VS, L"Ssao/DrawNormals/VS.hlsl");
+		InsertShaderFile(SsaoDrawNormals, PS, L"Ssao/DrawNormals/PS.hlsl");
 
 		return shaderFileList;
 	}

@@ -12,6 +12,7 @@
 #include "./FrameResources.h"
 #include "./Renderer.h"
 #include "./CoreDefine.h"
+#include "./headerUtility.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -71,7 +72,7 @@ void CSsaoMap::RebuildDescriptors(ID3D12Resource* depthStencilBuffer)
 	m_renderer->CreateShaderResourceView(eTextureType::SsaoAmbientMap0,
 		L"SSAOAMBIENT0", m_ambientMap0.Get(), &srvDesc);
 	m_renderer->CreateShaderResourceView(eTextureType::SsaoAmbientMap1,
-		L"SSAOAMBIENT1", m_ambientMap0.Get(), &srvDesc);
+		L"SSAOAMBIENT1", m_ambientMap1.Get(), &srvDesc);
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
@@ -131,11 +132,12 @@ void CSsaoMap::ComputeSsao(
 	cmdList->OMSetRenderTargets(1, &ambientMap0Rtv, true, nullptr);
 
 	auto ssaoCBAddress = currFrame->GetResource(eBufferType::SsaoCB)->GetGPUVirtualAddress();
-	cmdList->SetGraphicsRootConstantBufferView(0, ssaoCBAddress);
-	cmdList->SetGraphicsRoot32BitConstant(1, 0, 0);
+	cmdList->SetGraphicsRootConstantBufferView(EtoV(SsaoRegisterType::Pass), ssaoCBAddress);
+	cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 0, 0);
 
-	cmdList->SetGraphicsRootDescriptorTable(2, m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
-	cmdList->SetGraphicsRootDescriptorTable(3, m_renderer->GetGpuSrvHandle(eTextureType::SsaoRandomVectorMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Depth), m_renderer->GetGpuSrvHandle(eTextureType::SsaoDepthMap));
+	//cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::RandomVec), m_renderer->GetGpuSrvHandle(eTextureType::SsaoRandomVectorMap));
 
 	cmdList->SetPipelineState(m_ssaoPso);
 
@@ -147,7 +149,7 @@ void CSsaoMap::ComputeSsao(
 	cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_ambientMap0.Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ)));
 
-	BlurAmbientMap(cmdList, currFrame, blurCount);
+	//BlurAmbientMap(cmdList, currFrame, blurCount);
 }
 
 void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, CFrameResources* currFrame, int blurCount)
@@ -177,14 +179,14 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 		output = m_ambientMap1.Get();
 		inputSrv = m_renderer->GetGpuSrvHandle(eTextureType::SsaoAmbientMap0);
 		outputRtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap1);
-		cmdList->SetGraphicsRoot32BitConstant(1, 1, 0);
+		cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 1, 0);
 	}
 	else
 	{
 		output = m_ambientMap0.Get();
 		inputSrv = m_renderer->GetGpuSrvHandle(eTextureType::SsaoAmbientMap1);
 		outputRtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap0);
-		cmdList->SetGraphicsRoot32BitConstant(1, 0, 0);
+		cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 0, 0);
 	}
 
 	cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(output,
@@ -194,8 +196,11 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 	cmdList->ClearRenderTargetView(outputRtv, clearValue, 0, nullptr);
 	cmdList->OMSetRenderTargets(1, &outputRtv, true, nullptr);
 
+	//cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
+	//cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::SsaoAmbientMap0), inputSrv);
+
 	cmdList->SetGraphicsRootDescriptorTable(2, m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
-	cmdList->SetGraphicsRootDescriptorTable(3, inputSrv);
+	cmdList->SetGraphicsRootDescriptorTable(4, inputSrv);
 
 	cmdList->IASetVertexBuffers(0, 0, nullptr);
 	cmdList->IASetIndexBuffer(nullptr);

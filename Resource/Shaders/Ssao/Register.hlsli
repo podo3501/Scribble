@@ -1,6 +1,3 @@
-#ifndef _SSAO_REGISTER_HLSLI_
-#define _SSAO_REGISTER_HLSLI_
-
 cbuffer cbSsao : register(b0)
 {
     float4x4 gProj;
@@ -41,4 +38,8 @@ static const float2 gTexCoords[6] =
     float2(1.0f, 1.0f)
 };
 
-#endif //_SSAO_REGISTER_HLSLI_
+float NdcDepthToViewDepth(float z_ndc)
+{
+    float viewZ = gProj[3][2] / (z_ndc - gProj[2][2]);
+    return viewZ;
+}

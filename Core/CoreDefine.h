@@ -9,9 +9,14 @@ const int gMaterialBufferCount = 100;
 //텍스춰는 빈공간이 있어도 상관없다.
 constexpr UINT CubeCount{ 1u };
 constexpr UINT ShadowCount{ 1u };
-constexpr UINT SsaoCount{ 1u };
+constexpr UINT SsaoAmbientMap0Count{ 1u };
+constexpr UINT SsaoAmbientMap1Count{ 1u };
+constexpr UINT SsaoNormalMapCount{ 1u };
+constexpr UINT SsaoDepthMapCount{ 1u };
+constexpr UINT SsaoRandomVectorCount{ 1u };
 constexpr UINT TextureCount{ 35u };
-constexpr UINT TotalShaderResourceViewHeap = CubeCount + ShadowCount + SsaoCount + TextureCount;
+constexpr UINT TotalSsaoCount = SsaoAmbientMap0Count + SsaoAmbientMap1Count + SsaoNormalMapCount + SsaoDepthMapCount + SsaoRandomVectorCount;
+constexpr UINT TotalShaderResourceViewHeap = CubeCount + ShadowCount + TotalSsaoCount + TextureCount;
 
 constexpr UINT SwapChainBufferCount{ 2u };
 constexpr UINT SsaoScreenNormalMap{ 1u };

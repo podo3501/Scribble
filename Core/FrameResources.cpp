@@ -9,9 +9,9 @@
 
 CFrameResources::Resource::Resource()
 	: passCB{ nullptr }
+	, ssaoCB{ nullptr }
 	, instanceBuffer{ nullptr }
 	, materialBuffer{ nullptr }
-	, ssaoCB{ nullptr }
 	, cmdListAlloc{ nullptr }
 {}
 CFrameResources::Resource::~Resource() = default;
@@ -29,7 +29,7 @@ bool CFrameResources::Resource::CreateUpdateBuffer(
 		IID_PPV_ARGS(cmdListAlloc.GetAddressOf())));
 
 	passCB = std::make_unique<CUploadBuffer>(sizeof(PassConstants), passCount, true);
-	ssaoCB = std::make_unique<CUploadBuffer>(sizeof(MaterialBuffer), 1, false);
+	ssaoCB = std::make_unique<CUploadBuffer>(sizeof(SsaoConstants), 1, true);
 	instanceBuffer = std::make_unique<CUploadBuffer>(sizeof(InstanceBuffer), maxInstanceCount, false);
 	materialBuffer = std::make_unique<CUploadBuffer>(sizeof(MaterialBuffer), materialCount, false);
 
@@ -67,7 +67,7 @@ bool CFrameResources::SetUploadBuffer(eBufferType bufferType, const void* buffer
 
 bool CFrameResources::PrepareFrame(CRenderer* renderer)
 {
-	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
+	//m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
 	if (m_fenceCount == 0)
 		return true;
 	ReturnIfFalse(renderer->WaitUntilGpuFinished(m_fenceCount));

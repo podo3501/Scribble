@@ -50,6 +50,7 @@ public:
 	void CreateShaderResourceView(eTextureType type, const std::wstring& filename,
 		ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle(eTextureType type);
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCpuSrvHandle(eTextureType type);
 
 private:
 	bool BuildRootSignature();
@@ -71,10 +72,13 @@ private:
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 	void MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
+	void MakeDebugDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 	void DrawSceneToShadowMap(AllRenderItems& renderItem);
+	void DrawNormalsAndDepth(AllRenderItems& renderItem);
 	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
 
 private:
