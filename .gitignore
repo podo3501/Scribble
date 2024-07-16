@@ -369,3 +369,5 @@ FodyWeavers.xsd
 /Lib/SkyPS.cso
 /Lib/SkyVS.cso
 /Lib/VertexShader.cso
+/Lib/PS.cso
+/Lib/VS.cso
