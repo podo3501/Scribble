@@ -213,8 +213,7 @@ void CCamera::Move(float dx, float dy)
 	Move(eMove::RotateY, dx);
 	Move(eMove::Pitch, dy);
 }
-void StoreMatrix4x4dd(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
-XMMATRIX Inversedd(XMMATRIX& m) { return XMMatrixInverse(nullptr, m); }
+
 void CCamera::GetPassCB(PassConstants* pc)
 {
 	XMMATRIX view = GetView();
@@ -229,12 +228,11 @@ void CCamera::GetPassCB(PassConstants* pc)
 	XMMATRIX viewProjTex = XMMatrixMultiply(viewProj, T);
 
 	XMStoreFloat4x4(&pc->view, XMMatrixTranspose(view));
-	XMStoreFloat4x4(&pc->invView, XMMatrixInverse(nullptr, view));
+	XMStoreFloat4x4(&pc->invView, XMMatrixTranspose(XMMatrixInverse(nullptr, view)));
 	XMStoreFloat4x4(&pc->proj, XMMatrixTranspose(proj));
-	//StoreMatrix4x4dd(pc->invProj, Inversedd(proj));
-	XMStoreFloat4x4(&(pc->invProj), XMMatrixTranspose(XMMatrixInverse(nullptr, proj)));
+	XMStoreFloat4x4(&pc->invProj, XMMatrixTranspose(XMMatrixInverse(nullptr, proj)));
 	XMStoreFloat4x4(&pc->viewProj, XMMatrixTranspose(viewProj));
-	XMStoreFloat4x4(&pc->invViewProj, XMMatrixInverse(nullptr, viewProj));
+	XMStoreFloat4x4(&pc->invViewProj, XMMatrixTranspose(XMMatrixInverse(nullptr, viewProj)));
 	XMStoreFloat4x4(&pc->viewProjTex, XMMatrixTranspose(viewProjTex));
 
 	XMStoreFloat3(&pc->eyePosW, m_position);

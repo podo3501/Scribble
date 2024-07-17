@@ -454,7 +454,7 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 
 	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
 
-	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvCommon)));
+	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvOffset::Common)));
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
 	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(eBufferType::Material));
@@ -487,11 +487,10 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE)));
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvShadowMap = m_directx3D->GetCpuDsvHandle(DsvOffset::ShadowMap);
+	m_cmdList->ClearDepthStencilView(dsvShadowMap, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	m_cmdList->ClearDepthStencilView(m_directx3D->GetCpuDsvHandle(DsvShadowMap),
-		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-	m_cmdList->OMSetRenderTargets(0, nullptr, false, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvShadowMap)));
+	m_cmdList->OMSetRenderTargets(0, nullptr, false, &dsvShadowMap);
 
 	UINT passCBByteSize = CoreUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = GetFrameResourceAddress(eBufferType::PassCB) + 1 * passCBByteSize;
@@ -518,10 +517,10 @@ void CRenderer::DrawNormalsAndDepth(AllRenderItems& renderItem)
 
 	float clearValue[] = { 0.0f, 0.0f, 1.0f, 0.0f };
 	m_cmdList->ClearRenderTargetView(normalMapRtv, clearValue, 0, nullptr);
-	m_cmdList->ClearDepthStencilView(m_directx3D->GetCpuDsvHandle(DsvCommon),
-		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvCommon = m_directx3D->GetCpuDsvHandle(DsvOffset::Common);
+	m_cmdList->ClearDepthStencilView(dsvCommon, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	m_cmdList->OMSetRenderTargets(1, &normalMapRtv, true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvCommon)));
+	m_cmdList->OMSetRenderTargets(1, &normalMapRtv, true, &dsvCommon);
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
 	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SsaoDrawNormals].Get());
 

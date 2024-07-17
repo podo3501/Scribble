@@ -1,6 +1,7 @@
 #pragma once
 
 #include<wtypes.h>
+#include<vector>
 #include<memory>
 #include <wrl.h>
 #include <dxgiformat.h>
@@ -39,6 +40,7 @@ struct ID3D12Resource;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 enum class RtvOffset : int;
+enum class DsvOffset : int;
 
 class CDirectx3D
 {
@@ -59,7 +61,7 @@ public:
 	bool Set4xMsaaState(HWND hwnd, int width, int height, bool value);
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;
-	void CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, 
+	void CreateDepthStencilView(DsvOffset offset, ID3D12Resource* pRes,
 		const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc);
 	void CreateRenderTargetView(RtvOffset offsetType, ID3D12Resource* pRes,
 		const D3D12_RENDER_TARGET_VIEW_DESC* pDesc);
@@ -71,8 +73,8 @@ public:
 	inline ID3D12Resource* GetDepthStencilBufferResource() const;
 	inline ID3D12Resource* CurrentBackBuffer() const;
 	inline D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
-	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuDsvHandle(UINT dsvOffset);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuRtvHandle(RtvOffset rtvOffset);
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCpuDsvHandle(DsvOffset offset);
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCpuRtvHandle(RtvOffset rtvOffset);
 
 private:
 	bool InitDirect3D(HWND hwnd, int width, int height);
@@ -90,7 +92,6 @@ private:
 		ID3D12DescriptorHeap** descriptorHeap);
 
 private:
-	CWindow* m_window{ nullptr };
 	Microsoft::WRL::ComPtr<IDXGIFactory4> m_dxgiFactory;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> m_swapChain;
 	Microsoft::WRL::ComPtr<ID3D12Device> m_device;

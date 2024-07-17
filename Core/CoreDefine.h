@@ -23,8 +23,8 @@ constexpr UINT SsaoScreenNormalMap{ 1u };
 constexpr UINT SsaoAmbientMap{ 2u };
 constexpr UINT TotalRenderTargetViewHeap = SwapChainBufferCount + SsaoScreenNormalMap + SsaoAmbientMap;
 
-constexpr UINT DsvCommon{ 0u };
-constexpr UINT DsvShadowMap{ 1u };
+//constexpr UINT DsvCommon{ 0u };
+//constexpr UINT DsvShadowMap{ 1u };
 
 constexpr UINT DsvCommonCount{ 1u };
 constexpr UINT DsvShadowMapCount{ 1u };
@@ -32,9 +32,15 @@ constexpr UINT TotalDepthStencilView = DsvCommonCount + DsvShadowMapCount;
 
 enum class RtvOffset : int
 {
-	SwapChain0,
+	SwapChain0 = 0,
 	SwapChain1,
 	NormalMap,
 	AmbientMap0,
 	AmbientMap1,
+};
+
+enum class DsvOffset : int
+{
+	Common = 0,
+	ShadowMap,
 };

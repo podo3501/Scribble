@@ -32,8 +32,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 		
 		bool bResult{ true };
 		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
-		assert(mainLoop->Initialize(resPath, window.get(), renderer.get()));
-		assert(mainLoop->Run(renderer.get()));
+		bResult = mainLoop->Initialize(resPath, window.get(), renderer.get());
+		bResult = mainLoop->Run(renderer.get());
 	}
 	catch (CException e)
 	{

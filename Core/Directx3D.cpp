@@ -327,7 +327,7 @@ bool CDirectx3D::OnResize(int width, int height)
 		IID_PPV_ARGS(m_depthStencilBuffer.GetAddressOf())));
 
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
-	m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, GetCpuDsvHandle(DsvCommon));
+	m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, GetCpuDsvHandle(DsvOffset::Common));
 
 	// Transition the resource from its initial state to be used as a depth buffer.
 	CD3DX12_RESOURCE_BARRIER barrier(CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(),
@@ -406,17 +406,17 @@ void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutD
 	inoutDesc->SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuDsvHandle(UINT dsvOffset)
+D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuDsvHandle(DsvOffset offset)
 {
 	static UINT dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_dsvHeap->GetCPUDescriptorHandleForHeapStart() };
-	cpuDesc.Offset(dsvOffset, dsvDescriptorSize);
+	cpuDesc.Offset(EtoV(offset), dsvDescriptorSize);
 
 	return cpuDesc;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuRtvHandle(RtvOffset rtvOffset)
+D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuRtvHandle(RtvOffset rtvOffset)
 {
 	static UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -426,9 +426,9 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuRtvHandle(RtvOffset rtvOffset)
 	return cpuDesc;
 }
 
-void CDirectx3D::CreateDepthStencilView(UINT dsvOffset, ID3D12Resource* pRes, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc)
+void CDirectx3D::CreateDepthStencilView(DsvOffset offset, ID3D12Resource* pRes, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc)
 {
-	m_device->CreateDepthStencilView(pRes, pDesc, GetCpuDsvHandle(dsvOffset));
+	m_device->CreateDepthStencilView(pRes, pDesc, GetCpuDsvHandle(offset));
 }
 
 void CDirectx3D::CreateRenderTargetView(RtvOffset offsetType, ID3D12Resource* pRes, const D3D12_RENDER_TARGET_VIEW_DESC* pDesc)

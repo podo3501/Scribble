@@ -125,10 +125,9 @@ void CSsaoMap::ComputeSsao(
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
 	CDirectx3D* directx3D = m_renderer->GetDirectx3D();
-	CD3DX12_CPU_DESCRIPTOR_HANDLE ambientMap0Rtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap0);
+	D3D12_CPU_DESCRIPTOR_HANDLE ambientMap0Rtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap0);
 	float clearValue[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	cmdList->ClearRenderTargetView(ambientMap0Rtv, clearValue, 0, nullptr);
-
 	cmdList->OMSetRenderTargets(1, &ambientMap0Rtv, true, nullptr);
 
 	auto ssaoCBAddress = currFrame->GetResource(eBufferType::SsaoCB)->GetGPUVirtualAddress();

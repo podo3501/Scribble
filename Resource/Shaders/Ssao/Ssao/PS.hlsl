@@ -45,5 +45,5 @@ float4 main(VertexOut pin) : SV_Target
     occlusionSum /= gSampleCount;
     
     float access = 1.0f - occlusionSum;
-    return saturate(pow(access, 10.0f));
+    return saturate(pow(abs(access), 10.0f));
 }

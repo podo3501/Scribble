@@ -4,6 +4,7 @@
 #include "./d3dUtil.h"
 #include "./Renderer.h"
 #include "./Directx3D.h"
+#include "./CoreDefine.h"
 
 CShadowMap::~CShadowMap() = default;
 CShadowMap::CShadowMap(CRenderer* renderer)
@@ -71,7 +72,7 @@ void CShadowMap::BuildDescriptors()
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvDesc.Texture2D.MipSlice = 0;
 	auto directx3D = m_renderer->GetDirectx3D();
-	directx3D->CreateDepthStencilView(1, m_shadowMap.Get(), &dsvDesc);
+	directx3D->CreateDepthStencilView(DsvOffset::ShadowMap, m_shadowMap.Get(), &dsvDesc);
 }
 
 bool CShadowMap::CreateResource()

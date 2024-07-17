@@ -24,7 +24,7 @@ UINT CSsao::SsaoMapHeight() const
 {
 	return m_renderTargetHeight / 2;
 }
-void StoreeMatrix4x4(XMFLOAT4X4& dest, XMMATRIX src) { XMStoreFloat4x4(&dest, XMMatrixTranspose(src)); }
+
 void CSsao::UpdatePassCB(CCamera* camera, SsaoConstants* ssaoCB)
 {
 	XMMATRIX P = camera->GetProj();
@@ -33,8 +33,7 @@ void CSsao::UpdatePassCB(CCamera* camera, SsaoConstants* ssaoCB)
 		0.0f, -0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
-	StoreeMatrix4x4(ssaoCB->projTex, P * T);
-	//XMStoreFloat4x4(&(ssaoCB->projTex), XMMatrixTranspose(P * T));
+	XMStoreFloat4x4(&ssaoCB->projTex, XMMatrixTranspose(P * T));
 
 	GetOffsetVectors(ssaoCB->offsetVectors);
 

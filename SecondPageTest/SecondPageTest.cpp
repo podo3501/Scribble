@@ -23,9 +23,43 @@
 #include "../SecondPage/MockData.h"
 #include "../SecondPage/Helper.h"
 #include "../SecondPage/Utility.h"
+#include <DirectXMath.h>
 
 using enum GraphicsPSO;
 using enum ShaderType;
+
+class GTestRenderer : public ITestRenderer
+{
+	virtual bool Draw(AllRenderItems& renderItem) override
+	{
+		EXPECT_EQ(renderItem.empty(), false);
+		PostQuitMessage(0);
+		return true;
+	};
+};
+
+namespace A_MainLoop
+{
+	TEST(MainLoop, RunTest)
+	{
+		std::wstring resPath = L"../Resource/";
+
+		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
+		window->Initialize(true);
+		auto renderer = CreateRenderer(
+			resPath,
+			window->GetHandle(),
+			window->GetWidth(),
+			window->GetHeight(),
+			GetShaderFileList());
+
+		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
+		EXPECT_TRUE(mainLoop->Initialize(resPath, window.get(), renderer.get()));
+
+		GTestRenderer testRenderer{};
+		EXPECT_TRUE(mainLoop->Run(&testRenderer));
+	}
+}
 
 namespace MainLoop
 {
@@ -217,35 +251,6 @@ namespace MainLoop
 	}
 } //SecondPage
 
-class GTestRenderer : public ITestRenderer
+namespace Utility
 {
-	virtual bool Draw(AllRenderItems& renderItem) override
-	{
-		EXPECT_EQ(renderItem.empty(), false);
-		PostQuitMessage(0);
-		return true;
-	};
-};
-
-namespace A_SecondPage
-{
-	TEST(MainLoop, RunTest)
-	{
-		std::wstring resPath = L"../Resource/";
-
-		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
-		window->Initialize(true);
-		auto renderer = CreateRenderer(
-			resPath, 
-			window->GetHandle(), 
-			window->GetWidth(), 
-			window->GetHeight(),
-			GetShaderFileList());
-
-		std::unique_ptr<CMainLoop> mainLoop = std::make_unique<CMainLoop>();
-		EXPECT_TRUE(mainLoop->Initialize(resPath, window.get(), renderer.get()));
-
-		GTestRenderer testRenderer{};
-		EXPECT_TRUE(mainLoop->Run(&testRenderer));
-	}
 }
