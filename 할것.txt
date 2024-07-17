@@ -47,11 +47,12 @@
 --shadowmap이나 cubemap은 한번씩 밖에 안나오기 때문에 인덱스를 쉐이더의 순열로 픽스한다.
 --일반적인 텍스춰는 시작 인덱스를 가져와서 나중에 셋팅하는 방식으로 간다.
 --shadow map 적용
+--ssao 적용
 
-frame resource index 문제
 rtv srv dsv 인덱스 문제 정리 
+엔진 리팩토링
+store하는 trans inv 부분 설정 수정
 
-ssao 적용
 캐릭터를 붙인다.
 
 direct3D와 renderer가 꼬여 있다.

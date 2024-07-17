@@ -357,7 +357,10 @@ void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {}
 
 void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{}
+{
+	inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+}
 
 void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
@@ -443,8 +446,6 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 
 	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(eBufferType::Material));
-
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -452,15 +453,15 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
 	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-	m_cmdList->ClearDepthStencilView(m_directx3D->GetCpuDsvHandle(DsvCommon),
-		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvCommon)));
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
+	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(eBufferType::Material));
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), GetGpuSrvHandle(eTextureType::ShadowMap));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Ssao), GetGpuSrvHandle(eTextureType::SsaoDepthMap));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Ssao), GetGpuSrvHandle(eTextureType::SsaoAmbientMap0));
 	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), GetGpuSrvHandle(eTextureType::TextureCube));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), GetGpuSrvHandle(eTextureType::Texture2D));
 
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;

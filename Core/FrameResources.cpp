@@ -67,7 +67,7 @@ bool CFrameResources::SetUploadBuffer(eBufferType bufferType, const void* buffer
 
 bool CFrameResources::PrepareFrame(CRenderer* renderer)
 {
-	//m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
+	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
 	if (m_fenceCount == 0)
 		return true;
 	ReturnIfFalse(renderer->WaitUntilGpuFinished(m_fenceCount));

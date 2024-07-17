@@ -137,7 +137,7 @@ void CSsaoMap::ComputeSsao(
 
 	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
 	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Depth), m_renderer->GetGpuSrvHandle(eTextureType::SsaoDepthMap));
-	//cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::RandomVec), m_renderer->GetGpuSrvHandle(eTextureType::SsaoRandomVectorMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::RandomVec), m_renderer->GetGpuSrvHandle(eTextureType::SsaoRandomVectorMap));
 
 	cmdList->SetPipelineState(m_ssaoPso);
 
@@ -149,7 +149,7 @@ void CSsaoMap::ComputeSsao(
 	cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_ambientMap0.Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ)));
 
-	//BlurAmbientMap(cmdList, currFrame, blurCount);
+	BlurAmbientMap(cmdList, currFrame, blurCount);
 }
 
 void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, CFrameResources* currFrame, int blurCount)
@@ -196,11 +196,11 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 	cmdList->ClearRenderTargetView(outputRtv, clearValue, 0, nullptr);
 	cmdList->OMSetRenderTargets(1, &outputRtv, true, nullptr);
 
-	//cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
-	//cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::SsaoAmbientMap0), inputSrv);
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::SsaoAmbientMap0), inputSrv);
 
-	cmdList->SetGraphicsRootDescriptorTable(2, m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
-	cmdList->SetGraphicsRootDescriptorTable(4, inputSrv);
+	//cmdList->SetGraphicsRootDescriptorTable(2, m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
+	//cmdList->SetGraphicsRootDescriptorTable(4, inputSrv);
 
 	cmdList->IASetVertexBuffers(0, 0, nullptr);
 	cmdList->IASetIndexBuffer(nullptr);

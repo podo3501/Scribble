@@ -25,7 +25,7 @@ float4 main(VertexOut pin) : SV_Target
     
     for (int i = 0; i < gSampleCount; ++i)
     {
-        float3 offset = reflect(gOffsetVectors[i].xyz, randVec);       
+        float3 offset = reflect(gOffsetVectors[i].xyz, randVec);
         float flip = sign(dot(offset, n));
         float3 q = p + flip * gOcclusionRadius * offset;
         float4 projQ = mul(float4(q, 1.0f), gProjTex);

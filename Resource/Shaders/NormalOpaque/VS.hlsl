@@ -24,6 +24,7 @@ VertexOut main(VertexIn vin, uint instanceID : SV_InstanceID)
     vout.TexC = mul(texC, matData.MatTransform).xy;
     
     vout.ShadowPosH = mul(posW, gShadowTransform);
+    vout.SsaoPosH = mul(posW, gViewProjTex);
 	
     return vout;
 }

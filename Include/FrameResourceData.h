@@ -33,6 +33,7 @@ struct PassConstants
     DirectX::XMFLOAT4X4 invProj{};
     DirectX::XMFLOAT4X4 viewProj{};
     DirectX::XMFLOAT4X4 invViewProj{};
+    DirectX::XMFLOAT4X4 viewProjTex{};
     DirectX::XMFLOAT4X4 shadowTransform{};
     DirectX::XMFLOAT3 eyePosW = { 0.0f, 0.0f, 0.0f };
     float cbPerObjectPad1{ 0.0f };
