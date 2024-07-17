@@ -371,3 +371,5 @@ FodyWeavers.xsd
 /Lib/VertexShader.cso
 /Lib/PS.cso
 /Lib/VS.cso
+/Lib/SsaoPS.cso
+/Lib/SsaoVS.cso
