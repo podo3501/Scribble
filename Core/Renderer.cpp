@@ -493,6 +493,7 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 	m_cmdList->OMSetRenderTargets(0, nullptr, false, &dsvShadowMap);
 
 	UINT passCBByteSize = CoreUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+	//2개의 cb가 들어가 있는데 2번째를 가져올 함수가 아직 없다. -> + 1 * passCBByteSize;
 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = GetFrameResourceAddress(eBufferType::PassCB) + 1 * passCBByteSize;
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), passCBAddress);
 

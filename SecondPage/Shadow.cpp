@@ -71,11 +71,11 @@ PassConstants CShadow::UpdatePassCB()
 
 	PassConstants pc{};
 	XMStoreFloat4x4(&pc.view, XMMatrixTranspose(m_view));
-	XMStoreFloat4x4(&pc.invView, XMMatrixInverse(nullptr, m_view));
+	XMStoreFloat4x4(&pc.invView, XMMatrixTranspose(XMMatrixInverse(nullptr, m_view)));
 	XMStoreFloat4x4(&pc.proj, XMMatrixTranspose(m_proj));
-	XMStoreFloat4x4(&pc.invProj, XMMatrixInverse(nullptr, m_proj));
+	XMStoreFloat4x4(&pc.invProj, XMMatrixTranspose(XMMatrixInverse(nullptr, m_proj)));
 	XMStoreFloat4x4(&pc.viewProj, XMMatrixTranspose(viewProj));
-	XMStoreFloat4x4(&pc.invViewProj, XMMatrixInverse(nullptr, viewProj));
+	XMStoreFloat4x4(&pc.invViewProj, XMMatrixTranspose(XMMatrixInverse(nullptr, viewProj)));
 	XMStoreFloat3(&pc.eyePosW, m_posW);
 	pc.renderTargetSize = XMFLOAT2(width, height);
 	pc.invRenderTargetSize = XMFLOAT2(1.0f / width, 1.0f / height);

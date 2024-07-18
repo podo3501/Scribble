@@ -83,8 +83,9 @@ float4 main(VertexOut pin) : SV_Target
     // Vector from point being lit to eye. 
     float3 toEyeW = normalize(gEyePosW - pin.PosW);
     
+    float ambientAccess = 1.0f;
     pin.SsaoPosH /= pin.SsaoPosH.w;
-    float ambientAccess = gSsaoMap.Sample(gsamLinearClamp, pin.SsaoPosH.xy, 0.0f).r;
+    ambientAccess = gSsaoMap.Sample(gsamLinearClamp, pin.SsaoPosH.xy, 0.0f).r;
 
     // Light terms.
     float4 ambient = ambientAccess * gAmbientLight * diffuseAlbedo;
