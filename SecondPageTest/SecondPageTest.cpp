@@ -249,6 +249,23 @@ namespace MainLoop
 		shadow->GetPassCB(&pc);
 		EXPECT_TRUE(pc.lights[0].direction.x != 0.57735f);
 	}
+
+	CreateModelNames MakeSkinnedTestMockData()
+	{
+		return CreateModelNames
+		{
+			{SkinnedOpaque, {"soldier"}},
+		};
+	}
+
+	TEST_F(MainLoopClassTest, Skinned)
+	{
+		AllRenderItems allRenderItems{};
+		std::unique_ptr<CModel> model = std::make_unique<CModel>();
+		EXPECT_TRUE(model->Initialize(m_resourcePath, MakeSkinnedTestMockData()));
+		EXPECT_TRUE(model->LoadMemory(m_renderer.get(), allRenderItems));
+	}
+
 } //SecondPage
 
 namespace Utility

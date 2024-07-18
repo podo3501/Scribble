@@ -51,7 +51,8 @@
 
 rtv srv dsv 인덱스 문제 정리 
 엔진 리팩토링
-store하는 trans inv 부분 설정 수정
+drawnormal shader ssao에서 뺀다.
+mathhelper를 core랑 app에서 쓸수 있게 한다.
 
 캐릭터를 붙인다.
 

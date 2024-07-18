@@ -32,5 +32,6 @@ private:
 
     bool m_isConstantBuffer{ false };
     UINT m_elementByteSize{ 0u };
+    UINT m_typeSize{ 0u };
     UINT m_elementCount{ 0u };
 };

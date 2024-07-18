@@ -6,6 +6,7 @@
 #include "../Include/Interface.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
+#include "../Include/Types.h"
 #include "./SetupData.h"
 #include "./MathHelper.h"
 #include "./Helper.h"
@@ -23,8 +24,8 @@ bool CMesh::LoadGeometry(GraphicsPSO pso, const std::string& meshName, ModelProp
 	std::unique_ptr<MeshData> meshData{ nullptr };
 	switch (mProperty->createType)
 	{
-	case ModelProperty::CreateType::Generator:	meshData = std::move(mProperty->meshData);		break;
-	case ModelProperty::CreateType::ReadFile:		meshData = ReadFile(mProperty->filename);			break;
+	case ModelProperty::CreateType::Generator:	meshData = std::move(mProperty->meshData);						break;
+	case ModelProperty::CreateType::ReadFile:		meshData = ReadMeshType(pso, mProperty->filename);		break;
 	default: return false;
 	}
 	if (meshData == nullptr) return false;
@@ -34,16 +35,33 @@ bool CMesh::LoadGeometry(GraphicsPSO pso, const std::string& meshName, ModelProp
 
 	return true;
 }
+
+std::unique_ptr<MeshData> CMesh::ReadMeshType(GraphicsPSO pso, const std::wstring& filename)
+{
+	std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
+	MeshData* curMeshData = meshData.get();
+	switch (pso)
+	{
+	case	GraphicsPSO::Opaque:
+	case GraphicsPSO::NormalOpaque:
+		ReadFile(filename, &curMeshData);
+	case GraphicsPSO::SkinnedOpaque:
+		ReadSkinnedFile(filename, &curMeshData);
+		break;
+	}
+
+	return std::move(meshData);
+}
+
 #include <filesystem>
-std::unique_ptr<MeshData> CMesh::ReadFile(const std::wstring& filename)
+bool CMesh::ReadFile(const std::wstring& filename, MeshData** outMeshData)
 {
 	auto path = std::filesystem::current_path();
-	std::unique_ptr<MeshData> meshData = std::make_unique<MeshData>();
-
+	
 	std::wstring fullFilename = m_resPath + m_filePath + filename;
 	std::ifstream fin(fullFilename);
 	if (fin.fail())
-		return nullptr;
+		return false;
 	
 	UINT vCount = 0;
 	UINT iCount = 0;
@@ -83,14 +101,14 @@ std::unique_ptr<MeshData> CMesh::ReadFile(const std::wstring& filename)
 		vMin = XMVectorMin(vMin, P);
 		vMax = XMVectorMax(vMax, P);
 
-		meshData->vertices.emplace_back(std::move(curVertex));
+		(*outMeshData)->vertices.emplace_back(std::move(curVertex));
 	}
 
-	XMStoreFloat3(&meshData->boundingBox.Center, 0.5f * (vMin + vMax));
-	XMStoreFloat3(&meshData->boundingBox.Extents, 0.5f * (vMax - vMin));
+	XMStoreFloat3(&(*outMeshData)->boundingBox.Center, 0.5f * (vMin + vMax));
+	XMStoreFloat3(&(*outMeshData)->boundingBox.Extents, 0.5f * (vMax - vMin));
 
-	XMStoreFloat3(&meshData->boundingSphere.Center, 0.5f * (vMin + vMax));
-	meshData->boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
+	XMStoreFloat3(&(*outMeshData)->boundingSphere.Center, 0.5f * (vMin + vMax));
+	(*outMeshData)->boundingSphere.Radius = XMVectorGetX(XMVector3Length(0.5f * (vMax - vMin)));
 
 	fin >> ignore >> ignore >> ignore;
 
@@ -98,12 +116,25 @@ std::unique_ptr<MeshData> CMesh::ReadFile(const std::wstring& filename)
 	{
 		std::int32_t readIdx{ 0 };
 		fin >> readIdx;
-		meshData->indices.emplace_back(std::move(readIdx));
+		(*outMeshData)->indices.emplace_back(std::move(readIdx));
 	}
 	fin.close();
 
-	return std::move(meshData);
+	return true;
 }
+
+bool CMesh::ReadSkinnedFile(const std::wstring& filename, MeshData** outMeshData)
+{
+	//std::vector<M3DLoader::SkinnedVertex> vertices;
+	//std::vector<std::uint16_t> indices;
+
+	//M3DLoader m3dLoader;
+	//m3dLoader.LoadM3d(mSkinnedModelFilename, vertices, indices,
+	//	mSkinnedSubsets, mSkinnedMats, mSkinnedInfo);
+
+	return true;
+}
+
 
 CMesh::Offsets CMesh::SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data)
 {

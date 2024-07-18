@@ -101,6 +101,13 @@ InstanceDataList CreateSkullInstanceData(const std::vector<std::string>& materia
 	return instances;
 }
 
+InstanceDataList CreateSoldierInstanceData(const std::vector<std::string>& materialNameList)
+{
+	InstanceDataList instances{};
+
+	return instances;
+}
+
 InstanceDataList CreateCylinderInstanceData(const std::vector<std::string>& materialNameList)
 {
 	InstanceDataList instances{};
@@ -236,6 +243,32 @@ ModelProperty CreateSkullMock()
 	return modelProp;
 }
 
+ModelProperty CreateSoldierMock()
+{
+	MaterialList materialList;
+	/*materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Texture2D, { L"bricks.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Texture2D, { L"stone.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Texture2D, { L"tile.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Texture2D, { L"WoodCrate01.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Texture2D, { L"ice.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
+	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Texture2D, { L"grass.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Texture2D, { L"white1x1.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));*/
+
+	std::vector<std::string> materialNameList{};
+	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
+		return mat->name; });
+
+	ModelProperty  modelProp{};
+	modelProp.createType = ModelProperty::CreateType::ReadFile;
+	modelProp.meshData = nullptr;
+	modelProp.cullingFrustum = false;
+	modelProp.filename = L"soldier.m3d";
+	modelProp.instanceDataList = CreateSoldierInstanceData(materialNameList);
+	modelProp.materialList = materialList;
+
+	return modelProp;
+}
+
 ModelProperty CreateGridMock()
 {
 	MaterialList materialList;
@@ -316,6 +349,8 @@ ModelProperty CreateMock(const std::string& meshName)
 		return CreateCubeMock();
 	else if (meshName == "skull")
 		return CreateSkullMock();
+	else if (meshName == "man")
+		return CreateSoldierMock();
 	else if (meshName == "grid")
 		return CreateGridMock();
 	else if (meshName == "cylinder")

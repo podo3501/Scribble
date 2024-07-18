@@ -75,7 +75,9 @@ public:
 	bool LoadMeshIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems);
 
 private:
-	std::unique_ptr<MeshData> ReadFile(const std::wstring& filename);
+	std::unique_ptr<MeshData> ReadMeshType(GraphicsPSO pso, const std::wstring& filename);
+	bool ReadFile(const std::wstring& filename, MeshData** outMeshData);
+	bool ReadSkinnedFile(const std::wstring& filename, MeshData** outMeshData);
 
 	CMesh::Offsets SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data);
 	void SetSubmeshList(RenderItem* renderItem, const MeshDataList& meshDataList,
