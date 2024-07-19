@@ -39,6 +39,19 @@ RenderItem* GetRenderItem(AllRenderItems& allRenderItems, GraphicsPSO pso)
 	return pRenderItem;
 }
 
+RenderItem* MakeRenderItem(AllRenderItems& allRenderItems, GraphicsPSO pso)
+{
+	RenderItem* curRItem = GetRenderItem(allRenderItems, pso);
+	if (curRItem != nullptr)
+		return curRItem;
+
+	auto renderItem = std::make_unique<RenderItem>();
+	RenderItem* pRenderItem = renderItem.get();
+	allRenderItems.insert(std::make_pair(pso, std::move(renderItem)));
+
+	return pRenderItem;
+}
+
 SubRenderItem* GetSubRenderItem(RenderItem* renderItem, const std::string& meshName)
 {
 	SubRenderItems& subRItems = renderItem->subRenderItems;

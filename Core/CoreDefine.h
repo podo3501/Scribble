@@ -14,7 +14,7 @@ constexpr UINT SsaoAmbientMap1Count{ 1u };
 constexpr UINT SsaoNormalMapCount{ 1u };
 constexpr UINT SsaoDepthMapCount{ 1u };
 constexpr UINT SsaoRandomVectorCount{ 1u };
-constexpr UINT TextureCount{ 35u };
+constexpr UINT TextureCount{ 60u };
 constexpr UINT TotalSsaoCount = SsaoAmbientMap0Count + SsaoAmbientMap1Count + SsaoNormalMapCount + SsaoDepthMapCount + SsaoRandomVectorCount;
 constexpr UINT TotalShaderResourceViewHeap = CubeCount + ShadowCount + TotalSsaoCount + TextureCount;
 

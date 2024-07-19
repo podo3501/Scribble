@@ -17,6 +17,7 @@ struct ID3D12GraphicsCommandList;
 struct ID3D12DescriptorHeap;
 struct RenderItem;
 struct Vertex;
+struct SkinnedVertex;
 enum class eBufferType : int;
 enum class eTextureType : int;
 enum class GraphicsPSO : int;
@@ -27,6 +28,7 @@ using Vertices = std::vector<Vertex>;
 using Indices = std::vector<std::int32_t>;
 using TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
 using ShaderFileList = std::map<GraphicsPSO, std::vector<std::pair<ShaderType, std::wstring>>>;
+using SkinnedVertices = std::vector<SkinnedVertex>;
 
 interface IRenderer
 {
@@ -35,6 +37,7 @@ interface IRenderer
 	virtual bool IsInitialize() = 0;
 	virtual bool OnResize(int wndWidth, int wndHeight) = 0;
 	virtual bool LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) = 0;
+	virtual bool LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem) = 0;
 	virtual bool LoadTexture(const TextureList& textureList) = 0;
 	virtual bool LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename) = 0;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) = 0;

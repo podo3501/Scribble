@@ -42,6 +42,9 @@
     <Filter Include="리소스 파일\Shaders\Debug">
       <UniqueIdentifier>{1b055f21-603a-494a-82ed-657d52ca4e6e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="리소스 파일\Shaders\SkinnedOpaque">
+      <UniqueIdentifier>{542957c8-0351-44f1-beb1-f0552ae57264}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -201,6 +204,9 @@
     <None Include="..\Resource\Shaders\Debug\Type.hlsli">
       <Filter>리소스 파일\Shaders\Debug</Filter>
     </None>
+    <None Include="..\Resource\Shaders\SkinnedOpaque\Type.hlsli">
+      <Filter>리소스 파일\Shaders\SkinnedOpaque</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Resource\Shaders\Cube\PS.hlsl">
@@ -250,6 +256,12 @@
     </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Debug\VS.hlsl">
       <Filter>리소스 파일\Shaders\Debug</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\SkinnedOpaque\PS.hlsl">
+      <Filter>리소스 파일\Shaders\SkinnedOpaque</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\SkinnedOpaque\VS.hlsl">
+      <Filter>리소스 파일\Shaders\SkinnedOpaque</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

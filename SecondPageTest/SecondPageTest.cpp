@@ -250,6 +250,18 @@ namespace MainLoop
 		EXPECT_TRUE(pc.lights[0].direction.x != 0.57735f);
 	}
 
+	ShaderFileList GetSkinnedMeshFileList()
+	{
+		ShaderFileList shaderFileList{};
+		auto InsertShaderFile = [&shaderFileList](GraphicsPSO pso, ShaderType type, const std::wstring filename) {
+			shaderFileList[pso].emplace_back(std::make_pair(type, filename)); };
+
+		InsertShaderFile(SkinnedOpaque, VS, L"SkinnedOpaque/VS.hlsl");
+		InsertShaderFile(SkinnedOpaque, PS, L"SkinnedOpaque/PS.hlsl");
+
+		return shaderFileList;
+	}
+
 	CreateModelNames MakeSkinnedTestMockData()
 	{
 		return CreateModelNames
@@ -260,6 +272,17 @@ namespace MainLoop
 
 	TEST_F(MainLoopClassTest, Skinned)
 	{
+		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
+		EXPECT_TRUE(window->Initialize(false));
+
+		std::unique_ptr<IRenderer> renderer = CreateRenderer(
+			m_resourcePath,
+			window->GetHandle(),
+			window->GetWidth(),
+			window->GetHeight(),
+			GetSkinnedMeshFileList());
+		EXPECT_TRUE(m_renderer != nullptr);
+
 		AllRenderItems allRenderItems{};
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
 		EXPECT_TRUE(model->Initialize(m_resourcePath, MakeSkinnedTestMockData()));

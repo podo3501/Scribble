@@ -32,6 +32,7 @@ public:
 	virtual bool IsInitialize() override { return m_isInitialize; };
 	virtual bool OnResize(int width, int height) override;
 	virtual bool LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
+	virtual bool LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem) override;
 	virtual bool LoadTexture(const TextureList& textureList) override;
 	virtual bool LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
@@ -64,6 +65,8 @@ private:
 
 	bool LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
+	bool LoadSkinnedMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+		const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem);
 
 	bool MakeFrameResource();
 	bool MakePSOPipelineState(GraphicsPSO psoType);

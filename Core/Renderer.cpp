@@ -119,6 +119,37 @@ bool CRenderer::LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& tota
 		return LoadMesh(device, cmdList, totalVertices, totalIndices, renderItem); });
 }
 
+bool CRenderer::LoadSkinnedMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+	const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem)
+{
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
+		device, cmdList,
+		totalVertices.data(),
+		renderItem->vertexBufferView.SizeInBytes,
+		renderItem->vertexBufferUploader,
+		&renderItem->vertexBufferGPU));
+	renderItem->vertexBufferView.BufferLocation = renderItem->vertexBufferGPU->GetGPUVirtualAddress();
+
+	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
+		device, cmdList,
+		totalIndices.data(),
+		renderItem->indexBufferView.SizeInBytes,
+		renderItem->indexBufferUploader,
+		&renderItem->indexBufferGPU));
+	renderItem->indexBufferView.BufferLocation = renderItem->indexBufferGPU->GetGPUVirtualAddress();
+
+	return true;
+}
+
+bool CRenderer::LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem)
+{
+	if (m_psoList.find(GraphicsPSO::SkinnedOpaque) == m_psoList.end())
+		return false;
+
+	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+		return LoadSkinnedMesh(device, cmdList, totalVertices, totalIndices, renderItem); });
+}
+
 bool CRenderer::LoadTexture(const TextureList& textureList)
 {
 	ReturnIfFalse(LoadData(
@@ -184,6 +215,7 @@ bool CRenderer::WaitUntilGpuFinished(UINT64 fenceCount)
 enum class MainRegisterType : int
 {
 	Pass = 0,
+	Bone,
 	Material,
 	Instance,
 	Shadow,
@@ -221,6 +253,7 @@ bool CRenderer::BuildMainRootSignature()
 
 	std::vector<CD3DX12_ROOT_PARAMETER> rp{};
 	GetRootParameter(rp, Pass)->InitAsConstantBufferView(0);
+	GetRootParameter(rp, Bone)->InitAsConstantBufferView(1);
 	GetRootParameter(rp, Material)->InitAsShaderResourceView(0, 1);
 	GetRootParameter(rp, Instance)->InitAsShaderResourceView(1, 1);
 	GetRootParameter(rp, Shadow)->InitAsDescriptorTable(1, &shadowTexTable, D3D12_SHADER_VISIBILITY_PIXEL);

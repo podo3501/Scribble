@@ -15,6 +15,16 @@ constexpr T MaxValue(const T& a, const T& b)
 	return a > b ? a : b;
 }
 
+void SkinnedModelInstance::UpdateSkinnedAnimation(float dt)
+{
+	timePos += dt;
+
+	if (timePos > skinnedInfo->GetClipEndTime(clipName))
+		timePos = 0.0f;
+
+	skinnedInfo->GetFinalTransforms(clipName, timePos, finalTransforms);
+}
+
 Keyframe::Keyframe()
 	: TimePos(0.0f),
 	Translation(0.0f, 0.0f, 0.0f),

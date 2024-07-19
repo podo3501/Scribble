@@ -5,6 +5,8 @@
 #include <string>
 #include <wrl.h>
 
+class CSkinnedData;
+
 struct Subset
 {
 	UINT Id = -1;
@@ -57,6 +59,16 @@ struct AnimationClip
 	void Interpolate(float t, std::vector<DirectX::XMFLOAT4X4>& boneTransforms) const;
 
 	std::vector<BoneAnimation> BoneAnimations;
+};
+
+struct SkinnedModelInstance
+{
+	CSkinnedData* skinnedInfo = nullptr;
+	std::vector<DirectX::XMFLOAT4X4> finalTransforms;
+	std::string clipName;
+	float timePos{ 0.0f };
+
+	void UpdateSkinnedAnimation(float dt);
 };
 
 class CSkinnedData
