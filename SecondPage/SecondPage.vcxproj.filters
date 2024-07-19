@@ -92,10 +92,13 @@
     <ClCompile Include="Ssao.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="LoadM3d.cpp">
+    <ClCompile Include="LoadM3D.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="SkinnedData.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinnedMesh.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -148,10 +151,13 @@
     <ClInclude Include="Ssao.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="LoadM3d.h">
+    <ClInclude Include="LoadM3D.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="SkinnedData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinnedMesh.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

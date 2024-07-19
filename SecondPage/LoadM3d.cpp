@@ -1,12 +1,14 @@
-#include "LoadM3d.h"
+#include "LoadM3D.h"
 #include "SkinnedData.h"
 #include <fstream>
+#include "../Include/FrameResourceData.h"
+#include "./SkinnedData.h"
 
 using namespace DirectX;
 
-bool M3DLoader::LoadM3d(const std::string& filename, 
+bool CLoadM3D::Read(const std::wstring& filename, 
 						std::vector<Vertex>& vertices,
-						std::vector<USHORT>& indices,
+						std::vector<std::int32_t>& indices,
 						std::vector<Subset>& subsets,
 						std::vector<M3dMaterial>& mats)
 {
@@ -39,12 +41,12 @@ bool M3DLoader::LoadM3d(const std::string& filename,
     return false;
 }
 
-bool M3DLoader::LoadM3d(const std::string& filename, 
+bool CLoadM3D::Read(const std::wstring& filename,
 						std::vector<SkinnedVertex>& vertices,
-						std::vector<USHORT>& indices,
+						std::vector<std::int32_t>& indices,
 						std::vector<Subset>& subsets,
 						std::vector<M3dMaterial>& mats,
-						SkinnedData& skinInfo)
+						CSkinnedData* skinInfo)
 {
     std::ifstream fin(filename);
 
@@ -77,14 +79,14 @@ bool M3DLoader::LoadM3d(const std::string& filename,
 	    ReadBoneHierarchy(fin, numBones, boneIndexToParentIndex);
 	    ReadAnimationClips(fin, numBones, numAnimationClips, animations);
  
-		skinInfo.Set(boneIndexToParentIndex, boneOffsets, animations);
+		skinInfo->Set(boneIndexToParentIndex, boneOffsets, animations);
 
 	    return true;
 	}
     return false;
 }
 
-void M3DLoader::ReadMaterials(std::ifstream& fin, UINT numMaterials, std::vector<M3dMaterial>& mats)
+void CLoadM3D::ReadMaterials(std::ifstream& fin, UINT numMaterials, std::vector<M3dMaterial>& mats)
 {
 	 std::string ignore;
      mats.resize(numMaterials);
@@ -106,7 +108,7 @@ void M3DLoader::ReadMaterials(std::ifstream& fin, UINT numMaterials, std::vector
 		}
 }
 
-void M3DLoader::ReadSubsetTable(std::ifstream& fin, UINT numSubsets, std::vector<Subset>& subsets)
+void CLoadM3D::ReadSubsetTable(std::ifstream& fin, UINT numSubsets, std::vector<Subset>& subsets)
 {
     std::string ignore;
 	subsets.resize(numSubsets);
@@ -122,7 +124,7 @@ void M3DLoader::ReadSubsetTable(std::ifstream& fin, UINT numSubsets, std::vector
     }
 }
 
-void M3DLoader::ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<Vertex>& vertices)
+void CLoadM3D::ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<Vertex>& vertices)
 {
 	std::string ignore;
     vertices.resize(numVertices);
@@ -130,14 +132,14 @@ void M3DLoader::ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<V
     fin >> ignore; // vertices header text
     for(UINT i = 0; i < numVertices; ++i)
     {
-	    fin >> ignore >> vertices[i].Pos.x      >> vertices[i].Pos.y      >> vertices[i].Pos.z;
-		fin >> ignore >> vertices[i].TangentU.x >> vertices[i].TangentU.y >> vertices[i].TangentU.z >> vertices[i].TangentU.w;
-	    fin >> ignore >> vertices[i].Normal.x   >> vertices[i].Normal.y   >> vertices[i].Normal.z;
-	    fin >> ignore >> vertices[i].TexC.x     >> vertices[i].TexC.y;
+	    fin >> ignore >> vertices[i].pos.x      >> vertices[i].pos.y      >> vertices[i].pos.z;
+		fin >> ignore >> vertices[i].tangentU.x >> vertices[i].tangentU.y >> vertices[i].tangentU.z;// >> vertices[i].tangentU.w;
+	    fin >> ignore >> vertices[i].normal.x   >> vertices[i].normal.y   >> vertices[i].normal.z;
+	    fin >> ignore >> vertices[i].texC.x     >> vertices[i].texC.y;
     }
 }
 
-void M3DLoader::ReadSkinnedVertices(std::ifstream& fin, UINT numVertices, std::vector<SkinnedVertex>& vertices)
+void CLoadM3D::ReadSkinnedVertices(std::ifstream& fin, UINT numVertices, std::vector<SkinnedVertex>& vertices)
 {
 	std::string ignore;
     vertices.resize(numVertices);
@@ -166,7 +168,7 @@ void M3DLoader::ReadSkinnedVertices(std::ifstream& fin, UINT numVertices, std::v
     }
 }
 
-void M3DLoader::ReadTriangles(std::ifstream& fin, UINT numTriangles, std::vector<USHORT>& indices)
+void CLoadM3D::ReadTriangles(std::ifstream& fin, UINT numTriangles, std::vector<std::int32_t>& indices)
 {
 	std::string ignore;
     indices.resize(numTriangles*3);
@@ -178,7 +180,7 @@ void M3DLoader::ReadTriangles(std::ifstream& fin, UINT numTriangles, std::vector
     }
 }
  
-void M3DLoader::ReadBoneOffsets(std::ifstream& fin, UINT numBones, std::vector<XMFLOAT4X4>& boneOffsets)
+void CLoadM3D::ReadBoneOffsets(std::ifstream& fin, UINT numBones, std::vector<XMFLOAT4X4>& boneOffsets)
 {
 	std::string ignore;
     boneOffsets.resize(numBones);
@@ -194,7 +196,7 @@ void M3DLoader::ReadBoneOffsets(std::ifstream& fin, UINT numBones, std::vector<X
     }
 }
 
-void M3DLoader::ReadBoneHierarchy(std::ifstream& fin, UINT numBones, std::vector<int>& boneIndexToParentIndex)
+void CLoadM3D::ReadBoneHierarchy(std::ifstream& fin, UINT numBones, std::vector<int>& boneIndexToParentIndex)
 {
 	std::string ignore;
     boneIndexToParentIndex.resize(numBones);
@@ -206,7 +208,7 @@ void M3DLoader::ReadBoneHierarchy(std::ifstream& fin, UINT numBones, std::vector
 	}
 }
 
-void M3DLoader::ReadAnimationClips(std::ifstream& fin, UINT numBones, UINT numAnimationClips, 
+void CLoadM3D::ReadAnimationClips(std::ifstream& fin, UINT numBones, UINT numAnimationClips, 
 								   std::unordered_map<std::string, AnimationClip>& animations)
 {
 	std::string ignore;
@@ -230,7 +232,7 @@ void M3DLoader::ReadAnimationClips(std::ifstream& fin, UINT numBones, UINT numAn
     }
 }
 
-void M3DLoader::ReadBoneKeyframes(std::ifstream& fin, UINT numBones, BoneAnimation& boneAnimation)
+void CLoadM3D::ReadBoneKeyframes(std::ifstream& fin, UINT numBones, BoneAnimation& boneAnimation)
 {
 	std::string ignore;
     UINT numKeyframes = 0;

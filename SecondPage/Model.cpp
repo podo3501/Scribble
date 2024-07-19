@@ -7,6 +7,7 @@
 #include "../Include/FrameResourceData.h"
 #include "./SetupData.h"
 #include "./Mesh.h"
+#include "./SkinnedMesh.h"
 #include "./Material.h"
 #include "./MockData.h"
 #include "./Camera.h"
@@ -15,6 +16,7 @@
 CModel::CModel()
 	: m_material{ nullptr }
 	, m_mesh{ nullptr }
+	, m_skinnedMesh{ nullptr }
 	, m_setupData{ nullptr }
 {}
 CModel::~CModel() = default;
@@ -24,6 +26,7 @@ bool CModel::Initialize(const std::wstring& resPath, const CreateModelNames& cre
 	m_material = std::make_unique<CMaterial>();
 	m_setupData = std::make_unique<CSetupData>();
 	m_mesh = std::make_unique<CMesh>(resPath);
+	m_skinnedMesh = std::make_unique<CSkinnedMesh>(resPath);
 
 	return std::ranges::all_of(createModelNames, [this](auto& name) {
 		const auto& pso = name.first;
@@ -38,7 +41,7 @@ bool CModel::Initialize(const std::wstring& resPath, const CreateModelNames& cre
 bool CModel::LoadMemory(IRenderer* renderer, AllRenderItems& allRenderItems)
 {
 	ReturnIfFalse(m_material->LoadTextureIntoVRAM(renderer));
-	ReturnIfFalse(m_setupData->LoadMesh(m_mesh.get(), &allRenderItems));
+	ReturnIfFalse(m_setupData->LoadMesh(m_mesh.get(), m_skinnedMesh.get(), &allRenderItems));
 	ReturnIfFalse(m_mesh->LoadMeshIntoVRAM(renderer, &allRenderItems));
 
 	return true;

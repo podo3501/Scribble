@@ -51,7 +51,9 @@ std::unique_ptr<MeshData> Generator(std::string&& meshName)
 	meshData->name = std::move(meshName);
 
 	std::ranges::transform(genMeshData.Vertices, std::back_inserter(meshData->vertices),
-		[](auto& gen) { return Vertex(gen.Position, gen.Normal, gen.TexC, gen.TangentU); });
+		[](auto& gen) { 
+			DirectX::XMFLOAT4 tangentU( gen.TangentU.x, gen.TangentU.y, gen.TangentU.z, 0.0f );
+			return Vertex(gen.Position, gen.Normal, gen.TexC, tangentU	); });
 	meshData->indices.insert(meshData->indices.end(), genMeshData.Indices32.begin(), genMeshData.Indices32.end());
 
 	return std::move(meshData);
@@ -349,7 +351,7 @@ ModelProperty CreateMock(const std::string& meshName)
 		return CreateCubeMock();
 	else if (meshName == "skull")
 		return CreateSkullMock();
-	else if (meshName == "man")
+	else if (meshName == "soldier")
 		return CreateSoldierMock();
 	else if (meshName == "grid")
 		return CreateGridMock();

@@ -4,9 +4,11 @@
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/Interface.h"
+#include "../Include/Types.h"
 #include "./Utility.h"
 #include "./Material.h"
 #include "./Mesh.h"
+#include "./SkinnedMesh.h"
 #include "./Helper.h"
 
 using namespace DirectX;
@@ -44,17 +46,19 @@ bool CSetupData::InsertModelProperty(GraphicsPSO pso, const std::string& meshNam
 	return true;
 }
 
-bool CSetupData::LoadMesh(CMesh* mesh, GraphicsPSO pso, ModelProperties& modelProp)
+bool CSetupData::LoadMesh(CMesh* mesh, CSkinnedMesh* skinnedMesh, GraphicsPSO pso, ModelProperties& modelProp)
 {
-	return std::ranges::all_of(modelProp, [mesh, pso](auto& mProp) {
+	return std::ranges::all_of(modelProp, [mesh, skinnedMesh, pso](auto& mProp) {
+		if (pso == GraphicsPSO::SkinnedOpaque)
+			return skinnedMesh->Read(mProp.first, &mProp.second);
 		return mesh->LoadGeometry(pso, mProp.first, &mProp.second);});
 }
 
-bool CSetupData::LoadMesh(CMesh* mesh, AllRenderItems* renderItems)
+bool CSetupData::LoadMesh(CMesh* mesh, CSkinnedMesh* skinnedMesh, AllRenderItems* renderItems)
 {
-	ReturnIfFalse( std::ranges::all_of(m_allModelProperty, [this, mesh](auto& geoProp) {
+	ReturnIfFalse( std::ranges::all_of(m_allModelProperty, [this, mesh, skinnedMesh](auto& geoProp) {
 		auto& pso = geoProp.first;
-		return LoadMesh(mesh, pso, geoProp.second); }));
+		return LoadMesh(mesh, skinnedMesh, pso, geoProp.second); }));
 
 	return FillRenderItems(renderItems);
 }

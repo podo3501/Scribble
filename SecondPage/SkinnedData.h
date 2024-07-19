@@ -5,6 +5,29 @@
 #include <string>
 #include <wrl.h>
 
+struct Subset
+{
+	UINT Id = -1;
+	UINT VertexStart = 0;
+	UINT VertexCount = 0;
+	UINT FaceStart = 0;
+	UINT FaceCount = 0;
+};
+
+struct M3dMaterial
+{
+	std::string Name;
+
+	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+	float Roughness = 0.8f;
+	bool AlphaClip = false;
+
+	std::string MaterialTypeName;
+	std::string DiffuseMapName;
+	std::string NormalMapName;
+};
+
 struct Keyframe
 {
 	Keyframe();
@@ -36,7 +59,7 @@ struct AnimationClip
 	std::vector<BoneAnimation> BoneAnimations;
 };
 
-class SkinnedData
+class CSkinnedData
 {
 public:
 	UINT BoneCount() const;

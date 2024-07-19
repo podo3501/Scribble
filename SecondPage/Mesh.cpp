@@ -10,6 +10,8 @@
 #include "./SetupData.h"
 #include "./MathHelper.h"
 #include "./Helper.h"
+#include "./LoadM3D.h"
+#include "./SkinnedData.h"
 
 using namespace DirectX;
 
@@ -45,8 +47,6 @@ std::unique_ptr<MeshData> CMesh::ReadMeshType(GraphicsPSO pso, const std::wstrin
 	case	GraphicsPSO::Opaque:
 	case GraphicsPSO::NormalOpaque:
 		ReadFile(filename, &curMeshData);
-	case GraphicsPSO::SkinnedOpaque:
-		ReadSkinnedFile(filename, &curMeshData);
 		break;
 	}
 
@@ -122,19 +122,6 @@ bool CMesh::ReadFile(const std::wstring& filename, MeshData** outMeshData)
 
 	return true;
 }
-
-bool CMesh::ReadSkinnedFile(const std::wstring& filename, MeshData** outMeshData)
-{
-	//std::vector<M3DLoader::SkinnedVertex> vertices;
-	//std::vector<std::uint16_t> indices;
-
-	//M3DLoader m3dLoader;
-	//m3dLoader.LoadM3d(mSkinnedModelFilename, vertices, indices,
-	//	mSkinnedSubsets, mSkinnedMats, mSkinnedInfo);
-
-	return true;
-}
-
 
 CMesh::Offsets CMesh::SetSubmesh(RenderItem* renderItem, Offsets& offsets, MeshData* data)
 {

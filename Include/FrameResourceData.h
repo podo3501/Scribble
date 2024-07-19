@@ -98,14 +98,26 @@ struct Vertex
         const DirectX::XMFLOAT3& p,
         const DirectX::XMFLOAT3& n,
         const DirectX::XMFLOAT2& u,
-        const DirectX::XMFLOAT3& t)
+        const DirectX::XMFLOAT4& t)
         : pos(p), normal(n), texC(u) ,tangentU(t) {}
 
     DirectX::XMFLOAT3 pos{};
     DirectX::XMFLOAT3 normal{};
     DirectX::XMFLOAT2 texC{};
-    DirectX::XMFLOAT3 tangentU{};
+    DirectX::XMFLOAT4 tangentU{};
 };
 
 using Vertices = std::vector<Vertex>;
 using Indices = std::vector<std::int32_t>;
+
+struct SkinnedVertex
+{
+    DirectX::XMFLOAT3 Pos;
+    DirectX::XMFLOAT3 Normal;
+    DirectX::XMFLOAT2 TexC;
+    DirectX::XMFLOAT3 TangentU;
+    DirectX::XMFLOAT3 BoneWeights;
+    BYTE BoneIndices[4];
+};
+
+using SkinnedVertices = std::vector<SkinnedVertex>;

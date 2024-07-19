@@ -107,24 +107,24 @@ void AnimationClip::Interpolate(float t, std::vector<XMFLOAT4X4>& boneTransforms
 	}
 }
 
-float SkinnedData::GetClipStartTime(const std::string& clipName) const
+float CSkinnedData::GetClipStartTime(const std::string& clipName) const
 {
 	auto clip = mAnimations.find(clipName);
 	return clip->second.GetClipStartTime();
 }
 
-float SkinnedData::GetClipEndTime(const std::string& clipName) const
+float CSkinnedData::GetClipEndTime(const std::string& clipName) const
 {
 	auto clip = mAnimations.find(clipName);
 	return clip->second.GetClipEndTime();
 }
 
-UINT SkinnedData::BoneCount() const
+UINT CSkinnedData::BoneCount() const
 {
 	return static_cast<UINT>(mBoneHierarchy.size());
 }
 
-void SkinnedData::Set(
+void CSkinnedData::Set(
 	std::vector<int>& boneHierarchy,
 	std::vector<XMFLOAT4X4>& boneOffsets,
 	std::unordered_map<std::string, AnimationClip>& animations)
@@ -134,7 +134,7 @@ void SkinnedData::Set(
 	mAnimations = animations;
 }
 
-void SkinnedData::GetFinalTransforms(
+void CSkinnedData::GetFinalTransforms(
 	const std::string& clipName, float timePos, std::vector<XMFLOAT4X4>& finalTransforms) const
 {
 	UINT numBones = static_cast<UINT>(mBoneOffsets.size());

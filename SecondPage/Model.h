@@ -10,6 +10,7 @@
 interface IRenderer;
 class CMaterial;
 class CMesh;
+class CSkinnedMesh;
 class CSetupData;
 class CCamera;
 struct RenderItem;
@@ -41,6 +42,7 @@ private:
 private:
 	std::unique_ptr<CMaterial> m_material;
 	std::unique_ptr<CMesh> m_mesh;
+	std::unique_ptr<CSkinnedMesh> m_skinnedMesh;
 	std::unique_ptr<CSetupData> m_setupData;
 };
 

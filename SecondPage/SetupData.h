@@ -10,6 +10,7 @@
 interface IRenderer;
 class CMaterial;
 class CMesh;
+class CSkinnedMesh;
 struct MeshData;
 struct Material;
 struct RenderItem;
@@ -56,10 +57,10 @@ public:
 		const std::string& meshName, 
 		ModelProperty&& mProperty, 
 		CMaterial* material);
-	bool LoadMesh(CMesh* mesh, AllRenderItems* renderItems);
+	bool LoadMesh(CMesh* mesh, CSkinnedMesh* skinnedMesh, AllRenderItems* renderItems);
 
 private:
-	bool LoadMesh(CMesh* mesh, GraphicsPSO pso, ModelProperties& modelProp);
+	bool LoadMesh(CMesh* mesh, CSkinnedMesh* skinnedMesh, GraphicsPSO pso, ModelProperties& modelProp);
 	bool FillRenderItems(AllRenderItems* renderItems);
 
 private:
