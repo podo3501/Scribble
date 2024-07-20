@@ -20,9 +20,10 @@ enum class eBufferType : int
 {
     NoType = 0,
     PassCB,
+    SsaoCB,
+    SkinnedCB,
     Instance,
     Material,
-    SsaoCB,
 };
 
 struct PassConstants
@@ -64,6 +65,11 @@ struct SsaoConstants
     float occlusionFadeStart{ 0.2f };
     float occlusionFadeEnd{ 2.0f };
     float surfaceEpsilon{ 0.05f };
+};
+
+struct SkinnedConstants
+{
+    DirectX::XMFLOAT4X4 boneTransforms[96]{};
 };
 
 struct InstanceBuffer

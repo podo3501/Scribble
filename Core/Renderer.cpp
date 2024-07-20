@@ -16,7 +16,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
+std::unique_ptr<IRenderer> CreateRenderer(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
 	std::unique_ptr<CRenderer> renderer = std::make_unique<CRenderer>();
 	bool bResult = renderer->Initialize(resPath, hwnd, width, height, shaderFileList);
@@ -353,6 +353,7 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 	case GraphicsPSO::Sky:								MakeSkyDesc(&psoDesc);							break;
 	case GraphicsPSO::Opaque:						MakeOpaqueDesc(&psoDesc);					break;
 	case GraphicsPSO::NormalOpaque:			MakeNormalOpaqueDesc(&psoDesc);		break;
+	case GraphicsPSO::SkinnedOpaque:			MakeSkinnedOpaqueDesc(&psoDesc);	break;
 	case GraphicsPSO::ShadowMap:				MakeShadowDesc(&psoDesc);					break;
 	case GraphicsPSO::SsaoDrawNormals:		MakeDrawNormals(&psoDesc);				break;
 	case GraphicsPSO::SsaoMap:					MakeSsaoDesc(&psoDesc);						break;
@@ -394,6 +395,9 @@ void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDe
 	inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
 	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 }
+
+void CRenderer::MakeSkinnedOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{}
 
 void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {

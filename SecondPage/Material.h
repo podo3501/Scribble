@@ -20,8 +20,6 @@ struct Material
 	eTextureType type;
 	std::wstring diffuseName{};
 	std::wstring normalName{};
-	//UINT diffuseIndex{ 0 };
-	//UINT normalSrvHeapIndex{ 0 };	//normal map
 
 	DirectX::XMFLOAT4 diffuseAlbedo{ 1.0f, 1.0f, 1.0f, 1.0f };
 	DirectX::XMFLOAT3 fresnelR0{ 0.01f, 0.01f, 0.01f };

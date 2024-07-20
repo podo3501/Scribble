@@ -233,7 +233,7 @@ namespace MainLoop
 		std::unique_ptr<CCamera> camera = std::make_unique<CCamera>();
 		camera->OnResize(800, 600);
 		camera->Update(0.1f);
-		model->Update(&renderer, camera.get(), allRenderItems);
+		model->Update(&renderer, camera.get(), 0.1f, allRenderItems);
 
 		SubRenderItem* subItem = GetSubRenderItem(allRenderItems, NormalOpaque, "grid");
 		EXPECT_EQ(subItem->instanceCount, 1);
@@ -256,8 +256,8 @@ namespace MainLoop
 		auto InsertShaderFile = [&shaderFileList](GraphicsPSO pso, ShaderType type, const std::wstring filename) {
 			shaderFileList[pso].emplace_back(std::make_pair(type, filename)); };
 
-		InsertShaderFile(SkinnedOpaque, VS, L"SkinnedOpaque/VS.hlsl");
-		InsertShaderFile(SkinnedOpaque, PS, L"SkinnedOpaque/PS.hlsl");
+		InsertShaderFile(SkinnedOpaque, VS, L"Skinned/Opaque/VS.hlsl");
+		InsertShaderFile(SkinnedOpaque, PS, L"Skinned/Opaque/PS.hlsl");
 
 		return shaderFileList;
 	}
@@ -272,21 +272,25 @@ namespace MainLoop
 
 	TEST_F(MainLoopClassTest, Skinned)
 	{
+		m_renderer.reset();
+		m_window.reset();
+		
+		std::wstring resource = L"../Resource/";
 		std::unique_ptr<CWindow> window = std::make_unique<CWindow>(GetModuleHandle(nullptr));
 		EXPECT_TRUE(window->Initialize(false));
 
 		std::unique_ptr<IRenderer> renderer = CreateRenderer(
-			m_resourcePath,
+			resource,
 			window->GetHandle(),
 			window->GetWidth(),
 			window->GetHeight(),
 			GetSkinnedMeshFileList());
-		EXPECT_TRUE(m_renderer != nullptr);
+		EXPECT_TRUE(renderer != nullptr);
 
 		AllRenderItems allRenderItems{};
 		std::unique_ptr<CModel> model = std::make_unique<CModel>();
-		EXPECT_TRUE(model->Initialize(m_resourcePath, MakeSkinnedTestMockData()));
-		EXPECT_TRUE(model->LoadMemory(m_renderer.get(), allRenderItems));
+		EXPECT_TRUE(model->Initialize(resource, MakeSkinnedTestMockData()));
+		EXPECT_TRUE(model->LoadMemory(renderer.get(), allRenderItems));
 	}
 
 } //SecondPage

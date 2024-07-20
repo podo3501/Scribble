@@ -188,7 +188,7 @@ bool CMainLoop::Run(IRenderer* renderer)
 			ReturnIfFalse(m_iRenderer->PrepareFrame());
 
 			m_camera->Update(m_timer->DeltaTime());
-			m_model->Update(m_iRenderer, m_camera.get(), m_AllRenderItems);
+			m_model->Update(m_iRenderer, m_camera.get(), m_timer.get()->DeltaTime(), m_AllRenderItems);
 			m_shadow->Update(m_timer->DeltaTime());
 			
 			UpdatePassCB();

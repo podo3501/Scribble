@@ -47,4 +47,4 @@ interface IRenderer
 	virtual void Set4xMsaaState(HWND hwnd, int widht, int height, bool value) = 0;
 };
 
-std::unique_ptr<IRenderer> CreateRenderer(std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& fileList);
+std::unique_ptr<IRenderer> CreateRenderer(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& fileList);

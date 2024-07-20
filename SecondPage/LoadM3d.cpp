@@ -97,14 +97,14 @@ void CLoadM3D::ReadMaterials(std::ifstream& fin, UINT numMaterials, std::vector<
      fin >> ignore; // materials header text
 	 for(UINT i = 0; i < numMaterials; ++i)
 	 {
-         fin >> ignore >> mats[i].Name;
-		 fin >> ignore >> mats[i].DiffuseAlbedo.x  >> mats[i].DiffuseAlbedo.y  >> mats[i].DiffuseAlbedo.z;
-		 fin >> ignore >> mats[i].FresnelR0.x >> mats[i].FresnelR0.y >> mats[i].FresnelR0.z;
-         fin >> ignore >> mats[i].Roughness;
-		 fin >> ignore >> mats[i].AlphaClip;
-		 fin >> ignore >> mats[i].MaterialTypeName;
-		 fin >> ignore >> mats[i].DiffuseMapName;
-		 fin >> ignore >> mats[i].NormalMapName;
+         fin >> ignore >> mats[i].name;
+		 fin >> ignore >> mats[i].diffuseAlbedo.x  >> mats[i].diffuseAlbedo.y  >> mats[i].diffuseAlbedo.z;
+		 fin >> ignore >> mats[i].fresnelR0.x >> mats[i].fresnelR0.y >> mats[i].fresnelR0.z;
+         fin >> ignore >> mats[i].roughness;
+		 fin >> ignore >> mats[i].alphaClip;
+		 fin >> ignore >> mats[i].materialTypeName;
+		 fin >> ignore >> mats[i].diffuseMapName;
+		 fin >> ignore >> mats[i].normalMapName;
 		}
 }
 
@@ -116,11 +116,11 @@ void CLoadM3D::ReadSubsetTable(std::ifstream& fin, UINT numSubsets, std::vector<
 	fin >> ignore; // subset header text
 	for(UINT i = 0; i < numSubsets; ++i)
 	{
-        fin >> ignore >> subsets[i].Id;
-		fin >> ignore >> subsets[i].VertexStart;
-		fin >> ignore >> subsets[i].VertexCount;
-		fin >> ignore >> subsets[i].FaceStart;
-		fin >> ignore >> subsets[i].FaceCount;
+        fin >> ignore >> subsets[i].id;
+		fin >> ignore >> subsets[i].vertexStart;
+		fin >> ignore >> subsets[i].vertexCount;
+		fin >> ignore >> subsets[i].faceStart;
+		fin >> ignore >> subsets[i].faceCount;
     }
 }
 

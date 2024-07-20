@@ -247,26 +247,13 @@ ModelProperty CreateSkullMock()
 
 ModelProperty CreateSoldierMock()
 {
-	MaterialList materialList;
-	/*materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Texture2D, { L"bricks.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Texture2D, { L"stone.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Texture2D, { L"tile.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Texture2D, { L"WoodCrate01.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Texture2D, { L"ice.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
-	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Texture2D, { L"grass.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Texture2D, { L"white1x1.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));*/
-
-	std::vector<std::string> materialNameList{};
-	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
-		return mat->name; });
-
 	ModelProperty  modelProp{};
 	modelProp.createType = ModelProperty::CreateType::ReadFile;
 	modelProp.meshData = nullptr;
 	modelProp.cullingFrustum = false;
 	modelProp.filename = L"soldier.m3d";
-	modelProp.instanceDataList = CreateSoldierInstanceData(materialNameList);
-	modelProp.materialList = materialList;
+	modelProp.instanceDataList = {};
+	modelProp.materialList = {};
 
 	return modelProp;
 }
@@ -373,6 +360,7 @@ CreateModelNames MakeMockData()
 		{GraphicsPSO::Opaque, { "skull" }},
 		{GraphicsPSO::NormalOpaque, { "grid", "cylinder", "sphere" }},
 		{GraphicsPSO::Debug, { "debug" }},
+		//{GraphicsPSO::SkinnedOpaque, {"soldier"}},
 	};
 }
 
@@ -411,6 +399,8 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::PS, L"Ssao/DrawNormals/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::Debug, ShaderType::VS, L"Debug/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::Debug, ShaderType::PS, L"Debug/PS.hlsl");
+	//InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::VS, L"Skinned/Opaque/VS.hlsl");
+	//InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::PS, L"Skinned/Opaque/PS.hlsl");
 
 	return shaderFileList;
 }

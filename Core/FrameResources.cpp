@@ -10,6 +10,7 @@
 CFrameResources::Resource::Resource()
 	: passCB{ nullptr }
 	, ssaoCB{ nullptr }
+	, skinnedCB{ nullptr }
 	, instanceBuffer{ nullptr }
 	, materialBuffer{ nullptr }
 	, cmdListAlloc{ nullptr }
@@ -30,11 +31,13 @@ bool CFrameResources::Resource::CreateUpdateBuffer(
 
 	passCB = std::make_unique<CUploadBuffer>(sizeof(PassConstants), passCount, true);
 	ssaoCB = std::make_unique<CUploadBuffer>(sizeof(SsaoConstants), 1, true);
+	skinnedCB = std::make_unique<CUploadBuffer>(sizeof(SkinnedConstants), 1, true);
 	instanceBuffer = std::make_unique<CUploadBuffer>(sizeof(InstanceBuffer), maxInstanceCount, false);
 	materialBuffer = std::make_unique<CUploadBuffer>(sizeof(MaterialBuffer), materialCount, false);
 
 	ReturnIfFalse(passCB->Initialize(device));
 	ReturnIfFalse(ssaoCB->Initialize(device));
+	ReturnIfFalse(skinnedCB->Initialize(device));
 	ReturnIfFalse(instanceBuffer->Initialize(device));
 	ReturnIfFalse(materialBuffer->Initialize(device));
 
@@ -89,6 +92,7 @@ CUploadBuffer* CFrameResources::GetUploadBuffer(eBufferType bufferType)
 	{
 	case eBufferType::PassCB:			return resource->passCB.get();
 	case eBufferType::SsaoCB:			return resource->ssaoCB.get();
+	case eBufferType::SkinnedCB:	return resource->skinnedCB.get();
 	case eBufferType::Instance:		return resource->instanceBuffer.get();
 	case eBufferType::Material:		return resource->materialBuffer.get();
 	}

@@ -9,25 +9,25 @@ class CSkinnedData;
 
 struct Subset
 {
-	UINT Id = -1;
-	UINT VertexStart = 0;
-	UINT VertexCount = 0;
-	UINT FaceStart = 0;
-	UINT FaceCount = 0;
+	UINT id = -1;
+	UINT vertexStart{ 0u };
+	UINT vertexCount{ 0u };
+	UINT faceStart{ 0u };
+	UINT faceCount{ 0u };
 };
 
 struct M3dMaterial
 {
-	std::string Name;
+	std::string name;
 
-	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
-	float Roughness = 0.8f;
-	bool AlphaClip = false;
+	DirectX::XMFLOAT4 diffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT3 fresnelR0 = { 0.01f, 0.01f, 0.01f };
+	float roughness{ 0.8f };
+	bool alphaClip{ false };
 
-	std::string MaterialTypeName;
-	std::string DiffuseMapName;
-	std::string NormalMapName;
+	std::string materialTypeName{};
+	std::string diffuseMapName{};
+	std::string normalMapName{};
 };
 
 struct Keyframe

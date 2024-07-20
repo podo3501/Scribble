@@ -42,8 +42,11 @@
     <Filter Include="리소스 파일\Shaders\Debug">
       <UniqueIdentifier>{1b055f21-603a-494a-82ed-657d52ca4e6e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="리소스 파일\Shaders\SkinnedOpaque">
+    <Filter Include="리소스 파일\Shaders\Skinned">
       <UniqueIdentifier>{542957c8-0351-44f1-beb1-f0552ae57264}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="리소스 파일\Shaders\Skinned\Opaque">
+      <UniqueIdentifier>{9f3cc50f-ecb4-4451-96df-3e28b51cd1c5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -204,8 +207,8 @@
     <None Include="..\Resource\Shaders\Debug\Type.hlsli">
       <Filter>리소스 파일\Shaders\Debug</Filter>
     </None>
-    <None Include="..\Resource\Shaders\SkinnedOpaque\Type.hlsli">
-      <Filter>리소스 파일\Shaders\SkinnedOpaque</Filter>
+    <None Include="..\Resource\Shaders\Skinned\Opaque\Type.hlsli">
+      <Filter>리소스 파일\Shaders\Skinned\Opaque</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -257,11 +260,11 @@
     <FxCompile Include="..\Resource\Shaders\Debug\VS.hlsl">
       <Filter>리소스 파일\Shaders\Debug</Filter>
     </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\SkinnedOpaque\PS.hlsl">
-      <Filter>리소스 파일\Shaders\SkinnedOpaque</Filter>
+    <FxCompile Include="..\Resource\Shaders\Skinned\Opaque\PS.hlsl">
+      <Filter>리소스 파일\Shaders\Skinned\Opaque</Filter>
     </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\SkinnedOpaque\VS.hlsl">
-      <Filter>리소스 파일\Shaders\SkinnedOpaque</Filter>
+    <FxCompile Include="..\Resource\Shaders\Skinned\Opaque\VS.hlsl">
+      <Filter>리소스 파일\Shaders\Skinned\Opaque</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

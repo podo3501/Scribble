@@ -33,7 +33,7 @@ public:
 
 	bool Initialize(const std::wstring& resPath, const CreateModelNames& createModelNames );
 	bool LoadMemory(IRenderer* renderer, AllRenderItems& allRenderItems);
-	void Update(IRenderer* renderer, CCamera* camera, AllRenderItems& allRenderItems);
+	void Update(IRenderer* renderer, CCamera* camera, float deltaTime, AllRenderItems& allRenderItems);
 
 private:
 	void UpdateRenderItems(IRenderer* renderer, CCamera* camera, AllRenderItems& allRenderItems);

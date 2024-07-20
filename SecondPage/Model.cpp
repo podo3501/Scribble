@@ -5,6 +5,7 @@
 #include "../Include/Interface.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
+#include "../Include/Types.h"
 #include "./SetupData.h"
 #include "./Mesh.h"
 #include "./SkinnedMesh.h"
@@ -43,7 +44,7 @@ bool CModel::LoadMemory(IRenderer* renderer, AllRenderItems& allRenderItems)
 	ReturnIfFalse(m_material->LoadTextureIntoVRAM(renderer));
 	ReturnIfFalse(m_setupData->LoadMesh(m_mesh.get(), m_skinnedMesh.get(), &allRenderItems));
 	ReturnIfFalse(m_mesh->LoadMeshIntoVRAM(renderer, &allRenderItems));
-	ReturnIfFalse(m_skinnedMesh->LoadMeshIntoVRAM(renderer, &allRenderItems));
+	ReturnIfFalse(m_skinnedMesh->LoadMeshIntoVRAM(renderer, m_material.get(), &allRenderItems));
 
 	return true;
 }
@@ -80,9 +81,10 @@ void CModel::UpdateInstanceBuffer(IRenderer* renderer, const InstanceDataList& v
 	renderer->SetUploadBuffer(eBufferType::Instance, instanceBufferDatas.data(), instanceBufferDatas.size());
 }
 
-void CModel::Update(IRenderer* renderer, CCamera* camera, AllRenderItems& allRenderItems)
+void CModel::Update(IRenderer* renderer, CCamera* camera, float deltaTime, AllRenderItems& allRenderItems)
 {
 	m_material->MakeMaterialBuffer(renderer);
+	m_skinnedMesh->UpdateAnimation(renderer, deltaTime);
 	UpdateRenderItems(renderer, camera, allRenderItems);
 }
 

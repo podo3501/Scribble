@@ -21,6 +21,9 @@ CSetupData::~CSetupData() = default;
 bool CSetupData::FillRenderItems(AllRenderItems* renderItems)
 {
 	std::ranges::for_each(m_allModelProperty, [renderItems](auto& geoProp) {
+		if (geoProp.first == GraphicsPSO::SkinnedOpaque)
+			return;
+
 		std::ranges::for_each(geoProp.second, [renderItems, &geoProp](auto& meshProp) {
 			SubRenderItem* subRenderItem = MakeSubRenderItem((*renderItems), geoProp.first, meshProp.first);
 			subRenderItem->instanceDataList = meshProp.second.instanceDataList;

@@ -10,8 +10,8 @@
     #define NUM_SPOT_LIGHTS 0
 #endif
 
-#include "../LightingUtil.hlsli"
-#include "../Register.hlsli"
+#include "../../LightingUtil.hlsli"
+#include "../../Register.hlsli"
 #include "Type.hlsli"
 
 float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, float3 tangentW)
