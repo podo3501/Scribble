@@ -48,6 +48,12 @@
     <Filter Include="리소스 파일\Shaders\Skinned\Opaque">
       <UniqueIdentifier>{9f3cc50f-ecb4-4451-96df-3e28b51cd1c5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="리소스 파일\Shaders\Skinned\DrawNormals">
+      <UniqueIdentifier>{daabab7f-d508-4027-9c74-1dbc343994bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="리소스 파일\Shaders\Skinned\Shadow">
+      <UniqueIdentifier>{60579300-fc98-425a-aa0b-62070ed5c007}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -210,6 +216,12 @@
     <None Include="..\Resource\Shaders\Skinned\Opaque\Type.hlsli">
       <Filter>리소스 파일\Shaders\Skinned\Opaque</Filter>
     </None>
+    <None Include="..\Resource\Shaders\Skinned\DrawNormals\Type.hlsli">
+      <Filter>리소스 파일\Shaders\Skinned\DrawNormals</Filter>
+    </None>
+    <None Include="..\Resource\Shaders\Skinned\Shadow\Type.hlsli">
+      <Filter>리소스 파일\Shaders\Skinned\Shadow</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Resource\Shaders\Cube\PS.hlsl">
@@ -265,6 +277,18 @@
     </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Skinned\Opaque\VS.hlsl">
       <Filter>리소스 파일\Shaders\Skinned\Opaque</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\DrawNormals\PS.hlsl">
+      <Filter>리소스 파일\Shaders\Skinned\DrawNormals</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\DrawNormals\VS.hlsl">
+      <Filter>리소스 파일\Shaders\Skinned\DrawNormals</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\Shadow\PS.hlsl">
+      <Filter>리소스 파일\Shaders\Skinned\Shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\Shadow\VS.hlsl">
+      <Filter>리소스 파일\Shaders\Skinned\Shadow</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

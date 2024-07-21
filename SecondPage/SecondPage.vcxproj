@@ -210,7 +210,9 @@
     </None>
     <None Include="..\Resource\Shaders\LightingUtil.hlsli" />
     <None Include="..\Resource\Shaders\Shadow\Type.hlsli" />
+    <None Include="..\Resource\Shaders\Skinned\DrawNormals\Type.hlsli" />
     <None Include="..\Resource\Shaders\Skinned\Opaque\Type.hlsli" />
+    <None Include="..\Resource\Shaders\Skinned\Shadow\Type.hlsli" />
     <None Include="..\Resource\Shaders\Ssao\DrawNormals\Type.hlsli" />
     <None Include="..\Resource\Shaders\Ssao\Register.hlsli" />
     <None Include="..\Resource\Shaders\Ssao\SsaoBlur\Type.hlsli" />
@@ -283,11 +285,27 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
     </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\DrawNormals\PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\DrawNormals\VS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Skinned\Opaque\PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Skinned\Opaque\VS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\Shadow\PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\Skinned\Shadow\VS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
     </FxCompile>

@@ -69,6 +69,18 @@ std::wstring CShader::GetShaderFilename(GraphicsPSO psoType, ShaderType shaderTy
 	return m_resPath + m_filePath + find->second;
 }
 
+bool IsSkinned(GraphicsPSO psoType)
+{
+	switch (psoType)
+	{
+	case GraphicsPSO::SkinnedOpaque:
+	case GraphicsPSO::SkinnedDrawNormals:	
+	case GraphicsPSO::SkinnedShadowOpaque:
+		return true;
+	}
+	return false;
+}
+
 std::vector<D3D12_INPUT_ELEMENT_DESC> GetLayout(GraphicsPSO psoType)
 {
 	std::vector<D3D12_INPUT_ELEMENT_DESC> layout =
@@ -79,7 +91,7 @@ std::vector<D3D12_INPUT_ELEMENT_DESC> GetLayout(GraphicsPSO psoType)
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	if (psoType == GraphicsPSO::SkinnedOpaque)
+	if(IsSkinned(psoType))
 	{
 		layout.emplace_back(D3D12_INPUT_ELEMENT_DESC("WEIGHTS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0));
 		layout.emplace_back(D3D12_INPUT_ELEMENT_DESC("BONEINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 56, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0));

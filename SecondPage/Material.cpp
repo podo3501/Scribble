@@ -58,6 +58,8 @@ int CMaterial::GetSrvTextureIndex(const std::wstring& filename)
 
 int CMaterial::GetMaterialIndex(const std::string& matName)
 {
+	if (matName.empty()) return -1;
+
 	auto find = std::ranges::find_if(m_materialList, [&matName](auto& mat) {
 		return mat->name == matName; });
 	if (find == m_materialList.end())

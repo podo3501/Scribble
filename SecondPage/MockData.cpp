@@ -117,14 +117,14 @@ InstanceDataList CreateCylinderInstanceData(const std::vector<std::string>& mate
 	for(auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i * 3.0f);
+		instance->world = DirectX::XMMatrixTranslation(-3.0f, 1.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 
 	for (auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i * 3.0f);
+		instance->world = DirectX::XMMatrixTranslation(+3.0f, 1.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 	
@@ -168,14 +168,14 @@ InstanceDataList CreateSphereInstanceData(const std::vector<std::string>& materi
 	for (auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 3.0f);
+		instance->world = DirectX::XMMatrixTranslation(-3.0f, 3.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 
 	for (auto i : std::views::iota(0, 8))
 	{
 		auto instance = std::make_unique<InstanceData>();
-		instance->world = DirectX::XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 3.0f);
+		instance->world = DirectX::XMMatrixTranslation(+3.0f, 3.5f, -10.0f + i * 3.0f);
 		instances.emplace_back(std::move(instance));
 	}
 
@@ -356,12 +356,10 @@ CreateModelNames MakeMockData()
 {
 	return CreateModelNames
 	{
-		//{GraphicsPSO::Sky, { "cube" }},
-		//{GraphicsPSO::Opaque, { "skull" }},
-		//{GraphicsPSO::NormalOpaque, { "grid", "cylinder", "sphere" }},
-		//{GraphicsPSO::NormalOpaque, { "grid", "cylinder"}},
-		{GraphicsPSO::NormalOpaque, { "grid"}},
-		//{GraphicsPSO::Debug, { "debug" }},
+		{GraphicsPSO::Sky, { "cube" }},
+		{GraphicsPSO::Opaque, { "skull" }},
+		{GraphicsPSO::NormalOpaque, { "grid", "cylinder", "sphere" }},
+		{GraphicsPSO::Debug, { "debug" }},
 		{GraphicsPSO::SkinnedOpaque, {"soldier"}},
 	};
 }
@@ -391,18 +389,22 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::PS, L"Opaque/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::VS, L"NormalOpaque/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::PS, L"NormalOpaque/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::VS, L"Skinned/Opaque/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::PS, L"Skinned/Opaque/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedDrawNormals, ShaderType::VS, L"Skinned/DrawNormals/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedDrawNormals, ShaderType::PS, L"Skinned/DrawNormals/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedShadowOpaque, ShaderType::VS, L"Skinned/Shadow/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedShadowOpaque, ShaderType::PS, L"Skinned/Shadow/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::VS, L"Shadow/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::PS, L"Shadow/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::VS, L"Ssao/DrawNormals/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::PS, L"Ssao/DrawNormals/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::SsaoMap, ShaderType::VS, L"Ssao/Ssao/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::SsaoMap, ShaderType::PS, L"Ssao/Ssao/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::SsaoBlur, ShaderType::VS, L"Ssao/SsaoBlur/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::SsaoBlur, ShaderType::PS, L"Ssao/SsaoBlur/PS.hlsl");
-	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::VS, L"Ssao/DrawNormals/VS.hlsl");
-	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::PS, L"Ssao/DrawNormals/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::Debug, ShaderType::VS, L"Debug/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::Debug, ShaderType::PS, L"Debug/PS.hlsl");
-	InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::VS, L"Skinned/Opaque/VS.hlsl");
-	InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::PS, L"Skinned/Opaque/PS.hlsl");
 
 	return shaderFileList;
 }

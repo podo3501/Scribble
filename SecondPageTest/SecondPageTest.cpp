@@ -258,6 +258,10 @@ namespace MainLoop
 
 		InsertShaderFile(SkinnedOpaque, VS, L"Skinned/Opaque/VS.hlsl");
 		InsertShaderFile(SkinnedOpaque, PS, L"Skinned/Opaque/PS.hlsl");
+		InsertShaderFile(SkinnedDrawNormals, VS, L"Skinned/DrawNormals/VS.hlsl");
+		InsertShaderFile(SkinnedDrawNormals, PS, L"Skinned/DrawNormals/PS.hlsl");
+		InsertShaderFile(SkinnedShadowOpaque, VS, L"Skinned/Shadow/VS.hlsl");
+		InsertShaderFile(SkinnedShadowOpaque, PS, L"Skinned/Shadow/PS.hlsl");
 
 		return shaderFileList;
 	}

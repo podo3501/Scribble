@@ -351,15 +351,17 @@ bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
 
 	switch (psoType)
 	{
-	case GraphicsPSO::Sky:								MakeSkyDesc(&psoDesc);							break;
-	case GraphicsPSO::Opaque:						MakeOpaqueDesc(&psoDesc);					break;
-	case GraphicsPSO::NormalOpaque:			MakeNormalOpaqueDesc(&psoDesc);		break;
-	case GraphicsPSO::SkinnedOpaque:			MakeSkinnedOpaqueDesc(&psoDesc);	break;
-	case GraphicsPSO::ShadowMap:				MakeShadowDesc(&psoDesc);					break;
-	case GraphicsPSO::SsaoDrawNormals:		MakeDrawNormals(&psoDesc);				break;
-	case GraphicsPSO::SsaoMap:					MakeSsaoDesc(&psoDesc);						break;
-	case GraphicsPSO::SsaoBlur:						MakeSsaoBlurDesc(&psoDesc);				break;
-	case GraphicsPSO::Debug:							MakeDebugDesc(&psoDesc);					break;
+	case GraphicsPSO::Sky:										MakeSkyDesc(&psoDesc);										break;
+	case GraphicsPSO::Opaque:								MakeOpaqueDesc(&psoDesc);								break;
+	case GraphicsPSO::NormalOpaque:					MakeNormalOpaqueDesc(&psoDesc);					break;
+	case GraphicsPSO::SkinnedOpaque:					MakeSkinnedOpaqueDesc(&psoDesc);				break;
+	case GraphicsPSO::SkinnedShadowOpaque:	MakeSkinnedShadowOpaqueDesc(&psoDesc);	break;
+	case GraphicsPSO::SkinnedDrawNormals:		MakeSkinnedDrawNormals(&psoDesc);				break;
+	case GraphicsPSO::ShadowMap:						MakeShadowDesc(&psoDesc);								break;
+	case GraphicsPSO::SsaoDrawNormals:				MakeDrawNormals(&psoDesc);							break;
+	case GraphicsPSO::SsaoMap:							MakeSsaoDesc(&psoDesc);									break;
+	case GraphicsPSO::SsaoBlur:								MakeSsaoBlurDesc(&psoDesc);							break;
+	case GraphicsPSO::Debug:									MakeDebugDesc(&psoDesc);								break;
 	default: assert(!"wrong type");
 	}
 	
@@ -393,12 +395,24 @@ void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 
 void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
-	//inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
-	//inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 }
 
 void CRenderer::MakeSkinnedOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{}
+{
+	MakeNormalOpaqueDesc(inoutDesc);
+}
+
+void CRenderer::MakeSkinnedShadowOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	MakeShadowDesc(inoutDesc);
+}
+
+void CRenderer::MakeSkinnedDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
+{
+	MakeDrawNormals(inoutDesc);
+}
 
 void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
@@ -491,8 +505,8 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
 	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvCommon = m_directx3D->GetCpuDsvHandle(DsvOffset::Common);
-	m_cmdList->ClearDepthStencilView(dsvCommon, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	//D3D12_CPU_DESCRIPTOR_HANDLE dsvCommon = m_directx3D->GetCpuDsvHandle(DsvOffset::Common);
+	//m_cmdList->ClearDepthStencilView(dsvCommon, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvOffset::Common)));
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
@@ -519,19 +533,8 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	return true;
 }
 
-bool IsExistShadowObject(AllRenderItems& renderItems)
-{
-	return std::ranges::all_of(renderItems | std::views::keys, [](auto& keys) {
-		//if (keys == GraphicsPSO::NormalOpaque) return true;
-		if (keys == GraphicsPSO::Opaque) return true;
-		//if (keys == GraphicsPSO::SkinnedOpaque) return true;
-		return false; });
-}
-
 void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 {
-	if (IsExistShadowObject(renderItem) == false) return;
-
 	m_cmdList->RSSetViewports(1, &RvToLv(m_shadowMap->Viewport()));
 	m_cmdList->RSSetScissorRects(1, &RvToLv(m_shadowMap->ScissorRect()));
 
@@ -548,8 +551,10 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), passCBAddress);
 
 	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::ShadowMap].Get());
-
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::NormalOpaque, renderItem[GraphicsPSO::NormalOpaque].get());
+
+	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SkinnedShadowOpaque].Get());
+	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::SkinnedOpaque, renderItem[GraphicsPSO::SkinnedOpaque].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ)));
@@ -557,8 +562,6 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 
 void CRenderer::DrawNormalsAndDepth(AllRenderItems& renderItem)
 {
-	if (IsExistShadowObject(renderItem) == false) return;
-
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -575,14 +578,16 @@ void CRenderer::DrawNormalsAndDepth(AllRenderItems& renderItem)
 
 	m_cmdList->OMSetRenderTargets(1, &normalMapRtv, true, &dsvCommon);
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
-	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SsaoDrawNormals].Get());
 
+	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SsaoDrawNormals].Get());
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::NormalOpaque, renderItem[GraphicsPSO::NormalOpaque].get());
+
+	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SkinnedDrawNormals].Get());
+	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::SkinnedOpaque, renderItem[GraphicsPSO::SkinnedOpaque].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(normalMap,
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ)));
 }
-
 
 void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, GraphicsPSO pso, RenderItem* renderItem)
 {
