@@ -29,7 +29,7 @@ struct SubItem
 {
 	UINT indexCount{ 0u };
 	UINT startIndexLocation{ 0u };
-	INT baseVertexLocation{ 0 };
+	UINT baseVertexLocation{ 0u };
 
 	DirectX::BoundingBox boundingBox{};
 	DirectX::BoundingSphere boundingSphere{};

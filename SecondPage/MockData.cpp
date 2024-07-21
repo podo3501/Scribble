@@ -356,11 +356,13 @@ CreateModelNames MakeMockData()
 {
 	return CreateModelNames
 	{
-		{GraphicsPSO::Sky, { "cube" }},
-		{GraphicsPSO::Opaque, { "skull" }},
-		{GraphicsPSO::NormalOpaque, { "grid", "cylinder", "sphere" }},
-		{GraphicsPSO::Debug, { "debug" }},
-		//{GraphicsPSO::SkinnedOpaque, {"soldier"}},
+		//{GraphicsPSO::Sky, { "cube" }},
+		//{GraphicsPSO::Opaque, { "skull" }},
+		//{GraphicsPSO::NormalOpaque, { "grid", "cylinder", "sphere" }},
+		//{GraphicsPSO::NormalOpaque, { "grid", "cylinder"}},
+		{GraphicsPSO::NormalOpaque, { "grid"}},
+		//{GraphicsPSO::Debug, { "debug" }},
+		{GraphicsPSO::SkinnedOpaque, {"soldier"}},
 	};
 }
 
@@ -399,8 +401,8 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::PS, L"Ssao/DrawNormals/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::Debug, ShaderType::VS, L"Debug/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::Debug, ShaderType::PS, L"Debug/PS.hlsl");
-	//InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::VS, L"Skinned/Opaque/VS.hlsl");
-	//InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::PS, L"Skinned/Opaque/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::VS, L"Skinned/Opaque/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::PS, L"Skinned/Opaque/PS.hlsl");
 
 	return shaderFileList;
 }

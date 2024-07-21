@@ -83,7 +83,7 @@ private:
 
 	void DrawSceneToShadowMap(AllRenderItems& renderItem);
 	void DrawNormalsAndDepth(AllRenderItems& renderItem);
-	void DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem);
+	void DrawRenderItems(ID3D12Resource* instanceRes, GraphicsPSO pso, RenderItem* renderItem);
 
 private:
 	std::unique_ptr<CDirectx3D> m_directx3D;

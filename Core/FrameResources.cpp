@@ -83,11 +83,19 @@ ID3D12Resource* CFrameResources::GetResource(eBufferType bufferType)
 	return GetUploadBuffer(bufferType)->Resource();
 }
 
+UINT CFrameResources::GetBufferSize(eBufferType bufferType)
+{
+	CUploadBuffer* buffer = GetUploadBuffer(bufferType);
+	if (buffer == nullptr) return 0;
+
+	return buffer->GetByteSize();
+}
+
 CUploadBuffer* CFrameResources::GetUploadBuffer(eBufferType bufferType)
 {
 	Resource* resource = m_resources[m_frameResIdx].get();
 	if (resource == nullptr) return nullptr;
-
+	
 	switch (bufferType)
 	{
 	case eBufferType::PassCB:			return resource->passCB.get();

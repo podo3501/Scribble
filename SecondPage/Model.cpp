@@ -41,10 +41,10 @@ bool CModel::Initialize(const std::wstring& resPath, const CreateModelNames& cre
 
 bool CModel::LoadMemory(IRenderer* renderer, AllRenderItems& allRenderItems)
 {
-	ReturnIfFalse(m_material->LoadTextureIntoVRAM(renderer));
 	ReturnIfFalse(m_setupData->LoadMesh(m_mesh.get(), m_skinnedMesh.get(), &allRenderItems));
 	ReturnIfFalse(m_mesh->LoadMeshIntoVRAM(renderer, &allRenderItems));
 	ReturnIfFalse(m_skinnedMesh->LoadMeshIntoVRAM(renderer, m_material.get(), &allRenderItems));
+	ReturnIfFalse(m_material->LoadTextureIntoVRAM(renderer));
 
 	return true;
 }

@@ -77,7 +77,7 @@ bool CSkinnedMesh::LoadVRAM(IRenderer* renderer, RenderItem* renderItem)
 	UINT ibByteSize = static_cast<UINT>(m_indices.size()) * sizeof(std::int32_t);
 
 	renderItem->vertexBufferView.SizeInBytes = vbByteSize;
-	renderItem->vertexBufferView.StrideInBytes = sizeof(Vertex);
+	renderItem->vertexBufferView.StrideInBytes = sizeof(SkinnedVertex);
 
 	renderItem->indexBufferView.SizeInBytes = ibByteSize;
 	renderItem->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
@@ -91,21 +91,22 @@ bool CSkinnedMesh::LoadVRAM(IRenderer* renderer, RenderItem* renderItem)
 bool CSkinnedMesh::InsertSubmesh(RenderItem* renderItem)
 {
 	std::ranges::for_each(m_skinnedSubsets, [this, renderItem, idx{ 0 }](auto& subset) mutable {
-		std::string name = "sm_" + std::to_string(idx++);
 		SubRenderItem subRenderItem;
-		SetTransform(name, subRenderItem);
+		SetTransform(idx, subRenderItem);
+		std::string subMeshName = "sm_" + std::to_string(idx++);
 		
 		SubItem& subItem = subRenderItem.subItem;
 		subItem.indexCount = static_cast<UINT>(subset.faceCount) * 3;
 		subItem.startIndexLocation = static_cast<UINT>(subset.faceStart) * 3;
 		subItem.baseVertexLocation = 0;
 
-		renderItem->subRenderItems.insert(std::make_pair(name, subRenderItem)); });
+		renderItem->subRenderItems.insert(std::make_pair(subMeshName, subRenderItem)); 
+		});
 
 	return true;
 }
 
-bool CSkinnedMesh::SetTransform(const std::string& matName, SubRenderItem& subRItem)
+bool CSkinnedMesh::SetTransform(int matIndex, SubRenderItem& subRItem)
 {
 	subRItem.instanceCount = 1;
 	std::shared_ptr<InstanceData> instanceData = std::make_shared<InstanceData>();
@@ -114,7 +115,7 @@ bool CSkinnedMesh::SetTransform(const std::string& matName, SubRenderItem& subRI
 	DirectX::XMMATRIX modelRot = DirectX::XMMatrixRotationY(static_cast<float>(std::numbers::pi));
 	DirectX::XMMATRIX modelOffset = DirectX::XMMatrixTranslation(0.0f, 0.0f, -5.0f);
 
-	instanceData->matName = matName;
+	instanceData->matName = m_skinnedMats[matIndex].name;
 	instanceData->world = modelScale * modelRot * modelOffset;
 	instanceData->texTransform = DirectX::XMMatrixIdentity();
 

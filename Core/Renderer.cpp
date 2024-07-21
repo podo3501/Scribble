@@ -1,5 +1,6 @@
 #include "./Renderer.h"
 #include <DirectXColors.h>
+#include <ranges>
 #include "./Directx3D.h"
 #include "./d3dx12.h"
 #include "./d3dUtil.h"
@@ -392,8 +393,8 @@ void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 
 void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
 {
-	inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
-	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	//inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+	//inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 }
 
 void CRenderer::MakeSkinnedOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
@@ -490,7 +491,8 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
 	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvCommon = m_directx3D->GetCpuDsvHandle(DsvOffset::Common);
+	m_cmdList->ClearDepthStencilView(dsvCommon, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvOffset::Common)));
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
@@ -503,7 +505,7 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;
 		m_cmdList->SetPipelineState(m_psoList[pso].Get());
-		DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem[pso].get()); });
+		DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), pso, renderItem[pso].get()); });
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
@@ -517,8 +519,19 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	return true;
 }
 
+bool IsExistShadowObject(AllRenderItems& renderItems)
+{
+	return std::ranges::all_of(renderItems | std::views::keys, [](auto& keys) {
+		//if (keys == GraphicsPSO::NormalOpaque) return true;
+		if (keys == GraphicsPSO::Opaque) return true;
+		//if (keys == GraphicsPSO::SkinnedOpaque) return true;
+		return false; });
+}
+
 void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 {
+	if (IsExistShadowObject(renderItem) == false) return;
+
 	m_cmdList->RSSetViewports(1, &RvToLv(m_shadowMap->Viewport()));
 	m_cmdList->RSSetScissorRects(1, &RvToLv(m_shadowMap->ScissorRect()));
 
@@ -529,14 +542,14 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 
 	m_cmdList->OMSetRenderTargets(0, nullptr, false, &dsvShadowMap);
 
-	UINT passCBByteSize = CoreUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+	UINT passCBByteSize = m_frameResources->GetBufferSize(eBufferType::PassCB);
 	//2개의 cb가 들어가 있는데 2번째를 가져올 함수가 아직 없다. -> + 1 * passCBByteSize;
 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = GetFrameResourceAddress(eBufferType::PassCB) + 1 * passCBByteSize;
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), passCBAddress);
 
 	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::ShadowMap].Get());
 
-	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem[GraphicsPSO::NormalOpaque].get());
+	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::NormalOpaque, renderItem[GraphicsPSO::NormalOpaque].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ)));
@@ -544,6 +557,8 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 
 void CRenderer::DrawNormalsAndDepth(AllRenderItems& renderItem)
 {
+	if (IsExistShadowObject(renderItem) == false) return;
+
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -562,18 +577,21 @@ void CRenderer::DrawNormalsAndDepth(AllRenderItems& renderItem)
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
 	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SsaoDrawNormals].Get());
 
-	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), renderItem[GraphicsPSO::NormalOpaque].get());
+	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::NormalOpaque, renderItem[GraphicsPSO::NormalOpaque].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(normalMap,
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ)));
 }
 
 
-void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderItem)
+void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, GraphicsPSO pso, RenderItem* renderItem)
 {
 	m_cmdList->IASetVertexBuffers(0, 1, &renderItem->vertexBufferView);
 	m_cmdList->IASetIndexBuffer(&renderItem->indexBufferView);
 	m_cmdList->IASetPrimitiveTopology(renderItem->primitiveType);
+
+	auto skinnedCB = m_frameResources->GetResource(eBufferType::SkinnedCB);
+	UINT skinnedCBByteSize = m_frameResources->GetBufferSize(eBufferType::SkinnedCB);
 
 	for (auto& ri : renderItem->subRenderItems)
 	{
@@ -581,8 +599,16 @@ void CRenderer::DrawRenderItems(ID3D12Resource* instanceRes, RenderItem* renderI
 		auto& subItem = subRenderItem.subItem;
 
 		m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Instance),
-			instanceRes->GetGPUVirtualAddress() + 
+			instanceRes->GetGPUVirtualAddress() +
 			(renderItem->startIndexInstance + subRenderItem.startSubIndexInstance) * sizeof(InstanceBuffer));
+
+		if (pso == GraphicsPSO::SkinnedOpaque)
+		{
+			D3D12_GPU_VIRTUAL_ADDRESS skinnedCBAddress = skinnedCB->GetGPUVirtualAddress();// +1 * skinnedCBByteSize;
+			m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Bone), skinnedCBAddress);
+		}
+		else
+			m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Bone), 0);
 
 		m_cmdList->DrawIndexedInstanced(subItem.indexCount, subRenderItem.instanceCount,
 			subItem.startIndexLocation, subItem.baseVertexLocation, 0);

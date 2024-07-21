@@ -36,7 +36,7 @@ public:
 private:
 	bool LoadVRAM(IRenderer* renderer, RenderItem* outRenderItems);
 	bool InsertSubmesh(RenderItem* outRenderItems);
-	bool SetTransform(const std::string& matName, SubRenderItem& subRItem);
+	bool SetTransform(int matIndex, SubRenderItem& subRItem);
 	bool InsertMaterial(CMaterial* material);
 
 private:

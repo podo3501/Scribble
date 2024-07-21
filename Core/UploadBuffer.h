@@ -19,6 +19,7 @@ public:
     bool Initialize(ID3D12Device* device);
     ID3D12Resource* Resource()const;
     void CopyDataList(const void* data, size_t size);
+    inline UINT GetByteSize() { return m_elementByteSize; }; 
 
     template<typename T>
     void CopyData(int elementIndex, const T& data)

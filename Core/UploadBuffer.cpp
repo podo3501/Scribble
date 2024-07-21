@@ -56,7 +56,10 @@ ID3D12Resource* CUploadBuffer::Resource() const
 void CUploadBuffer::CopyDataList(const void* data, size_t size)
 {
     if (m_elementByteSize == m_typeSize)
+    {
         memcpy(&m_mappedData[0], data, size * m_elementByteSize);
+        return;
+    }
 
     //|-------------|--------------|-------|        데이터 1, 데이터2, 남는 공간
     //|-----------------|------------------|        데이터 1(계산되어서 빈공간이 합쳐있는), 데이터2

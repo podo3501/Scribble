@@ -61,7 +61,10 @@ int CMaterial::GetMaterialIndex(const std::string& matName)
 	auto find = std::ranges::find_if(m_materialList, [&matName](auto& mat) {
 		return mat->name == matName; });
 	if (find == m_materialList.end())
+	{
+		assert(false && "material index error!");
 		return -1;
+	}
 
 	return static_cast<int>(std::distance(m_materialList.begin(), find));
 }

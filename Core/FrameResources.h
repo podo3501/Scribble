@@ -42,6 +42,7 @@ public:
 	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_resources[m_frameResIdx]->cmdListAlloc.Get();	}
 	inline void SetFence(UINT64 fenceIdx)	{ m_fenceCount = fenceIdx; }
 	ID3D12Resource* GetResource(eBufferType bufferType);
+	UINT GetBufferSize(eBufferType bufferType);
 
 private:
 	CUploadBuffer* GetUploadBuffer(eBufferType bufferType);
