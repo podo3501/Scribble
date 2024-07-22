@@ -15,10 +15,17 @@ class CShader;
 class CTexture;
 class CShadowMap;
 class CSsaoMap;
+class CPipelineStateObjects;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
+
+enum class RootSignature : int
+{
+	Common = 0,
+	Ssao,
+};
 
 class CRenderer : public IRenderer
 {
@@ -44,6 +51,7 @@ public:
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
 	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
 
+	inline ID3D12RootSignature* GetRootSignature(RootSignature sigType);
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 	inline CDirectx3D* GetDirectx3D() const;
@@ -54,11 +62,11 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCpuSrvHandle(eTextureType type);
 
 private:
+	bool CreateRootSignature(RootSignature type, ID3DBlob* serialized);
 	bool BuildRootSignature();
 	bool BuildMainRootSignature();
 	bool BuildSsaoRootSignature();
 	bool BuildDescriptorHeaps();
-	bool BuildPSOs();
 
 	UINT GetSrvIndex(eTextureType type);
 	D3D12_GPU_VIRTUAL_ADDRESS GetFrameResourceAddress(eBufferType bufType);
@@ -69,19 +77,6 @@ private:
 		const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem);
 
 	bool MakeFrameResource();
-	bool MakePSOPipelineState(GraphicsPSO psoType);
-	void MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeSkinnedOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeSkinnedShadowOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeSkinnedDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
-	void MakeDebugDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc);
 
 	void DrawSceneToShadowMap(AllRenderItems& renderItem);
 	void DrawNormalsAndDepth(AllRenderItems& renderItem);
@@ -98,20 +93,20 @@ private:
 	ID3D12Device* m_device{ nullptr };
 	ID3D12GraphicsCommandList* m_cmdList{ nullptr };
 
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_ssaoRootSignature;
+	std::map<RootSignature, Microsoft::WRL::ComPtr<ID3D12RootSignature>> m_rootSignatures;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
 	UINT m_srvOffsetTexture2D{ 0u };
 	std::vector<std::wstring> m_srvTexture2DFilename{};
 
 	std::unique_ptr<CFrameResources> m_frameResources;
-	std::map<GraphicsPSO, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList;
+	std::unique_ptr<CPipelineStateObjects> m_pso;
 
 	D3D12_VIEWPORT m_screenViewport{};
 	D3D12_RECT m_scissorRect{};
 };
 
-inline ID3D12Device* CRenderer::GetDevice() const											{	return m_device;		}
-inline ID3D12DescriptorHeap* CRenderer::GetSrvDescriptorHeap() const		{	return m_srvDescHeap.Get();		}
-inline CDirectx3D* CRenderer::GetDirectx3D() const											{ return m_directx3D.get(); }
+inline ID3D12RootSignature* CRenderer::GetRootSignature(RootSignature sigType) 		{ return m_rootSignatures[sigType].Get(); }
+inline ID3D12Device* CRenderer::GetDevice() const												{ return m_device; }
+inline ID3D12DescriptorHeap* CRenderer::GetSrvDescriptorHeap() const			{ return m_srvDescHeap.Get(); }
+inline CDirectx3D* CRenderer::GetDirectx3D() const												{ return m_directx3D.get(); }
 

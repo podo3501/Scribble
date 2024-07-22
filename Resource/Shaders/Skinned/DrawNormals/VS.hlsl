@@ -19,23 +19,24 @@ VertexOut main(VertexIn vin, uint instanceID : SV_InstanceID)
     weights[1] = vin.BoneWeights.y;
     weights[2] = vin.BoneWeights.z;
     weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
-
-    float3 posL = float3(0.0f, 0.0f, 0.0f);
-    float3 normalL = float3(0.0f, 0.0f, 0.0f);
-    float3 tangentL = float3(0.0f, 0.0f, 0.0f);
-    for(int i = 0; i < 4; ++i)
+    
+    float3 bonePosL = float3(0.0f, 0.0f, 0.0f);
+    float3 boneNormalL = float3(0.0f, 0.0f, 0.0f);
+    float3 boneTangentL = float3(0.0f, 0.0f, 0.0f);
+    
+    for (int i = 0; i < 4; ++i)
     {
         // Assume no nonuniform scaling when transforming normals, so 
         // that we do not have to use the inverse-transpose.
 
-        posL += weights[i] * mul(float4(vin.PosL, 1.0f), gBoneTransforms[vin.BoneIndices[i]]).xyz;
-        normalL += weights[i] * mul(vin.NormalL, (float3x3)gBoneTransforms[vin.BoneIndices[i]]);
-        tangentL += weights[i] * mul(vin.TangentL.xyz, (float3x3)gBoneTransforms[vin.BoneIndices[i]]);
+        bonePosL += weights[i] * mul(float4(vin.PosL, 1.0f), gBoneTransforms[vin.BoneIndices[i]]).xyz;
+        boneNormalL += weights[i] * mul(vin.NormalL, (float3x3) gBoneTransforms[vin.BoneIndices[i]]);
+        boneTangentL += weights[i] * mul(vin.TangentL, (float3x3) gBoneTransforms[vin.BoneIndices[i]]);
     }
 
-    vin.PosL = posL;
-    vin.NormalL = normalL;
-    vin.TangentL.xyz = tangentL;
+    vin.PosL = bonePosL;
+    vin.NormalL = boneNormalL;
+    vin.TangentL = boneTangentL;
     
     vout.NormalW = mul(vin.NormalL, (float3x3) world);
     vout.TangentW = mul(vin.TangentL, (float3x3) world);

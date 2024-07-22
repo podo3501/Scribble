@@ -14,6 +14,7 @@
 #include "./ShadowMap.h"
 #include "./FrameResources.h"
 #include "./SsaoMap.h"
+#include "./PipelineStateObjects.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -33,11 +34,10 @@ CRenderer::CRenderer()
 	, m_texture{ nullptr }
 	, m_shadowMap{ nullptr }
 	, m_ssaoMap{ nullptr }
-	, m_rootSignature{ nullptr }
-	, m_ssaoRootSignature{ nullptr }
+	, m_rootSignatures{}
 	, m_srvDescHeap{ nullptr }
 	, m_frameResources{ nullptr }
-	, m_psoList{}
+	, m_pso{ nullptr }
 {}
 
 CRenderer::~CRenderer() = default;
@@ -53,15 +53,16 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 	m_texture = std::make_unique<CTexture>(resPath);
 	m_shadowMap = std::make_unique<CShadowMap>(this);
 	m_ssaoMap = std::make_unique<CSsaoMap>(this);
+	m_pso = std::make_unique<CPipelineStateObjects>(this);
 
 	ReturnIfFalse(BuildRootSignature());
 	ReturnIfFalse(BuildDescriptorHeaps());
-	ReturnIfFalse(BuildPSOs());
+	ReturnIfFalse(m_pso->Build(m_shader.get()));
 	ReturnIfFalse(MakeFrameResource());
 	ReturnIfFalse(m_shadowMap->Initialize());
 	ReturnIfFalse(m_ssaoMap->Initialize(m_directx3D->GetDepthStencilBufferResource(), width, height));
 
-	m_ssaoMap->SetPSOs(m_psoList[GraphicsPSO::SsaoMap].Get(), m_psoList[GraphicsPSO::SsaoBlur].Get());
+	m_ssaoMap->SetPSOs(m_pso->GetPso(GraphicsPSO::SsaoMap), m_pso->GetPso(GraphicsPSO::SsaoBlur));
 
 	m_isInitialize = true;
 
@@ -113,7 +114,7 @@ bool CRenderer::LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdLis
 
 bool CRenderer::LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
 {
-	if (m_psoList.find(pso) == m_psoList.end())
+	if (m_pso->GetPso(pso) == nullptr)
 		return false;	//renderer에서 PSO가 준비되지 않았다.
 	
 	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
@@ -144,7 +145,7 @@ bool CRenderer::LoadSkinnedMesh(ID3D12Device* device, ID3D12GraphicsCommandList*
 
 bool CRenderer::LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem)
 {
-	if (m_psoList.find(GraphicsPSO::SkinnedOpaque) == m_psoList.end())
+	if (m_pso->GetPso(GraphicsPSO::SkinnedOpaque) == nullptr)
 		return false;
 
 	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
@@ -241,6 +242,16 @@ CD3DX12_ROOT_PARAMETER* GetRootParameter(
 	return &rootParameter[EtoV(type)];
 };
 
+bool CRenderer::CreateRootSignature(RootSignature type, ID3DBlob* serialized)
+{
+	ID3D12RootSignature* signature = nullptr;
+	ReturnIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
+		IID_PPV_ARGS(&signature)));
+	m_rootSignatures.insert(std::make_pair(type, signature));
+
+	return true;
+}
+
 bool CRenderer::BuildMainRootSignature()
 {
 	using enum MainRegisterType;
@@ -279,8 +290,7 @@ bool CRenderer::BuildMainRootSignature()
 	}
 	ReturnIfFailed(hr);
 
-	ReturnIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
-		IID_PPV_ARGS(&m_rootSignature)));
+	ReturnIfFalse(CreateRootSignature(RootSignature::Common, serialized.Get()));
 
 	return true;
 }
@@ -319,8 +329,7 @@ bool CRenderer::BuildSsaoRootSignature()
 	}
 	ReturnIfFailed(hr);
 
-	ReturnIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
-		IID_PPV_ARGS(&m_ssaoRootSignature)));
+	ReturnIfFalse(CreateRootSignature(RootSignature::Ssao, serialized.Get()));
 
 	return true;
 }
@@ -336,120 +345,6 @@ bool CRenderer::BuildDescriptorHeaps()
 
 	return true;
 }
-
-bool CRenderer::BuildPSOs()
-{
-	return std::ranges::all_of(m_shader->GetPSOList(), [this](auto pso) { return MakePSOPipelineState(pso); });
-}
-
-bool CRenderer::MakePSOPipelineState(GraphicsPSO psoType)
-{
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	ReturnIfFalse(m_shader->SetPipelineStateDesc(psoType, &psoDesc));
-
-	MakeBasicDesc(&psoDesc);
-
-	switch (psoType)
-	{
-	case GraphicsPSO::Sky:										MakeSkyDesc(&psoDesc);										break;
-	case GraphicsPSO::Opaque:								MakeOpaqueDesc(&psoDesc);								break;
-	case GraphicsPSO::NormalOpaque:					MakeNormalOpaqueDesc(&psoDesc);					break;
-	case GraphicsPSO::SkinnedOpaque:					MakeSkinnedOpaqueDesc(&psoDesc);				break;
-	case GraphicsPSO::SkinnedShadowOpaque:	MakeSkinnedShadowOpaqueDesc(&psoDesc);	break;
-	case GraphicsPSO::SkinnedDrawNormals:		MakeSkinnedDrawNormals(&psoDesc);				break;
-	case GraphicsPSO::ShadowMap:						MakeShadowDesc(&psoDesc);								break;
-	case GraphicsPSO::SsaoDrawNormals:				MakeDrawNormals(&psoDesc);							break;
-	case GraphicsPSO::SsaoMap:							MakeSsaoDesc(&psoDesc);									break;
-	case GraphicsPSO::SsaoBlur:								MakeSsaoBlurDesc(&psoDesc);							break;
-	case GraphicsPSO::Debug:									MakeDebugDesc(&psoDesc);								break;
-	default: assert(!"wrong type");
-	}
-	
-	ReturnIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_psoList[psoType])));
-
-	return true;
-}
-
-void CRenderer::MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	inoutDesc->NodeMask = 0;
-	inoutDesc->SampleMask = UINT_MAX;
-	inoutDesc->NumRenderTargets = 1;
-	inoutDesc->pRootSignature = m_rootSignature.Get();
-	inoutDesc->BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	inoutDesc->DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	inoutDesc->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	inoutDesc->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	m_directx3D->SetPipelineStateDesc(inoutDesc);
-}
-
-void CRenderer::MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	inoutDesc->RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-	inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-}
-
-void CRenderer::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{}
-
-void CRenderer::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	inoutDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
-	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-}
-
-void CRenderer::MakeSkinnedOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	MakeNormalOpaqueDesc(inoutDesc);
-}
-
-void CRenderer::MakeSkinnedShadowOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	MakeShadowDesc(inoutDesc);
-}
-
-void CRenderer::MakeSkinnedDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	MakeDrawNormals(inoutDesc);
-}
-
-void CRenderer::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	inoutDesc->RasterizerState.DepthBias = 10000;
-	inoutDesc->RasterizerState.DepthBiasClamp = 0.0f;
-	inoutDesc->RasterizerState.SlopeScaledDepthBias = 1.0f;
-	inoutDesc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
-	inoutDesc->NumRenderTargets = 0;
-}
-
-void CRenderer::MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	inoutDesc->RTVFormats[0] = CSsaoMap::NormalMapFormat;
-	inoutDesc->SampleDesc.Count = 1;
-	inoutDesc->SampleDesc.Quality = 0;
-	inoutDesc->DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-}
-
-void CRenderer::MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	inoutDesc->InputLayout = { nullptr, 0 };
-	inoutDesc->pRootSignature = m_ssaoRootSignature.Get();
-	inoutDesc->DepthStencilState.DepthEnable = false;
-	inoutDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	inoutDesc->RTVFormats[0] = CSsaoMap::AmbientMapFormat;
-	inoutDesc->SampleDesc.Count = 1;
-	inoutDesc->SampleDesc.Quality = 0;
-	inoutDesc->DSVFormat = DXGI_FORMAT_UNKNOWN;
-}
-
-void CRenderer::MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{
-	MakeSsaoDesc(inoutDesc);
-}
-
-void CRenderer::MakeDebugDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc)
-{}
 
 D3D12_GPU_DESCRIPTOR_HANDLE CRenderer::GetGpuSrvHandle(eTextureType type)
 {
@@ -482,7 +377,7 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	ReturnIfFailed(cmdListAlloc->Reset());
 	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, nullptr));
 
-	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
+	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Common));
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get() };
 	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -493,10 +388,10 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 	DrawSceneToShadowMap(renderItem);
 	DrawNormalsAndDepth(renderItem);
 
-	m_cmdList->SetGraphicsRootSignature(m_ssaoRootSignature.Get());
+	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Ssao));
 	m_ssaoMap->ComputeSsao(m_cmdList, m_frameResources.get(), 3);
 
-	m_cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
+	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Common));
 
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
@@ -505,8 +400,6 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
 	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-	//D3D12_CPU_DESCRIPTOR_HANDLE dsvCommon = m_directx3D->GetCpuDsvHandle(DsvOffset::Common);
-	//m_cmdList->ClearDepthStencilView(dsvCommon, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvOffset::Common)));
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
@@ -518,7 +411,7 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 
 	std::ranges::for_each(renderItem, [this, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;
-		m_cmdList->SetPipelineState(m_psoList[pso].Get());
+		m_cmdList->SetPipelineState(m_pso->GetPso(pso));
 		DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), pso, renderItem[pso].get()); });
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
@@ -550,10 +443,10 @@ void CRenderer::DrawSceneToShadowMap(AllRenderItems& renderItem)
 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = GetFrameResourceAddress(eBufferType::PassCB) + 1 * passCBByteSize;
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), passCBAddress);
 
-	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::ShadowMap].Get());
+	m_cmdList->SetPipelineState(m_pso->GetPso(GraphicsPSO::ShadowMap));
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::NormalOpaque, renderItem[GraphicsPSO::NormalOpaque].get());
 
-	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SkinnedShadowOpaque].Get());
+	m_cmdList->SetPipelineState(m_pso->GetPso(GraphicsPSO::SkinnedShadowOpaque));
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::SkinnedOpaque, renderItem[GraphicsPSO::SkinnedOpaque].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
@@ -579,10 +472,10 @@ void CRenderer::DrawNormalsAndDepth(AllRenderItems& renderItem)
 	m_cmdList->OMSetRenderTargets(1, &normalMapRtv, true, &dsvCommon);
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(eBufferType::PassCB));
 
-	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SsaoDrawNormals].Get());
+	m_cmdList->SetPipelineState(m_pso->GetPso(GraphicsPSO::SsaoDrawNormals));
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::NormalOpaque, renderItem[GraphicsPSO::NormalOpaque].get());
 
-	m_cmdList->SetPipelineState(m_psoList[GraphicsPSO::SkinnedDrawNormals].Get());
+	m_cmdList->SetPipelineState(m_pso->GetPso(GraphicsPSO::SkinnedDrawNormals));
 	DrawRenderItems(m_frameResources->GetResource(eBufferType::Instance), GraphicsPSO::SkinnedOpaque, renderItem[GraphicsPSO::SkinnedOpaque].get());
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(normalMap,

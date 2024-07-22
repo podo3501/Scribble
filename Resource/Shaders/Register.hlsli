@@ -1,5 +1,8 @@
 #include "Common.hlsli"
 
+#ifndef _COMMON_REGISTER_HLSLI_
+#define _COMMON_REGISTER_HLSLI_
+
 struct InstanceData
 {
     float4x4 World;
@@ -65,3 +68,5 @@ SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 SamplerComparisonState gsamShadow : register(s6);
+
+#endif

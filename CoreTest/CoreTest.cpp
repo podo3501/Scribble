@@ -6,6 +6,7 @@
 #include "../Core/d3dUtil.h"
 #include "../Core/Renderer.h"
 #include "../SecondPage/Window.h"
+#include "../Core/PipelineStateObjects.h"
 
 namespace Core
 {
@@ -45,7 +46,8 @@ namespace Core
 			window->GetHeight(),
 			GetShaderShadowAndSsaoTestFileList()));
 	}
-	TEST(CShader, Load)
+
+	std::unique_ptr<CShader> CreateShader()
 	{
 		using ShaderFileList = std::map<GraphicsPSO, std::vector<std::pair<ShaderType, std::wstring>>>;
 
@@ -56,7 +58,12 @@ namespace Core
 		InsertShaderFile(NormalOpaque, VS, L"NormalOpaque/VS.hlsl");
 		InsertShaderFile(NormalOpaque, PS, L"NormalOpaque/PS.hlsl");
 
-		std::unique_ptr<CShader> shader = std::make_unique<CShader>(L"../Resource/", shaderFileList);
+		return std::move(std::make_unique<CShader>(L"../Resource/", shaderFileList));
+	}
+
+	TEST(CShader, Load)
+	{
+		std::unique_ptr<CShader> shader = CreateShader();
 
 		EXPECT_EQ(shader->GetPSOList().size(), 1);
 

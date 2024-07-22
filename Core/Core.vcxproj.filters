@@ -54,6 +54,9 @@
     <ClInclude Include="SsaoMap.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineStateObjects.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Directx3D.cpp">
@@ -84,6 +87,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="SsaoMap.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineStateObjects.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
