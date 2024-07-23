@@ -1,6 +1,7 @@
 #include "./Renderer.h"
 #include <DirectXColors.h>
 #include <ranges>
+#include <algorithm>
 #include "./Directx3D.h"
 #include "./d3dx12.h"
 #include "./d3dUtil.h"
@@ -41,7 +42,8 @@ CRenderer::CRenderer()
 	, m_pso{ nullptr }
 {}
 
-CRenderer::~CRenderer() = default;
+CRenderer::~CRenderer()
+{}
 
 bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
@@ -178,10 +180,8 @@ bool CRenderer::CreateRootSignature(RootSignature type,
 	}
 	ReturnIfFailed(hr);
 
-	ID3D12RootSignature* signature = nullptr;
 	ReturnIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
-		IID_PPV_ARGS(&signature)));
-	m_rootSignatures.insert(std::make_pair(type, signature));
+		IID_PPV_ARGS(&m_rootSignatures[EtoV(type)])));
 
 	return true;
 }
@@ -333,6 +333,11 @@ UINT CRenderer::GetSrvIndex(eTextureType type)
 		srvOffset = m_srvOffsetTexture2D++;
 
 	return srvStartIndex + srvOffset;
+}
+
+ID3D12RootSignature* CRenderer::GetRootSignature(RootSignature sigType) 
+{ 
+	return m_rootSignatures[EtoV(sigType)].Get(); 
 }
 
 

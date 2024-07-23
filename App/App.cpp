@@ -9,7 +9,7 @@
 #include "../SecondPage/Utility.h"
 #include "../SecondPage/MockData.h"
 
-void list_remaining_d3d_objects();
+void ReportLiveObjects();
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -45,24 +45,25 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 		return 0;
 	}
 
-	list_remaining_d3d_objects();
+#if defined(DEBUG) | defined(_DEBUG)
+	ReportLiveObjects();
+#endif
 
 	//이 리턴값을 msg리턴값으로 바꿔야 한다. 딱히 뭐 필요는 없지만.
 	return 0;
 }
 
-void list_remaining_d3d_objects()
+void ReportLiveObjects()
 {
 	HMODULE dxgidebugdll = GetModuleHandleW(L"dxgidebug.dll");
 	decltype(&DXGIGetDebugInterface) GetDebugInterface = reinterpret_cast<decltype(&DXGIGetDebugInterface)>(GetProcAddress(dxgidebugdll, "DXGIGetDebugInterface"));
 
 	IDXGIDebug* debug;
-
 	GetDebugInterface(IID_PPV_ARGS(&debug));
 
-	OutputDebugStringW(L"Starting Live Direct3D Object Dump:\r\n");
+	OutputDebugStringW(L"---------------Starting Live Direct3D Object Dump:----------------\r\n");
 	debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_DETAIL);
-	OutputDebugStringW(L"Completed Live Direct3D Object Dump.\r\n");
+	OutputDebugStringW(L"---------------Completed Live Direct3D Object Dump----------------\r\n");
 
 	debug->Release();
 }

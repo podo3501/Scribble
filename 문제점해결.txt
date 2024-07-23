@@ -54,3 +54,24 @@ To solve the third warning, delete the value of the Floating Point Model (which 
 해결책은 ID3DInclude 이 인터페이스 함수를 재작성해서 인자로 넣어주면 #include 문이 실행될때 여기로 들어온다.
 그리고 읽고나면 소멸자로 들어오기 때문에 stack으로 구현했다.
 여기서 파일의 디렉토리를 설정하고 파일을 읽어서 넣어주면 된다.
+
+D3D12 WARNING: Live ID3D12Device at 0x000001F10019C2F0, Refcount: 2 [ STATE_CREATION WARNING #274: LIVE_DEVICE]
+D3D12 WARNING: 	Live ID3D12ShaderCacheSession at 0x000001F10044B5C0, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #1281: LIVE_SHADERCACHESESSION]
+D3D12 WARNING: 	Live ID3D12RootSignature at 0x000001F1004E2460, Refcount: 0, IntRef: 2 [ STATE_CREATION WARNING #577: LIVE_ROOTSIGNATURE]
+D3D12 WARNING: 	Live ID3D12PipelineState at 0x000001F1004FEAD0, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #572: LIVE_PIPELINESTATE]
+D3D12 WARNING: 	Live ID3D12PipelineState at 0x000001F1004F9150, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #572: LIVE_PIPELINESTATE]
+D3D12 WARNING: 	Live ID3D12Resource at 0x000001F100563290, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #575: LIVE_RESOURCE]
+D3D12 WARNING: 	Live ID3D12Heap at 0x000001F100501220, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #579: LIVE_HEAP]
+D3D12 WARNING: 	Live ID3D12Fence at 0x000001F100549D90, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #580: LIVE_MONITOREDFENCE]
+D3D12 WARNING: 	Live ID3D12CommandQueue at 0x000001F10054A030, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #570: LIVE_COMMANDQUEUE]
+D3D12 WARNING: 	Live ID3D12Fence at 0x000001F1006CF130, Name: Internal D3D12 Debug Fence, Refcount: 0, IntRef: 1 [ STATE_CREATION WARNING #580: LIVE_MONITOREDFENCE]
+D3D12 WARNING: 	Live ID3D12RootSignature at 0x000001F106A6AE40, Refcount: 1, IntRef: 0 [ STATE_CREATION WARNING #577: LIVE_ROOTSIGNATURE]
+D3D12 WARNING: 	Live ID3D12RootSignature at 0x000001F106A6E670, Refcount: 1, IntRef: 0 [ STATE_CREATION WARNING #577: LIVE_ROOTSIGNATURE]
+이렇게 DirectX12에서 메모리가 센다는 메세지가 떴다. 여기서 Refcount와 IntRef가 있는데 앞에 Refcount가 0이면 메모리가 세지는 않는다는 것.
+Refcount가 0이 아닌 것을 먼저 잡고나면 Refcount가 0인 것들은 warning으로 안뜬다. 아마도 1이 하나라도 있다면 0값도 같이 뜨는 것 같다.
+	ID3D12RootSignature* signature = nullptr;
+	ReturnIfFailed(m_device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
+		IID_PPV_ARGS(&signature)));
+	m_rootSignatures.insert(std::make_pair(type, signature));
+이런식으로 signature값으로 생성한다음 map에 넣었는데 이것이 메모리 세는 문제의 근원이었다.
+밑에서 Refcount가 1이상인 값을 차례대로 잡아 올라가면 된다.
