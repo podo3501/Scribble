@@ -78,6 +78,12 @@ bool CFrameResources::PrepareFrame(CRenderer* renderer)
 	return true;
 }
 
+UINT64 CFrameResources::ForwardFrame()
+{
+	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
+	return m_fenceCount;
+}
+
 ID3D12Resource* CFrameResources::GetResource(eBufferType bufferType)
 {
 	return GetUploadBuffer(bufferType)->Resource();

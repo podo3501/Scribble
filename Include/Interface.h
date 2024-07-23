@@ -38,7 +38,6 @@ interface IRenderer
 	virtual bool OnResize(int wndWidth, int wndHeight) = 0;
 	virtual bool LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) = 0;
 	virtual bool LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem) = 0;
-	virtual bool LoadTexture(const TextureList& textureList) = 0;
 	virtual bool LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename) = 0;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) = 0;
 	virtual bool PrepareFrame() = 0;

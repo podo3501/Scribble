@@ -170,7 +170,7 @@ namespace MainLoop
 	public:
 		GMockTestRenderer(IRenderer* originRenderer)
 			: m_originRenderer(originRenderer) {}
-		virtual bool LoadTexture(const TextureList& textureList) override
+		virtual bool LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename) override
 		{
 			EXPECT_EQ(textureList.size(), 4);
 			std::vector<std::wstring> curtexIndexList;

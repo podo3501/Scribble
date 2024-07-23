@@ -13,13 +13,12 @@
 class CDirectx3D;
 class CShader;
 class CTexture;
-class CShadowMap;
 class CSsaoMap;
+class CDraw;
 class CPipelineStateObjects;
+struct CD3DX12_ROOT_PARAMETER;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
-struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
-struct ID3D12PipelineState;
 
 enum class RootSignature : int
 {
@@ -40,7 +39,6 @@ public:
 	virtual bool OnResize(int width, int height) override;
 	virtual bool LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
 	virtual bool LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem) override;
-	virtual bool LoadTexture(const TextureList& textureList) override;
 	virtual bool LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
 	virtual bool PrepareFrame() override;
@@ -58,18 +56,18 @@ public:
 
 	void CreateShaderResourceView(eTextureType type, const std::wstring& filename,
 		ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc);
-	D3D12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle(eTextureType type);
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCpuSrvHandle(eTextureType type);
 
 private:
-	bool CreateRootSignature(RootSignature type, ID3DBlob* serialized);
+	bool CreateRootSignature(
+		RootSignature type,
+		const std::vector<CD3DX12_ROOT_PARAMETER>& rootParamList,
+		std::vector<D3D12_STATIC_SAMPLER_DESC> samplers);
 	bool BuildRootSignature();
 	bool BuildMainRootSignature();
 	bool BuildSsaoRootSignature();
 	bool BuildDescriptorHeaps();
 
 	UINT GetSrvIndex(eTextureType type);
-	D3D12_GPU_VIRTUAL_ADDRESS GetFrameResourceAddress(eBufferType bufType);
 
 	bool LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
@@ -78,15 +76,11 @@ private:
 
 	bool MakeFrameResource();
 
-	void DrawSceneToShadowMap(AllRenderItems& renderItem);
-	void DrawNormalsAndDepth(AllRenderItems& renderItem);
-	void DrawRenderItems(ID3D12Resource* instanceRes, GraphicsPSO pso, RenderItem* renderItem);
-
 private:
 	std::unique_ptr<CDirectx3D> m_directx3D;
 	std::unique_ptr<CShader> m_shader;
 	std::unique_ptr<CTexture> m_texture;
-	std::unique_ptr<CShadowMap> m_shadowMap;
+	std::unique_ptr<CDraw> m_draw;
 	std::unique_ptr<CSsaoMap> m_ssaoMap;
 
 	bool m_isInitialize{ false };
@@ -100,9 +94,6 @@ private:
 
 	std::unique_ptr<CFrameResources> m_frameResources;
 	std::unique_ptr<CPipelineStateObjects> m_pso;
-
-	D3D12_VIEWPORT m_screenViewport{};
-	D3D12_RECT m_scissorRect{};
 };
 
 inline ID3D12RootSignature* CRenderer::GetRootSignature(RootSignature sigType) 		{ return m_rootSignatures[sigType].Get(); }

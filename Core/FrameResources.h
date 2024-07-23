@@ -37,6 +37,7 @@ public:
 	bool BuildFrameResources(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
 	bool PrepareFrame(CRenderer* renderer);
+	UINT64 ForwardFrame();
 	bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize);
 
 	inline ID3D12CommandAllocator* GetCurrCmdListAlloc() { return m_resources[m_frameResIdx]->cmdListAlloc.Get();	}

@@ -13,6 +13,7 @@
 #include "./Renderer.h"
 #include "./CoreDefine.h"
 #include "./headerUtility.h"
+#include "./Helper.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -134,9 +135,9 @@ void CSsaoMap::ComputeSsao(
 	cmdList->SetGraphicsRootConstantBufferView(EtoV(SsaoRegisterType::Pass), ssaoCBAddress);
 	cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 0, 0);
 
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Depth), m_renderer->GetGpuSrvHandle(eTextureType::SsaoDepthMap));
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::RandomVec), m_renderer->GetGpuSrvHandle(eTextureType::SsaoRandomVectorMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), GetGpuSrvHandle(m_renderer, eTextureType::SsaoNormalMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Depth), GetGpuSrvHandle(m_renderer, eTextureType::SsaoDepthMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::RandomVec), GetGpuSrvHandle(m_renderer, eTextureType::SsaoRandomVectorMap));
 
 	cmdList->SetPipelineState(m_ssaoPso);
 
@@ -176,14 +177,14 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 	if (horzBlur == true)
 	{
 		output = m_ambientMap1.Get();
-		inputSrv = m_renderer->GetGpuSrvHandle(eTextureType::SsaoAmbientMap0);
+		inputSrv = GetGpuSrvHandle(m_renderer, eTextureType::SsaoAmbientMap0);
 		outputRtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap1);
 		cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 1, 0);
 	}
 	else
 	{
 		output = m_ambientMap0.Get();
-		inputSrv = m_renderer->GetGpuSrvHandle(eTextureType::SsaoAmbientMap1);
+		inputSrv = GetGpuSrvHandle(m_renderer, eTextureType::SsaoAmbientMap1);
 		outputRtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap0);
 		cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 0, 0);
 	}
@@ -195,11 +196,8 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 	cmdList->ClearRenderTargetView(outputRtv, clearValue, 0, nullptr);
 	cmdList->OMSetRenderTargets(1, &outputRtv, true, nullptr);
 
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), GetGpuSrvHandle(m_renderer, eTextureType::SsaoNormalMap));
 	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::SsaoAmbientMap0), inputSrv);
-
-	//cmdList->SetGraphicsRootDescriptorTable(2, m_renderer->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
-	//cmdList->SetGraphicsRootDescriptorTable(4, inputSrv);
 
 	cmdList->IASetVertexBuffers(0, 0, nullptr);
 	cmdList->IASetIndexBuffer(nullptr);

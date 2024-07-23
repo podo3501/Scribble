@@ -44,3 +44,15 @@ enum class DsvOffset : int
 	Common = 0,
 	ShadowMap,
 };
+
+enum class MainRegisterType : int
+{
+	Pass = 0,
+	Bone,
+	Material,
+	Instance,
+	Shadow,
+	Ssao,
+	Cube,
+	Diffuse,
+};
