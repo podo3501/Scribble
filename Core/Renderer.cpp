@@ -41,19 +41,18 @@ CRenderer::CRenderer()
 bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
 {
 	m_directx3D = std::make_unique<CDirectx3D>();
-	ReturnIfFalse(m_directx3D->Initialize(hwnd, width, height));
+	m_descHeap = std::make_unique<CDescriptorHeap>();
+	ReturnIfFalse(m_directx3D->Initialize(hwnd, width, height, m_descHeap.get()));
 	m_device = m_directx3D->GetDevice();
 	m_cmdList = m_directx3D->GetCommandList();
 
 	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_texture = std::make_unique<CTexture>(resPath);
 	m_draw = std::make_unique<CDraw>();
-	m_descHeap = std::make_unique<CDescriptorHeap>(m_device);
 	m_ssaoMap = std::make_unique<CSsaoMap>(this, m_descHeap.get());
 	m_pso = std::make_unique<CPipelineStateObjects>(this);
 	
 	ReturnIfFalse(BuildRootSignature());
-	ReturnIfFalse(m_descHeap->Build());
 	ReturnIfFalse(m_pso->Build(m_shader.get()));
 	ReturnIfFalse(MakeFrameResource());
 	ReturnIfFalse(m_draw->Initialize(this, m_descHeap.get(), m_pso.get()));

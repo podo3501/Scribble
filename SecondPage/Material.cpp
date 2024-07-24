@@ -19,7 +19,7 @@ CMaterial::CMaterial()
 {}
 CMaterial::~CMaterial() = default;
 
-void CMaterial::InsertTexture(eTextureType type, const std::wstring& filename)
+void CMaterial::InsertTexture(SrvOffset type, const std::wstring& filename)
 {
 	if (filename.empty()) return;
 

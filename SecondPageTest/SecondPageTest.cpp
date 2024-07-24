@@ -148,11 +148,11 @@ namespace MainLoop
 	ModelProperty TestCreateMock()
 	{
 		MaterialList materialList;
-		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Texture2D, { L"bricks.dds" }, {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("sky", eTextureType::TextureCube, { L"grasscube1024.dds" }, {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Texture2D, { L"bricks.dds", L"bricks2_nmap.dds" }, {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks1", eTextureType::Texture2D, { L"bricks.dds" }, {}, {}, 0.1f));
-		materialList.emplace_back(MakeMaterial("bricks2", eTextureType::Texture2D, { L"bricks2.dds", L"bricks2_nmap.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks0", SrvOffset::Texture2D, { L"bricks.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("sky", SrvOffset::TextureCube, { L"grasscube1024.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks0", SrvOffset::Texture2D, { L"bricks.dds", L"bricks2_nmap.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks1", SrvOffset::Texture2D, { L"bricks.dds" }, {}, {}, 0.1f));
+		materialList.emplace_back(MakeMaterial("bricks2", SrvOffset::Texture2D, { L"bricks2.dds", L"bricks2_nmap.dds" }, {}, {}, 0.1f));
 
 		ModelProperty  modelProp{};
 		modelProp.createType = ModelProperty::CreateType::Generator;

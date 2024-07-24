@@ -127,7 +127,7 @@ bool CSkinnedMesh::InsertMaterial(CMaterial* material)
 	std::ranges::for_each(m_skinnedMats, [material, &materialList](auto& skinnedMat) {
 		auto mat = std::make_shared<Material>();
 		mat->name = skinnedMat.name;
-		mat->type = eTextureType::Texture2D;
+		mat->type = SrvOffset::Texture2D;
 		mat->diffuseName.assign(skinnedMat.diffuseMapName.begin(), skinnedMat.diffuseMapName.end());
 		mat->normalName.assign(skinnedMat.normalMapName.begin(), skinnedMat.normalMapName.end());
 		mat->diffuseAlbedo = skinnedMat.diffuseAlbedo;

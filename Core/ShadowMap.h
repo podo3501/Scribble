@@ -31,7 +31,7 @@ public:
 private:
 	void BuildDescriptors();
 	bool BuildResource();
-	bool CreateResource();
+	bool CreateResource(ID3D12Device* device);
 
 private:
 	CRenderer* m_renderer;

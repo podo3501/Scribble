@@ -13,11 +13,11 @@ struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
 struct ID3D12DescriptorHeap;
 
-enum class eTextureType : int;
+enum class SrvOffset : int;
 
 class CTexture
 {
-	using TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
+	using TextureList = std::vector<std::pair<SrvOffset, std::wstring>>;
 
 public:
 	CTexture(std::wstring resPath);
@@ -48,7 +48,7 @@ private:
 	std::wstring m_resPath{};
 	const std::wstring m_filePath;
 
-	std::vector<std::pair<eTextureType, std::unique_ptr<TextureMemory>>> m_textureMemories;
+	std::vector<std::pair<SrvOffset, std::unique_ptr<TextureMemory>>> m_textureMemories;
 	std::vector<std::wstring> m_srvTexture2DFilename{};
 };
 

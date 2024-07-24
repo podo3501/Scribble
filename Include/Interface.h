@@ -19,14 +19,14 @@ struct RenderItem;
 struct Vertex;
 struct SkinnedVertex;
 enum class eBufferType : int;
-enum class eTextureType : int;
+enum class SrvOffset : int;
 enum class GraphicsPSO : int;
 enum class ShaderType : int;
 
 using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
 using Vertices = std::vector<Vertex>;
 using Indices = std::vector<std::int32_t>;
-using TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
+using TextureList = std::vector<std::pair<SrvOffset, std::wstring>>;
 using ShaderFileList = std::map<GraphicsPSO, std::vector<std::pair<ShaderType, std::wstring>>>;
 using SkinnedVertices = std::vector<SkinnedVertex>;
 

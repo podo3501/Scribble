@@ -16,7 +16,7 @@ struct Material;
 struct RenderItem;
 struct InstanceData;
 struct PassConstants;
-enum class eTextureType : int;
+enum class SrvOffset : int;
 enum class GraphicsPSO : int; 
 
 using InstanceDataList = std::vector<std::shared_ptr<InstanceData>>;

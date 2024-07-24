@@ -54,7 +54,7 @@ void CTexture::CreateShaderResourceView(CDescriptorHeap* descHeap)
 			srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
-			if (type == eTextureType::TextureCube)
+			if (type == SrvOffset::TextureCube)
 			{
 				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 				srvDesc.TextureCube.MostDetailedMip = 0;
@@ -64,9 +64,9 @@ void CTexture::CreateShaderResourceView(CDescriptorHeap* descHeap)
 			}
 
 			UINT index = static_cast<UINT>(m_srvTexture2DFilename.size());
-			descHeap->CreateShaderResourceView(type, index, srvDesc, curTexRes.Get());
+			descHeap->CreateShaderResourceView(type, index, &srvDesc, curTexRes.Get());
 
-			if(type == eTextureType::Texture2D)
+			if(type == SrvOffset::Texture2D)
 				m_srvTexture2DFilename.emplace_back(curTexMemory->filename);
 		});
 }

@@ -4,10 +4,9 @@
 #include <WindowsX.h>
 #include "./CoreDefine.h"
 #include "./headerUtility.h"
+#include "./DescriptorHeap.h"
 
 using Microsoft::WRL::ComPtr;
-using namespace std;
-using namespace DirectX;
 
 constexpr bool gOutputDebugWindow = false;
 
@@ -26,8 +25,7 @@ CDirectx3D::CDirectx3D()
 	, m_commandQueue{ nullptr }
 	, m_cmdListAlloc{ nullptr }
 	, m_commandList{ nullptr }
-	, m_rtvHeap{ nullptr }
-	, m_dsvHeap{ nullptr }
+	, m_descHeap{ nullptr }
 	, m_depthStencilBuffer{ nullptr }
 {
 	m_swapChainBuffer.resize(SwapChainBufferCount);
@@ -41,9 +39,12 @@ CDirectx3D::~CDirectx3D()
 		FlushCommandQueue();
 }
 
-bool CDirectx3D::Initialize(HWND hwnd, int width, int height)
+bool CDirectx3D::Initialize(HWND hwnd, int width, int height, CDescriptorHeap* descHeap)
 {
+	m_descHeap = descHeap;
+
 	ReturnIfFalse(InitDirect3D(hwnd, width, height));
+	ReturnIfFalse(m_descHeap->Build(m_device.Get()));
 	ReturnIfFalse(OnResize(width, height));
 
 	return true;
@@ -106,7 +107,6 @@ bool CDirectx3D::InitDirect3D(HWND hwnd, int width, int height)
 
 	ReturnIfFalse(CreateCommandObjects());
 	ReturnIfFalse(CreateSwapChain(hwnd, width, height));
-	ReturnIfFalse(CreateRtvAndDsvDescriptorHeaps());
 
 	return true;
 }
@@ -244,29 +244,6 @@ bool CDirectx3D::CreateSwapChain(HWND hwnd, int width, int height)
 	return true;
 }
 
-bool CDirectx3D::CreateDescriptorHeap(UINT numDescriptor, D3D12_DESCRIPTOR_HEAP_TYPE heapType, ID3D12DescriptorHeap** descriptorHeap)
-{
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	rtvHeapDesc.NumDescriptors = numDescriptor;
-	rtvHeapDesc.Type = heapType;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	rtvHeapDesc.NodeMask = 0;
-	ReturnIfFailed(m_device->CreateDescriptorHeap(
-		&rtvHeapDesc, IID_PPV_ARGS(descriptorHeap)));
-	
-	return true;
-}
-
-bool CDirectx3D::CreateRtvAndDsvDescriptorHeaps()
-{
-	ReturnIfFalse(CreateDescriptorHeap(
-		TotalRenderTargetViewHeap, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_rtvHeap.GetAddressOf()));
-	ReturnIfFalse(CreateDescriptorHeap(
-		TotalDepthStencilView, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_dsvHeap.GetAddressOf()));
-
-	return true;
-}
-
 bool CDirectx3D::OnResize(int width, int height)
 {
 	assert(m_device);
@@ -278,7 +255,7 @@ bool CDirectx3D::OnResize(int width, int height)
 	ReturnIfFalse(ResetCommandLists());
 
 	// Release the previous resources we will be recreating.
-	for (int i = 0; i < SwapChainBufferCount; ++i)
+	for (auto i : std::views::iota(0u, SwapChainBufferCount))
 		m_swapChainBuffer[i].Reset();
 	m_depthStencilBuffer.Reset();
 
@@ -289,14 +266,14 @@ bool CDirectx3D::OnResize(int width, int height)
 		m_backBufferFormat,
 		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
-	m_currBackBuffer = 0;
+	m_descHeap->SetupFirstBackBuffer();
 	UINT rtvDescHeapSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	for (UINT i = 0; i < SwapChainBufferCount; i++)
+	for(auto i : std::views::iota(0u, SwapChainBufferCount))
 	{
 		ReturnIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_swapChainBuffer[i])));
-		CreateRenderTargetView(i == 0 ? RtvOffset::SwapChain0 : RtvOffset::SwapChain1,
-			m_swapChainBuffer[i].Get(), nullptr);
+		m_descHeap->CreateRenderTargetView(i == 0 ? RtvOffset::SwapChain0 : RtvOffset::SwapChain1,
+			nullptr, m_swapChainBuffer[i].Get());
 	}
 
 	// Create the depth/stencil buffer and view.
@@ -327,7 +304,7 @@ bool CDirectx3D::OnResize(int width, int height)
 		IID_PPV_ARGS(m_depthStencilBuffer.GetAddressOf())));
 
 	// Create descriptor to mip level 0 of entire resource using the format of the resource.
-	m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), nullptr, GetCpuDsvHandle(DsvOffset::Common));
+	m_descHeap->CreateDepthStencilView(DsvOffset::Common, nullptr, m_depthStencilBuffer.Get());
 
 	// Transition the resource from its initial state to be used as a depth buffer.
 	CD3DX12_RESOURCE_BARRIER barrier(CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(),
@@ -359,7 +336,7 @@ bool CDirectx3D::ExcuteCommandLists()
 bool CDirectx3D::ExcuteSwapChain(UINT64* outFenceIdx)
 {
 	ReturnIfFailed(m_swapChain->Present(0, 0));
-	m_currBackBuffer = (m_currBackBuffer + 1) % SwapChainBufferCount;
+	m_descHeap->SwapBackBuffer();
 
 	UINT64 curFenceIdx = ++m_currentFence;
 	m_commandQueue->Signal(m_fence.Get(), curFenceIdx);
@@ -406,39 +383,6 @@ void CDirectx3D::SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutD
 	inoutDesc->SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuDsvHandle(DsvOffset offset)
-{
-	static UINT dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_dsvHeap->GetCPUDescriptorHandleForHeapStart() };
-	cpuDesc.Offset(EtoV(offset), dsvDescriptorSize);
-
-	return cpuDesc;
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE CDirectx3D::GetCpuRtvHandle(RtvOffset rtvOffset)
-{
-	static UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_rtvHeap->GetCPUDescriptorHandleForHeapStart() };
-	cpuDesc.Offset(EtoV(rtvOffset), rtvDescriptorSize);
-
-	return cpuDesc;
-}
-
-void CDirectx3D::CreateDepthStencilView(DsvOffset offset, ID3D12Resource* pRes, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc)
-{
-	m_device->CreateDepthStencilView(pRes, pDesc, GetCpuDsvHandle(offset));
-}
-
-void CDirectx3D::CreateRenderTargetView(RtvOffset offsetType, ID3D12Resource* pRes, const D3D12_RENDER_TARGET_VIEW_DESC* pDesc)
-{
-	static UINT rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle{ m_rtvHeap->GetCPUDescriptorHandleForHeapStart() };
-	rtvHeapHandle.Offset(EtoV(offsetType), rtvDescriptorSize);
-	m_device->CreateRenderTargetView(pRes, pDesc, rtvHeapHandle);
-}
-
 bool CDirectx3D::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 {
 	if (m_4xMsaaState == value)
@@ -449,5 +393,10 @@ bool CDirectx3D::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 	ReturnIfFalse(OnResize(width, height));
 
 	return true;
+}
+
+ID3D12Resource* CDirectx3D::CurrentBackBuffer() const 
+{ 
+	return m_swapChainBuffer[m_descHeap->GetCurrBackBuffer()].Get(); 
 }
 

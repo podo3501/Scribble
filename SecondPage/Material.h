@@ -10,14 +10,14 @@
 
 interface IRenderer;
 struct MaterialBuffer;
-enum class eTextureType : int;
+enum class SrvOffset : int;
 
 struct Material
 {
 	Material();
 
 	std::string name{};
-	eTextureType type;
+	SrvOffset type;
 	std::wstring diffuseName{};
 	std::wstring normalName{};
 
@@ -34,7 +34,7 @@ using MaterialList = std::vector<std::shared_ptr<Material>>;
 
 class CMaterial
 {
-	using TextureList = std::vector<std::pair<eTextureType, std::wstring>>;
+	using TextureList = std::vector<std::pair<SrvOffset, std::wstring>>;
 	
 public:
 	CMaterial();
@@ -52,7 +52,7 @@ public:
 
 private:
 	MaterialBuffer ConvertUploadBuffer(Material* material);
-	void InsertTexture(eTextureType type, const std::wstring& filename);
+	void InsertTexture(SrvOffset type, const std::wstring& filename);
 
 private:
 	MaterialList m_materialList;

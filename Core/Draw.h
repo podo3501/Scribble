@@ -14,7 +14,7 @@ struct ID3D12Device;
 struct RenderItem;
 struct ID3D12GraphicsCommandList;
 enum class GraphicsPSO : int;
-enum class eTextureType : int;
+enum class SrvOffset : int;
 enum class RootSignature : int;
 
 class CDraw

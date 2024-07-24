@@ -71,11 +71,10 @@ bool CDraw::Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems&
 
 	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Common));
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { m_descHeap->GetSrvDescriptorHeap() };
-	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	m_descHeap->SetSrvDescriptorHeaps(m_cmdList);
 
 	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(frameRes, eBufferType::Material));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), m_descHeap->GetGpuSrvHandle(eTextureType::Texture2D));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), m_descHeap->GetGpuSrvHandle(SrvOffset::Texture2D));
 
 	DrawSceneToShadowMap(frameRes, renderItem);
 	DrawNormalsAndDepth(frameRes, ssaoMap, renderItem);
@@ -91,15 +90,15 @@ bool CDraw::Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems&
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_directx3D->CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
-	m_cmdList->ClearRenderTargetView(m_directx3D->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
-	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_directx3D->CurrentBackBufferView()), true, &RvToLv(m_directx3D->GetCpuDsvHandle(DsvOffset::Common)));
+	m_cmdList->ClearRenderTargetView(m_descHeap->CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	m_cmdList->OMSetRenderTargets(1, &RvToLv(m_descHeap->CurrentBackBufferView()), true, &RvToLv(m_descHeap->GetCpuDsvHandle(DsvOffset::Common)));
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(frameRes, eBufferType::PassCB));
 	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(frameRes, eBufferType::Material));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), m_descHeap->GetGpuSrvHandle(eTextureType::ShadowMap));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Ssao), m_descHeap->GetGpuSrvHandle(eTextureType::SsaoAmbientMap0));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), m_descHeap->GetGpuSrvHandle(eTextureType::TextureCube));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), m_descHeap->GetGpuSrvHandle(eTextureType::Texture2D));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), m_descHeap->GetGpuSrvHandle(SrvOffset::ShadowMap));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Ssao), m_descHeap->GetGpuSrvHandle(SrvOffset::SsaoAmbientMap0));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), m_descHeap->GetGpuSrvHandle(SrvOffset::TextureCube));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), m_descHeap->GetGpuSrvHandle(SrvOffset::Texture2D));
 
 	std::ranges::for_each(renderItem, [this, frameRes, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;
@@ -126,7 +125,7 @@ void CDraw::DrawSceneToShadowMap(CFrameResources* frameRes, AllRenderItems& rend
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->Resource(),
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE)));
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvShadowMap = directx3D->GetCpuDsvHandle(DsvOffset::ShadowMap);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvShadowMap = m_descHeap->GetCpuDsvHandle(DsvOffset::ShadowMap);
 	m_cmdList->ClearDepthStencilView(dsvShadowMap, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	m_cmdList->OMSetRenderTargets(0, nullptr, false, &dsvShadowMap);
@@ -152,14 +151,14 @@ void CDraw::DrawNormalsAndDepth(CFrameResources* frameRes, CSsaoMap* ssaoMap, Al
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
 
 	auto normalMap = ssaoMap->NormalMap();
-	auto normalMapRtv = m_directx3D->GetCpuRtvHandle(RtvOffset::NormalMap);
+	auto normalMapRtv = m_descHeap->GetCpuRtvHandle(RtvOffset::NormalMap);
 
 	m_cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(normalMap,
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET)));
 
 	float clearValue[] = { 0.0f, 0.0f, 1.0f, 0.0f };
 	m_cmdList->ClearRenderTargetView(normalMapRtv, clearValue, 0, nullptr);
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvCommon = m_directx3D->GetCpuDsvHandle(DsvOffset::Common);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvCommon = m_descHeap->GetCpuDsvHandle(DsvOffset::Common);
 	m_cmdList->ClearDepthStencilView(dsvCommon, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	m_cmdList->OMSetRenderTargets(1, &normalMapRtv, true, &dsvCommon);

@@ -6,45 +6,104 @@
 #include "./headerUtility.h"
 
 CDescriptorHeap::~CDescriptorHeap() = default;
-CDescriptorHeap::CDescriptorHeap(ID3D12Device* device)
-	: m_device{ device }
+CDescriptorHeap::CDescriptorHeap()
+	: m_device{ nullptr }
 	, m_srvDescHeap{ nullptr }
-{
-	m_cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-}
+	, m_dsvDescHeap{ nullptr }
+	, m_rtvDescHeap{ nullptr }
+{}
 
-bool CDescriptorHeap::Build()
+bool CDescriptorHeap::CreateDescriptorHeap(
+	D3D12_DESCRIPTOR_HEAP_TYPE heapType,
+	UINT numDescriptor, 
+	D3D12_DESCRIPTOR_HEAP_FLAGS flags,
+	ID3D12DescriptorHeap** descriptorHeap)
 {
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
+	heapDesc.Type = heapType;
+	heapDesc.NumDescriptors = numDescriptor;
+	heapDesc.Flags = flags;
 	heapDesc.NodeMask = 0;
-	heapDesc.NumDescriptors = TotalShaderResourceViewHeap;
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	ReturnIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvDescHeap)));
+	ReturnIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(descriptorHeap)));
 
 	return true;
 }
 
-inline UINT StartOffset(eTextureType type)	{	return static_cast<UINT>(EtoV(type));		}
-
-void CDescriptorHeap::CreateShaderResourceView(eTextureType type, UINT index,
-	const D3D12_SHADER_RESOURCE_VIEW_DESC& pDesc, ID3D12Resource* pRes)
+bool CDescriptorHeap::Build(ID3D12Device* device)
 {
-	UINT offset = StartOffset(type); 
-	offset += index;
+	m_device = device;
+	m_cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ m_srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-	hCpuDesc.Offset(offset, m_cbvSrvUavDescSize);
-	m_device->CreateShaderResourceView(pRes, &pDesc, hCpuDesc);
+	ReturnIfFalse(CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, TotalShaderResourceViewHeap,
+		D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_srvDescHeap.GetAddressOf()));
+	ReturnIfFalse(CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, TotalDepthStencilView,
+		D3D12_DESCRIPTOR_HEAP_FLAG_NONE, m_dsvDescHeap.GetAddressOf()));
+	ReturnIfFalse(CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, TotalRenderTargetViewHeap,
+		D3D12_DESCRIPTOR_HEAP_FLAG_NONE, m_rtvDescHeap.GetAddressOf()));
+
+	return true;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE CDescriptorHeap::GetGpuSrvHandle(eTextureType type)
+void CDescriptorHeap::CreateShaderResourceView(SrvOffset offset, UINT index,
+	const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc, ID3D12Resource* pRes)
 {
-	UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
+	cpuDesc.Offset(EtoV(offset) + index, m_cbvSrvUavDescSize);
 
-	UINT offset = StartOffset(type);
-	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandle{ m_srvDescHeap->GetGPUDescriptorHandleForHeapStart() };
-	gpuDescHandle.Offset(offset, cbvSrvUavDescSize);
+	m_device->CreateShaderResourceView(pRes, pDesc, cpuDesc);
+}
 
-	return gpuDescHandle;
+void CDescriptorHeap::CreateDepthStencilView(DsvOffset offset,
+	const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc, ID3D12Resource* pRes)
+{
+	m_device->CreateDepthStencilView(pRes, pDesc, GetCpuDsvHandle(offset));
+}
+
+void CDescriptorHeap::CreateRenderTargetView(RtvOffset offset, 
+	const D3D12_RENDER_TARGET_VIEW_DESC* pDesc, ID3D12Resource* pRes)
+{
+	m_device->CreateRenderTargetView(pRes, pDesc, GetCpuRtvHandle(offset));
+}
+
+void CDescriptorHeap::SetSrvDescriptorHeaps(ID3D12GraphicsCommandList* cmdList)
+{
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.Get()};
+	cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+}
+
+void CDescriptorHeap::SwapBackBuffer()
+{
+	m_currBackBuffer = (m_currBackBuffer + 1) % SwapChainBufferCount;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE CDescriptorHeap::GetGpuSrvHandle(SrvOffset offset) const
+{
+	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDesc{ m_srvDescHeap->GetGPUDescriptorHandleForHeapStart() };
+	gpuDesc.Offset(EtoV(offset), m_cbvSrvUavDescSize);
+
+	return gpuDesc;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE CDescriptorHeap::GetCpuDsvHandle(DsvOffset offset) const
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_dsvDescHeap->GetCPUDescriptorHandleForHeapStart() };
+	cpuDesc.Offset(EtoV(offset), m_dsvDescriptorSize);
+
+	return cpuDesc;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE CDescriptorHeap::GetCpuRtvHandle(RtvOffset offset) const
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDesc{ m_rtvDescHeap->GetCPUDescriptorHandleForHeapStart() };
+	cpuDesc.Offset(EtoV(offset), m_rtvDescriptorSize);
+
+	return cpuDesc;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE CDescriptorHeap::CurrentBackBufferView() const
+{
+	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
+		m_rtvDescHeap->GetCPUDescriptorHandleForHeapStart(), m_currBackBuffer, m_rtvDescriptorSize);
 }

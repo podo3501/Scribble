@@ -16,7 +16,7 @@ std::wstring GetFilename(std::vector<std::wstring>& fileList, int index)
 	return fileList.size() >= index + 1 ? fileList[index] : L"";
 }
 
-std::unique_ptr<Material> MakeMaterial(std::string&& name, eTextureType type, std::vector<std::wstring> texFilenames,
+std::unique_ptr<Material> MakeMaterial(std::string&& name, SrvOffset type, std::vector<std::wstring> texFilenames,
 	DirectX::XMFLOAT4 diffuseAlbedo, DirectX::XMFLOAT3 fresnelR0, float rough)
 {
 	std::unique_ptr<Material> material = std::make_unique<Material>();
@@ -201,7 +201,7 @@ InstanceDataList CreateDebugInstanceData()
 ModelProperty CreateCubeMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("sky", eTextureType::TextureCube, { L"grasscube1024.dds" },
+	materialList.emplace_back(MakeMaterial("sky", SrvOffset::TextureCube, { L"grasscube1024.dds" },
 		{ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f));
 
 	std::vector<std::string> materialNameList{};
@@ -222,13 +222,13 @@ ModelProperty CreateCubeMock()
 ModelProperty CreateSkullMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("bricks0", eTextureType::Texture2D, { L"bricks.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
-	materialList.emplace_back(MakeMaterial("stone0", eTextureType::Texture2D, { L"stone.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("tile0", eTextureType::Texture2D, { L"tile.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
-	materialList.emplace_back(MakeMaterial("checkboard0", eTextureType::Texture2D, { L"WoodCrate01.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("ice0", eTextureType::Texture2D, { L"ice.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
-	materialList.emplace_back(MakeMaterial("grass0", eTextureType::Texture2D, { L"grass.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
-	materialList.emplace_back(MakeMaterial("skullMat", eTextureType::Texture2D, { L"white1x1.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));
+	materialList.emplace_back(MakeMaterial("bricks0", SrvOffset::Texture2D, { L"bricks.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.002f, 0.002f, 0.02f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("stone0", SrvOffset::Texture2D, { L"stone.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("tile0", SrvOffset::Texture2D, { L"tile.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("checkboard0", SrvOffset::Texture2D, { L"WoodCrate01.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("ice0", SrvOffset::Texture2D, { L"ice.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f));
+	materialList.emplace_back(MakeMaterial("grass0", SrvOffset::Texture2D, { L"grass.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f));
+	materialList.emplace_back(MakeMaterial("skullMat", SrvOffset::Texture2D, { L"white1x1.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -261,7 +261,7 @@ ModelProperty CreateSoldierMock()
 ModelProperty CreateGridMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("nTile", eTextureType::Texture2D, { L"tile.dds", L"tile_nmap.dds" }, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f));
+	materialList.emplace_back(MakeMaterial("nTile", SrvOffset::Texture2D, { L"tile.dds", L"tile_nmap.dds" }, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -281,7 +281,7 @@ ModelProperty CreateGridMock()
 ModelProperty CreateCylinderMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("nBricks2", eTextureType::Texture2D, { L"bricks.dds", L"bricks_nmap.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f));
+	materialList.emplace_back(MakeMaterial("nBricks2", SrvOffset::Texture2D, { L"bricks.dds", L"bricks_nmap.dds" }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f));
 
 	std::vector<std::string> materialNameList{};
 	std::ranges::transform(materialList, std::back_inserter(materialNameList), [](auto& mat) {
@@ -301,7 +301,7 @@ ModelProperty CreateCylinderMock()
 ModelProperty CreateSphereMock()
 {
 	MaterialList materialList;
-	materialList.emplace_back(MakeMaterial("mirror0", eTextureType::Texture2D, { L"white1x1.dds", L"default_nmap.dds" },
+	materialList.emplace_back(MakeMaterial("mirror0", SrvOffset::Texture2D, { L"white1x1.dds", L"default_nmap.dds" },
 		{ 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f));
 
 	std::vector<std::string> materialNameList{};

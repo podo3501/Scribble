@@ -30,7 +30,7 @@ D3D12_RECT CShadowMap::ScissorRect() const		{	return m_scissorRect;	}
 bool CShadowMap::BuildResource()
 {
 	return (m_renderer->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-		return CreateResource(); }));
+		return CreateResource(device); }));
 }
 
 bool CShadowMap::Initialize()
@@ -65,18 +65,17 @@ void CShadowMap::BuildDescriptors()
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	srvDesc.Texture2D.PlaneSlice = 0;
-	m_descHeap->CreateShaderResourceView(eTextureType::ShadowMap, 0, srvDesc, m_shadowMap.Get());
+	m_descHeap->CreateShaderResourceView(SrvOffset::ShadowMap, 0, &srvDesc, m_shadowMap.Get());
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvDesc.Texture2D.MipSlice = 0;
-	auto directx3D = m_renderer->GetDirectx3D();
-	directx3D->CreateDepthStencilView(DsvOffset::ShadowMap, m_shadowMap.Get(), &dsvDesc);
+	m_descHeap->CreateDepthStencilView(DsvOffset::ShadowMap, &dsvDesc, m_shadowMap.Get());
 }
 
-bool CShadowMap::CreateResource()
+bool CShadowMap::CreateResource(ID3D12Device* device)
 {
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
@@ -97,7 +96,6 @@ bool CShadowMap::CreateResource()
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
 
-	ID3D12Device* device = m_renderer->GetDevice();
 	ReturnIfFailed(device->CreateCommittedResource(
 		&RvToLv(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
 		D3D12_HEAP_FLAG_NONE,
