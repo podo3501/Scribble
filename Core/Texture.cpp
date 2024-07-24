@@ -4,6 +4,7 @@
 #include "./Directx3D.h"
 #include "./Renderer.h"
 #include "../Include/Types.h"
+#include "./DescriptorHeap.h"
 
 using namespace DirectX;
 
@@ -37,10 +38,10 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
 		return true; });
 }
 
-void CTexture::CreateShaderResourceView(CRenderer* renderer)
+void CTexture::CreateShaderResourceView(CDescriptorHeap* descHeap)
 {
 	std::ranges::for_each(m_textureMemories,
-		[renderer](auto& curTex) mutable {
+		[descHeap, this](auto& curTex) mutable {
 			auto& type = curTex.first;
 			auto& curTexMemory = curTex.second;
 			auto& curTexRes = curTexMemory->resource;
@@ -62,6 +63,10 @@ void CTexture::CreateShaderResourceView(CRenderer* renderer)
 				srvDesc.Format = curTexRes->GetDesc().Format;
 			}
 
-			renderer->CreateShaderResourceView(type, curTexMemory->filename, curTexRes.Get(), &srvDesc);
+			UINT index = static_cast<UINT>(m_srvTexture2DFilename.size());
+			descHeap->CreateShaderResourceView(type, index, srvDesc, curTexRes.Get());
+
+			if(type == eTextureType::Texture2D)
+				m_srvTexture2DFilename.emplace_back(curTexMemory->filename);
 		});
 }

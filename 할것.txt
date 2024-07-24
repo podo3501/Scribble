@@ -49,11 +49,11 @@
 --shadow map 적용
 --ssao 적용
 --캐릭터를 붙인다.
+--출력창에 나오는 directx 오류 수정
 
-출력창에 나오는 directx 오류 수정
 rtv srv dsv 인덱스 문제 정리 
 엔진 리팩토링
-drawnormal shader ssao에서 뺀다.
+쉐이더 코드drawnormal을 shader ssao에서 뺀다.
 mathhelper를 core랑 app에서 쓸수 있게 한다.
 mesh안에 일반적 mesh와 skinned mesh를 사용하게끔 수정한다.
 material을 먼저 설정해주는 부분을 뒤로 설정하게 변경한다. 

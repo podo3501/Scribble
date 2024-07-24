@@ -4,13 +4,14 @@
 #include "d3dx12.h"
 
 class CRenderer;
+class CDescriptorHeap;
 struct ID3D12Device;
 struct ID3D12Resource;
 
 class CShadowMap
 {
 public:
-	CShadowMap(CRenderer* renderer);
+	CShadowMap(CRenderer* renderer, CDescriptorHeap* descHeap);
 	~CShadowMap();
 
 	CShadowMap() = delete;
@@ -33,7 +34,8 @@ private:
 	bool CreateResource();
 
 private:
-	CRenderer* m_renderer{ nullptr };
+	CRenderer* m_renderer;
+	CDescriptorHeap* m_descHeap;
 
 	D3D12_VIEWPORT m_viewport{};
 	D3D12_RECT m_scissorRect{};

@@ -1,21 +1,17 @@
 #include "./Renderer.h"
-#include <DirectXColors.h>
 #include <ranges>
-#include <algorithm>
 #include "./Directx3D.h"
-#include "./d3dx12.h"
 #include "./d3dUtil.h"
-#include "../Include/RendererDefine.h"
-#include "../Include/FrameResourceData.h"
+#include "./headerUtility.h"
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
 #include "./CoreDefine.h"
 #include "./Shader.h"
 #include "./Texture.h"
-#include "./ShadowMap.h"
 #include "./FrameResources.h"
 #include "./SsaoMap.h"
 #include "./PipelineStateObjects.h"
+#include "./DescriptorHeap.h"
 #include "./Draw.h"
 
 using Microsoft::WRL::ComPtr;
@@ -30,6 +26,7 @@ std::unique_ptr<IRenderer> CreateRenderer(const std::wstring& resPath, HWND hwnd
 	return std::move(renderer);
 }
 
+CRenderer::~CRenderer() = default;
 CRenderer::CRenderer()
 	: m_directx3D{ nullptr }
 	, m_shader{ nullptr }
@@ -37,12 +34,8 @@ CRenderer::CRenderer()
 	, m_draw{ nullptr }
 	, m_ssaoMap{ nullptr }
 	, m_rootSignatures{}
-	, m_srvDescHeap{ nullptr }
 	, m_frameResources{ nullptr }
 	, m_pso{ nullptr }
-{}
-
-CRenderer::~CRenderer()
 {}
 
 bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList)
@@ -55,14 +48,15 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_texture = std::make_unique<CTexture>(resPath);
 	m_draw = std::make_unique<CDraw>();
-	m_ssaoMap = std::make_unique<CSsaoMap>(this);
+	m_descHeap = std::make_unique<CDescriptorHeap>(m_device);
+	m_ssaoMap = std::make_unique<CSsaoMap>(this, m_descHeap.get());
 	m_pso = std::make_unique<CPipelineStateObjects>(this);
-
+	
 	ReturnIfFalse(BuildRootSignature());
-	ReturnIfFalse(BuildDescriptorHeaps());
+	ReturnIfFalse(m_descHeap->Build());
 	ReturnIfFalse(m_pso->Build(m_shader.get()));
 	ReturnIfFalse(MakeFrameResource());
-	ReturnIfFalse(m_draw->Initialize(this, m_pso.get()));
+	ReturnIfFalse(m_draw->Initialize(this, m_descHeap.get(), m_pso.get()));
 	ReturnIfFalse(m_ssaoMap->Initialize(m_directx3D->GetDepthStencilBufferResource(), width, height));
 
 	m_ssaoMap->SetPSOs(m_pso->GetPso(GraphicsPSO::SsaoMap), m_pso->GetPso(GraphicsPSO::SsaoBlur));
@@ -186,33 +180,6 @@ bool CRenderer::CreateRootSignature(RootSignature type,
 	return true;
 }
 
-bool CRenderer::BuildDescriptorHeaps()
-{
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
-	heapDesc.NodeMask = 0;
-	heapDesc.NumDescriptors = TotalShaderResourceViewHeap;
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	ReturnIfFailed(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_srvDescHeap)));
-
-	return true;
-}
-
-void CRenderer::CreateShaderResourceView(eTextureType type, const std::wstring& filename,
-	ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc)
-{
-	static UINT cbvSrvUavDescSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	UINT index = GetSrvIndex(type);
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuDesc{ m_srvDescHeap->GetCPUDescriptorHandleForHeapStart() };
-	hCpuDesc.Offset(index, cbvSrvUavDescSize);
-	m_device->CreateShaderResourceView(pRes, pDesc, hCpuDesc);
-
-	if (type == eTextureType::Texture2D)
-		m_srvTexture2DFilename.emplace_back(filename);
-}
-
 bool CRenderer::LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
 {
 	ReturnIfFalse(m_directx3D->ResetCommandLists());
@@ -225,66 +192,28 @@ bool CRenderer::LoadData(std::function<bool(ID3D12Device* device, ID3D12Graphics
 	return true;
 }
 
-bool CRenderer::LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
-	Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
+bool CRenderer::LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
+	const void* verticesData, const void* indicesData, RenderItem* renderItem)
 {
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		device, cmdList,
-		totalVertices.data(),
-		renderItem->vertexBufferView.SizeInBytes,
-		renderItem->vertexBufferUploader,
-		&renderItem->vertexBufferGPU));
-	renderItem->vertexBufferView.BufferLocation = renderItem->vertexBufferGPU->GetGPUVirtualAddress();
+	auto CreateDefaultBuffer = [device, cmdList](auto data, auto& bufferView, auto& uploader, auto& bufferGpu)->bool {
+		ReturnIfFalse(CoreUtil::CreateDefaultBuffer( device, cmdList, data, bufferView.SizeInBytes, uploader, &bufferGpu));
+		bufferView.BufferLocation = bufferGpu->GetGPUVirtualAddress();
+		return true;
+		};
 
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		device, cmdList,
-		totalIndices.data(),
-		renderItem->indexBufferView.SizeInBytes,
-		renderItem->indexBufferUploader,
-		&renderItem->indexBufferGPU));
-	renderItem->indexBufferView.BufferLocation = renderItem->indexBufferGPU->GetGPUVirtualAddress();
+	ReturnIfFalse(CreateDefaultBuffer(verticesData, renderItem->vertexBufferView, renderItem->vertexBufferUploader, renderItem->vertexBufferGPU));
+	ReturnIfFalse(CreateDefaultBuffer(indicesData, renderItem->indexBufferView, renderItem->indexBufferUploader, renderItem->indexBufferGPU));
 
 	return true;
 }
 
-bool CRenderer::LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem)
+bool CRenderer::LoadMesh(GraphicsPSO pso, const void* verticesData, const void* indicesData, RenderItem* renderItem)
 {
 	if (m_pso->GetPso(pso) == nullptr)
 		return false;	//renderer에서 PSO가 준비되지 않았다.
 
 	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-		return LoadMesh(device, cmdList, totalVertices, totalIndices, renderItem); });
-}
-
-bool CRenderer::LoadSkinnedMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
-	const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem)
-{
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		device, cmdList,
-		totalVertices.data(),
-		renderItem->vertexBufferView.SizeInBytes,
-		renderItem->vertexBufferUploader,
-		&renderItem->vertexBufferGPU));
-	renderItem->vertexBufferView.BufferLocation = renderItem->vertexBufferGPU->GetGPUVirtualAddress();
-
-	ReturnIfFalse(CoreUtil::CreateDefaultBuffer(
-		device, cmdList,
-		totalIndices.data(),
-		renderItem->indexBufferView.SizeInBytes,
-		renderItem->indexBufferUploader,
-		&renderItem->indexBufferGPU));
-	renderItem->indexBufferView.BufferLocation = renderItem->indexBufferGPU->GetGPUVirtualAddress();
-
-	return true;
-}
-
-bool CRenderer::LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem)
-{
-	if (m_pso->GetPso(GraphicsPSO::SkinnedOpaque) == nullptr)
-		return false;
-
-	return LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-		return LoadSkinnedMesh(device, cmdList, totalVertices, totalIndices, renderItem); });
+		return LoadMesh(device, cmdList, verticesData, indicesData, renderItem); });
 }
 
 bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename)
@@ -293,9 +222,8 @@ bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wst
 		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 			return (m_texture->Upload(device, cmdList, textureList)); }));
 
-	m_texture->CreateShaderResourceView(this);
-
-	(*srvFilename) = m_srvTexture2DFilename;
+	m_texture->CreateShaderResourceView(m_descHeap.get());
+	(*srvFilename) = m_texture->GetListSrvTexture2D();
 
 	return true;
 }
@@ -323,16 +251,6 @@ bool CRenderer::Draw(AllRenderItems& renderItem)
 void CRenderer::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 {
 	m_directx3D->Set4xMsaaState(hwnd, width, height, value);
-}
-
-UINT CRenderer::GetSrvIndex(eTextureType type)
-{
-	UINT srvStartIndex = static_cast<UINT>(EtoV(type));
-	UINT srvOffset{ 0 };
-	if (type == eTextureType::Texture2D)
-		srvOffset = m_srvOffsetTexture2D++;
-
-	return srvStartIndex + srvOffset;
 }
 
 ID3D12RootSignature* CRenderer::GetRootSignature(RootSignature sigType) 

@@ -23,9 +23,6 @@ constexpr UINT SsaoScreenNormalMap{ 1u };
 constexpr UINT SsaoAmbientMap{ 2u };
 constexpr UINT TotalRenderTargetViewHeap = SwapChainBufferCount + SsaoScreenNormalMap + SsaoAmbientMap;
 
-//constexpr UINT DsvCommon{ 0u };
-//constexpr UINT DsvShadowMap{ 1u };
-
 constexpr UINT DsvCommonCount{ 1u };
 constexpr UINT DsvShadowMapCount{ 1u };
 constexpr UINT TotalDepthStencilView = DsvCommonCount + DsvShadowMapCount;

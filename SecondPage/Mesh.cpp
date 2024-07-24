@@ -178,7 +178,7 @@ bool CMesh::LoadMeshIntoVRAM(IRenderer* renderer, AllRenderItems* outRenderItems
 		ReturnIfFalse(Convert(iter.second, totalVertices, totalIndices, pRenderItem));
 
 		//그래픽 메모리에 올린다.
-		ReturnIfFalse(renderer->LoadMesh(pso, totalVertices, totalIndices, pRenderItem));
+		ReturnIfFalse(renderer->LoadMesh(pso, totalVertices.data(), totalIndices.data(), pRenderItem));
 
 		return true;	}); 	
 }

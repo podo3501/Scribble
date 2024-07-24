@@ -3,15 +3,16 @@
 #include "../Include/RendererDefine.h"
 #include "./d3dUtil.h"
 #include "./Renderer.h"
+#include "./DescriptorHeap.h"
 #include "./Directx3D.h"
 #include "./CoreDefine.h"
 
 CShadowMap::~CShadowMap() = default;
-CShadowMap::CShadowMap(CRenderer* renderer)
-	: m_shadowMap{ nullptr }
+CShadowMap::CShadowMap(CRenderer* renderer, CDescriptorHeap* descHeap)
+	: m_renderer{ renderer }
+	, m_descHeap{ descHeap }
+	, m_shadowMap{ nullptr }
 {
-	m_renderer = renderer;
-
 	m_mapWidth = gShadowMapWidth;
 	m_mapHeight = gShadowMapHeight;
 
@@ -64,7 +65,7 @@ void CShadowMap::BuildDescriptors()
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	srvDesc.Texture2D.PlaneSlice = 0;
-	m_renderer->CreateShaderResourceView(eTextureType::ShadowMap, L"SHADOWMAP", m_shadowMap.Get(), &srvDesc);
+	m_descHeap->CreateShaderResourceView(eTextureType::ShadowMap, 0, srvDesc, m_shadowMap.Get());
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;

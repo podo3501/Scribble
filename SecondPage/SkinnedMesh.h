@@ -29,6 +29,10 @@ public:
 	CSkinnedMesh(const std::wstring& resPath);
 	~CSkinnedMesh();
 
+	CSkinnedMesh() = delete;
+	CSkinnedMesh(const CSkinnedMesh&) = delete;
+	CSkinnedMesh& operator=(const CSkinnedMesh&) = delete;
+
 	bool Read(const std::string& meshName, ModelProperty* mProperty);
 	bool LoadMeshIntoVRAM(IRenderer* renderer, CMaterial* material, AllRenderItems* outRenderItems);
 	void UpdateAnimation(IRenderer* renderer, float deltaTime);

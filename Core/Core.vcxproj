@@ -144,11 +144,11 @@
     <ClInclude Include="d3dUtil.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DDSTextureLoader.h" />
+    <ClInclude Include="DescriptorHeap.h" />
     <ClInclude Include="Directx3D.h" />
     <ClInclude Include="Draw.h" />
     <ClInclude Include="FrameResources.h" />
     <ClInclude Include="headerUtility.h" />
-    <ClInclude Include="Helper.h" />
     <ClInclude Include="PipelineStateObjects.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
@@ -160,10 +160,10 @@
   <ItemGroup>
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
+    <ClCompile Include="DescriptorHeap.cpp" />
     <ClCompile Include="Directx3D.cpp" />
     <ClCompile Include="Draw.cpp" />
     <ClCompile Include="FrameResources.cpp" />
-    <ClCompile Include="Helper.cpp" />
     <ClCompile Include="PipelineStateObjects.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />

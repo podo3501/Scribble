@@ -6,6 +6,7 @@
 #include "d3dx12.h"
 
 class CRenderer;
+class CDescriptorHeap;
 class CFrameResources;
 struct ID3D12RootSignature;
 struct ID3D12Device;
@@ -26,7 +27,7 @@ enum class SsaoRegisterType : int
 class CSsaoMap
 {
 public:
-	CSsaoMap(CRenderer* renderer);
+	CSsaoMap(CRenderer* renderer, CDescriptorHeap* descHeap);
 	~CSsaoMap();
 
 	CSsaoMap(const CSsaoMap& rhs) = delete;
@@ -60,12 +61,13 @@ private:
 	bool CreateRandomVectorTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
 
 private:
-	CRenderer* m_renderer{ nullptr };
+	CRenderer* m_renderer;
+	CDescriptorHeap* m_descHeap;
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_ssaoRootSig;
 
-	ID3D12PipelineState* m_ssaoPso{ nullptr };
-	ID3D12PipelineState* m_blurPso{ nullptr };
+	ID3D12PipelineState* m_ssaoPso;
+	ID3D12PipelineState* m_blurPso;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_randomVectorMap;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_randomVectorMapUploadBuffer;

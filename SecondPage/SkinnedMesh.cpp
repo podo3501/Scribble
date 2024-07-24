@@ -5,10 +5,8 @@
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
 #include <numbers>
-#include <vector>
 #include <ranges>
 #include <algorithm>
-#include <DirectXMath.h>
 #include "./SkinnedData.h"
 #include "./SetupData.h"
 #include "./LoadM3D.h"
@@ -16,6 +14,7 @@
 #include "./Helper.h"
 #include "./Utility.h"
 
+CSkinnedMesh::~CSkinnedMesh() = default;
 CSkinnedMesh::CSkinnedMesh(const std::wstring& resPath)
 	: m_resPath{resPath}
 	, m_skinnedVertices{}
@@ -25,8 +24,6 @@ CSkinnedMesh::CSkinnedMesh(const std::wstring& resPath)
 	, m_skinnedMats{}
 	, m_skinnedModelInst{ std::make_unique<SkinnedModelInstance>() }
 {}
-
-CSkinnedMesh::~CSkinnedMesh() = default;
 
 bool CSkinnedMesh::Read(const std::string& meshName, ModelProperty* mProperty)
 {
@@ -83,7 +80,7 @@ bool CSkinnedMesh::LoadVRAM(IRenderer* renderer, RenderItem* renderItem)
 	renderItem->indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 	//그래픽 메모리에 올린다.
-	ReturnIfFalse(renderer->LoadSkinnedMesh(m_skinnedVertices, m_indices, renderItem));
+	ReturnIfFalse(renderer->LoadMesh(GraphicsPSO::SkinnedOpaque, m_skinnedVertices.data(), m_indices.data(), renderItem));
 
 	return true;
 }

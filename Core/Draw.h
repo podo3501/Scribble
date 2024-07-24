@@ -9,6 +9,7 @@ class CPipelineStateObjects;
 class CFrameResources;
 class CShadowMap;
 class CSsaoMap;
+class CDescriptorHeap;
 struct ID3D12Device;
 struct RenderItem;
 struct ID3D12GraphicsCommandList;
@@ -27,7 +28,7 @@ public:
 	CDraw(const CDraw&) = delete;
 	CDraw& operator=(const CDraw&) = delete;
 
-	bool Initialize(CRenderer* renderer, CPipelineStateObjects* pso);
+	bool Initialize(CRenderer* renderer, CDescriptorHeap* descHeap, CPipelineStateObjects* pso);
 	bool Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems& renderItem);
 	void OnResize(int width, int height);
 
@@ -43,6 +44,7 @@ private:
 	CRenderer* m_renderer;
 	ID3D12Device* m_device;
 	ID3D12GraphicsCommandList* m_cmdList;
+	CDescriptorHeap* m_descHeap;
 	CPipelineStateObjects* m_pso;
 	std::unique_ptr<CShadowMap> m_shadowMap;
 

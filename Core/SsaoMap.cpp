@@ -11,25 +11,27 @@
 #include "./d3dUtil.h"
 #include "./FrameResources.h"
 #include "./Renderer.h"
+#include "./DescriptorHeap.h"
 #include "./CoreDefine.h"
 #include "./headerUtility.h"
-#include "./Helper.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 using namespace Microsoft::WRL;
 
 CSsaoMap::~CSsaoMap() = default;
-CSsaoMap::CSsaoMap(CRenderer* renderer)
-	: m_ssaoRootSig{ nullptr }
+CSsaoMap::CSsaoMap(CRenderer* renderer, CDescriptorHeap* descHeap)
+	: m_renderer{ renderer }
+	, m_descHeap{ descHeap }
+	, m_ssaoRootSig{ nullptr }
+	, m_ssaoPso{ nullptr }
+	, m_blurPso{ nullptr }
 	, m_randomVectorMap{ nullptr }
 	, m_randomVectorMapUploadBuffer{ nullptr }
 	, m_normalMap{ nullptr }
 	, m_ambientMap0{ nullptr }
 	, m_ambientMap1{ nullptr }
-{
-	m_renderer = renderer;
-}
+{}
 
 bool CSsaoMap::Initialize(ID3D12Resource* depthStencilBuffer, UINT width, UINT height)
 {
@@ -58,22 +60,17 @@ void CSsaoMap::RebuildDescriptors(ID3D12Resource* depthStencilBuffer)
 	srvDesc.Format = NormalMapFormat;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = 1;
-	m_renderer->CreateShaderResourceView(eTextureType::SsaoNormalMap,
-		L"SSAONORMALMAP", m_normalMap.Get(), &srvDesc);
+	m_descHeap->CreateShaderResourceView(eTextureType::SsaoNormalMap, 0, srvDesc, m_normalMap.Get());
 
 	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-	m_renderer->CreateShaderResourceView(eTextureType::SsaoDepthMap, 
-		L"SSAODEPTHMAP", depthStencilBuffer, &srvDesc);
+	m_descHeap->CreateShaderResourceView(eTextureType::SsaoDepthMap, 0, srvDesc, depthStencilBuffer);
 
 	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	m_renderer->CreateShaderResourceView(eTextureType::SsaoRandomVectorMap, 
-		L"SSAORANDOMVECTORMAP", m_randomVectorMap.Get(), &srvDesc);
+	m_descHeap->CreateShaderResourceView(eTextureType::SsaoRandomVectorMap, 0, srvDesc, m_randomVectorMap.Get());
 
 	srvDesc.Format = AmbientMapFormat;
-	m_renderer->CreateShaderResourceView(eTextureType::SsaoAmbientMap0,
-		L"SSAOAMBIENT0", m_ambientMap0.Get(), &srvDesc);
-	m_renderer->CreateShaderResourceView(eTextureType::SsaoAmbientMap1,
-		L"SSAOAMBIENT1", m_ambientMap1.Get(), &srvDesc);
+	m_descHeap->CreateShaderResourceView(eTextureType::SsaoAmbientMap0, 0, srvDesc, m_ambientMap0.Get());
+	m_descHeap->CreateShaderResourceView(eTextureType::SsaoAmbientMap1, 0, srvDesc, m_ambientMap1.Get());
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
@@ -135,9 +132,9 @@ void CSsaoMap::ComputeSsao(
 	cmdList->SetGraphicsRootConstantBufferView(EtoV(SsaoRegisterType::Pass), ssaoCBAddress);
 	cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 0, 0);
 
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), GetGpuSrvHandle(m_renderer, eTextureType::SsaoNormalMap));
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Depth), GetGpuSrvHandle(m_renderer, eTextureType::SsaoDepthMap));
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::RandomVec), GetGpuSrvHandle(m_renderer, eTextureType::SsaoRandomVectorMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_descHeap->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Depth), m_descHeap->GetGpuSrvHandle(eTextureType::SsaoDepthMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::RandomVec), m_descHeap->GetGpuSrvHandle(eTextureType::SsaoRandomVectorMap));
 
 	cmdList->SetPipelineState(m_ssaoPso);
 
@@ -177,14 +174,14 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 	if (horzBlur == true)
 	{
 		output = m_ambientMap1.Get();
-		inputSrv = GetGpuSrvHandle(m_renderer, eTextureType::SsaoAmbientMap0);
+		inputSrv = m_descHeap->GetGpuSrvHandle(eTextureType::SsaoAmbientMap0);
 		outputRtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap1);
 		cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 1, 0);
 	}
 	else
 	{
 		output = m_ambientMap0.Get();
-		inputSrv = GetGpuSrvHandle(m_renderer, eTextureType::SsaoAmbientMap1);
+		inputSrv = m_descHeap->GetGpuSrvHandle(eTextureType::SsaoAmbientMap1);
 		outputRtv = directx3D->GetCpuRtvHandle(RtvOffset::AmbientMap0);
 		cmdList->SetGraphicsRoot32BitConstant(EtoV(SsaoRegisterType::Constants), 0, 0);
 	}
@@ -196,7 +193,7 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 	cmdList->ClearRenderTargetView(outputRtv, clearValue, 0, nullptr);
 	cmdList->OMSetRenderTargets(1, &outputRtv, true, nullptr);
 
-	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), GetGpuSrvHandle(m_renderer, eTextureType::SsaoNormalMap));
+	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::Normal), m_descHeap->GetGpuSrvHandle(eTextureType::SsaoNormalMap));
 	cmdList->SetGraphicsRootDescriptorTable(EtoV(SsaoRegisterType::SsaoAmbientMap0), inputSrv);
 
 	cmdList->IASetVertexBuffers(0, 0, nullptr);

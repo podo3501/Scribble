@@ -5,9 +5,6 @@
 #include <functional>
 #include <memory>
 #include <array>
-#include <set>
-#include <vector>
-#include <string>
 #include "../Include/Interface.h"
 
 class CDirectx3D;
@@ -16,6 +13,7 @@ class CTexture;
 class CSsaoMap;
 class CDraw;
 class CPipelineStateObjects;
+class CDescriptorHeap;
 struct CD3DX12_ROOT_PARAMETER;
 struct ID3D12RootSignature;
 struct ID3D12DescriptorHeap;
@@ -37,8 +35,7 @@ public:
 
 	virtual bool IsInitialize() override { return m_isInitialize; };
 	virtual bool OnResize(int width, int height) override;
-	virtual bool LoadMesh(GraphicsPSO pso, Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem) override;
-	virtual bool LoadSkinnedMesh(const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem) override;
+	virtual bool LoadMesh(GraphicsPSO pso, const void* verticesData, const void* indicesData, RenderItem* renderItem) override;
 	virtual bool LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename) override;
 	virtual bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize) override;
 	virtual bool PrepareFrame() override;
@@ -51,11 +48,7 @@ public:
 
 	ID3D12RootSignature* GetRootSignature(RootSignature sigType);
 	inline ID3D12Device* GetDevice() const;
-	inline ID3D12DescriptorHeap* GetSrvDescriptorHeap() const;
 	inline CDirectx3D* GetDirectx3D() const;
-
-	void CreateShaderResourceView(eTextureType type, const std::wstring& filename,
-		ID3D12Resource* pRes, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc);
 
 private:
 	bool CreateRootSignature(
@@ -65,14 +58,9 @@ private:
 	bool BuildRootSignature();
 	bool BuildMainRootSignature();
 	bool BuildSsaoRootSignature();
-	bool BuildDescriptorHeaps();
-
-	UINT GetSrvIndex(eTextureType type);
 
 	bool LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
-		Vertices& totalVertices, Indices& totalIndices, RenderItem* renderItem);
-	bool LoadSkinnedMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
-		const SkinnedVertices& totalVertices, const Indices& totalIndices, RenderItem* renderItem);
+		const void* verticesData, const void* indicesData, RenderItem* renderItem);
 
 	bool MakeFrameResource();
 
@@ -82,21 +70,18 @@ private:
 	std::unique_ptr<CTexture> m_texture;
 	std::unique_ptr<CDraw> m_draw;
 	std::unique_ptr<CSsaoMap> m_ssaoMap;
+	std::unique_ptr<CDescriptorHeap> m_descHeap;
 
 	bool m_isInitialize{ false };
 	ID3D12Device* m_device{ nullptr };
 	ID3D12GraphicsCommandList* m_cmdList{ nullptr };
 
 	std::array< Microsoft::WRL::ComPtr<ID3D12RootSignature>, 2> m_rootSignatures;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
-	UINT m_srvOffsetTexture2D{ 0u };
-	std::vector<std::wstring> m_srvTexture2DFilename{};
 
 	std::unique_ptr<CFrameResources> m_frameResources;
 	std::unique_ptr<CPipelineStateObjects> m_pso;
 };
 
 inline ID3D12Device* CRenderer::GetDevice() const												{ return m_device; }
-inline ID3D12DescriptorHeap* CRenderer::GetSrvDescriptorHeap() const			{ return m_srvDescHeap.Get(); }
 inline CDirectx3D* CRenderer::GetDirectx3D() const												{ return m_directx3D.get(); }
 

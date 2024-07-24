@@ -7,8 +7,7 @@
 #include <wrl.h>
 #include <memory>
 
-interface IRenderer;
-class CRenderer;
+class CDescriptorHeap;
 struct ID3D12Device;
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
@@ -28,9 +27,9 @@ public:
 	CTexture(const CTexture&) = delete;
 	CTexture& operator=(const CTexture&) = delete;
 
-	void CreateShaderResourceView(CRenderer* renderer);
+	void CreateShaderResourceView(CDescriptorHeap* descHeap);
 	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const TextureList& textureList);
-
+	inline std::vector<std::wstring> GetListSrvTexture2D();
 private:
 	struct TextureMemory
 	{
@@ -50,5 +49,8 @@ private:
 	const std::wstring m_filePath;
 
 	std::vector<std::pair<eTextureType, std::unique_ptr<TextureMemory>>> m_textureMemories;
+	std::vector<std::wstring> m_srvTexture2DFilename{};
 };
+
+inline std::vector<std::wstring> CTexture::GetListSrvTexture2D() {	return m_srvTexture2DFilename; }
 

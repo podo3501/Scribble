@@ -11,7 +11,7 @@
 #include "./ShadowMap.h"
 #include "./PipelineStateObjects.h"
 #include "./SsaoMap.h"
-#include "./Helper.h"
+#include "./DescriptorHeap.h"
 
 CDraw::~CDraw() = default;
 CDraw::CDraw()
@@ -19,19 +19,21 @@ CDraw::CDraw()
 	, m_renderer{ nullptr }
 	, m_device{ nullptr }
 	, m_cmdList{ nullptr }
+	, m_descHeap{ nullptr }
 	, m_pso{ nullptr }
 	, m_shadowMap{ nullptr }
 	, m_screenViewport{}
 	, m_scissorRect{}
 {}
 
-bool CDraw::Initialize(CRenderer* renderer, CPipelineStateObjects* pso)
+bool CDraw::Initialize(CRenderer* renderer, CDescriptorHeap* descHeap, CPipelineStateObjects* pso)
 {
 	m_renderer = renderer;
+	m_descHeap = descHeap;
 	m_directx3D = m_renderer->GetDirectx3D();
 	m_device = m_renderer->GetDevice();
 	m_cmdList = m_directx3D->GetCommandList();
-	m_shadowMap = std::make_unique<CShadowMap>(m_renderer);
+	m_shadowMap = std::make_unique<CShadowMap>(m_renderer, descHeap);
 	m_pso = pso;
 
 	ReturnIfFalse(m_shadowMap->Initialize());
@@ -69,11 +71,11 @@ bool CDraw::Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems&
 
 	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Common));
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { m_renderer->GetSrvDescriptorHeap() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_descHeap->GetSrvDescriptorHeap() };
 	m_cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(frameRes, eBufferType::Material));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), GetGpuSrvHandle(m_renderer, eTextureType::Texture2D));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), m_descHeap->GetGpuSrvHandle(eTextureType::Texture2D));
 
 	DrawSceneToShadowMap(frameRes, renderItem);
 	DrawNormalsAndDepth(frameRes, ssaoMap, renderItem);
@@ -94,10 +96,10 @@ bool CDraw::Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems&
 
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(frameRes, eBufferType::PassCB));
 	m_cmdList->SetGraphicsRootShaderResourceView(EtoV(MainRegisterType::Material), GetFrameResourceAddress(frameRes, eBufferType::Material));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), GetGpuSrvHandle(m_renderer, eTextureType::ShadowMap));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Ssao), GetGpuSrvHandle(m_renderer, eTextureType::SsaoAmbientMap0));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), GetGpuSrvHandle(m_renderer, eTextureType::TextureCube));
-	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), GetGpuSrvHandle(m_renderer, eTextureType::Texture2D));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Shadow), m_descHeap->GetGpuSrvHandle(eTextureType::ShadowMap));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Ssao), m_descHeap->GetGpuSrvHandle(eTextureType::SsaoAmbientMap0));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Cube), m_descHeap->GetGpuSrvHandle(eTextureType::TextureCube));
+	m_cmdList->SetGraphicsRootDescriptorTable(EtoV(MainRegisterType::Diffuse), m_descHeap->GetGpuSrvHandle(eTextureType::Texture2D));
 
 	std::ranges::for_each(renderItem, [this, frameRes, &renderItem](auto& curRenderItem) {
 		auto pso = curRenderItem.first;

@@ -12,6 +12,10 @@ public:
 	CSsao(UINT width, UINT height);
 	~CSsao();
 
+	CSsao() = delete;
+	CSsao(const CSsao&) = delete;
+	CSsao& operator=(const CSsao&) = delete;
+
 	void UpdatePassCB(CCamera* camera, SsaoConstants* ssaoCB);
 	void GetOffsetVectors(DirectX::XMFLOAT4 offsets[14]);
 
