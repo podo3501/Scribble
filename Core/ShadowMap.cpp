@@ -2,15 +2,13 @@
 #include "../Include/types.h"
 #include "../Include/RendererDefine.h"
 #include "./d3dUtil.h"
-#include "./Renderer.h"
 #include "./DescriptorHeap.h"
 #include "./Directx3D.h"
 #include "./CoreDefine.h"
 
 CShadowMap::~CShadowMap() = default;
-CShadowMap::CShadowMap(CRenderer* renderer, CDescriptorHeap* descHeap)
-	: m_renderer{ renderer }
-	, m_descHeap{ descHeap }
+CShadowMap::CShadowMap(CDescriptorHeap* descHeap)
+	: m_descHeap{ descHeap }
 	, m_shadowMap{ nullptr }
 {
 	m_mapWidth = gShadowMapWidth;
@@ -27,21 +25,21 @@ ID3D12Resource* CShadowMap::Resource()		{	return m_shadowMap.Get();	}
 D3D12_VIEWPORT CShadowMap::Viewport() const	{	return m_viewport;	}
 D3D12_RECT CShadowMap::ScissorRect() const		{	return m_scissorRect;	}
 
-bool CShadowMap::BuildResource()
+bool CShadowMap::BuildResource(CDirectx3D* directx3D)
 {
-	return (m_renderer->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 		return CreateResource(device); }));
 }
 
-bool CShadowMap::Initialize()
+bool CShadowMap::Initialize(CDirectx3D* directx3D)
 {
-	ReturnIfFalse(BuildResource());
+	ReturnIfFalse(BuildResource(directx3D));
 	BuildDescriptors();
 
 	return true;
 }
 
-bool CShadowMap::OnResize(UINT newWidth, UINT newHeight)
+bool CShadowMap::OnResize(CDirectx3D* directx3D, UINT newWidth, UINT newHeight)
 {
 	if ((m_mapWidth == newWidth) && (m_mapHeight == newHeight))
 		return true;
@@ -49,7 +47,7 @@ bool CShadowMap::OnResize(UINT newWidth, UINT newHeight)
 	m_mapWidth = newWidth;
 	m_mapHeight = newHeight;
 
-	ReturnIfFalse(BuildResource());
+	ReturnIfFalse(BuildResource(directx3D));
 	BuildDescriptors();
 
 	return true;

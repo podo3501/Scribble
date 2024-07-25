@@ -10,7 +10,6 @@
 #include "./Directx3D.h"
 #include "./d3dUtil.h"
 #include "./FrameResources.h"
-#include "./Renderer.h"
 #include "./DescriptorHeap.h"
 #include "./CoreDefine.h"
 #include "./headerUtility.h"
@@ -20,9 +19,8 @@ using namespace DirectX::PackedVector;
 using namespace Microsoft::WRL;
 
 CSsaoMap::~CSsaoMap() = default;
-CSsaoMap::CSsaoMap(CRenderer* renderer, CDescriptorHeap* descHeap)
-	: m_renderer{ renderer }
-	, m_descHeap{ descHeap }
+CSsaoMap::CSsaoMap(CDescriptorHeap* descHeap)
+	: m_descHeap{ descHeap }
 	, m_ssaoRootSig{ nullptr }
 	, m_ssaoPso{ nullptr }
 	, m_blurPso{ nullptr }
@@ -33,11 +31,11 @@ CSsaoMap::CSsaoMap(CRenderer* renderer, CDescriptorHeap* descHeap)
 	, m_ambientMap1{ nullptr }
 {}
 
-bool CSsaoMap::Initialize(ID3D12Resource* depthStencilBuffer, UINT width, UINT height)
+bool CSsaoMap::Initialize(CDirectx3D* directx3D, UINT width, UINT height)
 {
-	ReturnIfFalse(OnResize(width, height));
-	ReturnIfFalse(BuildRandomVectorTexture());
-	RebuildDescriptors(depthStencilBuffer);
+	ReturnIfFalse(OnResize(directx3D, width, height));
+	ReturnIfFalse(BuildRandomVectorTexture(directx3D));
+	RebuildDescriptors(directx3D->GetDepthStencilBufferResource());
 
 	return true;
 }
@@ -91,7 +89,7 @@ void CSsaoMap::SetPSOs(ID3D12PipelineState* ssaoPso, ID3D12PipelineState* ssaoBl
 	m_blurPso = ssaoBlurPso;
 }
 
-bool CSsaoMap::OnResize(UINT newWidth, UINT newHeight)
+bool CSsaoMap::OnResize(CDirectx3D* directx3D, UINT newWidth, UINT newHeight)
 {
 	if (m_renderTargetWidth == newWidth && m_renderTargetHeight == newHeight)
 		return true;
@@ -108,7 +106,7 @@ bool CSsaoMap::OnResize(UINT newWidth, UINT newHeight)
 
 	m_scissorRect = { 0, 0, static_cast<int>(m_renderTargetWidth / 2), static_cast<int>(m_renderTargetHeight / 2) };
 
-	return BuildResources();
+	return BuildResources(directx3D);
 }
 
 void CSsaoMap::ComputeSsao(
@@ -202,9 +200,9 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ)));
 }
 
-bool CSsaoMap::BuildResources()
+bool CSsaoMap::BuildResources(CDirectx3D* directx3D)
 {
-	return (m_renderer->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 		return CreateResources(device); }));
 }
 
@@ -274,9 +272,9 @@ float RandF(float a, float b)
 	return a + RandF() * (b - a);
 }
 
-bool CSsaoMap::BuildRandomVectorTexture()
+bool CSsaoMap::BuildRandomVectorTexture(CDirectx3D* directx3D)
 {
-	return (m_renderer->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
 		return CreateRandomVectorTexture(device, cmdList); }));
 }
 

@@ -267,7 +267,6 @@ bool CDirectx3D::OnResize(int width, int height)
 		DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
 	m_descHeap->SetupFirstBackBuffer();
-	UINT rtvDescHeapSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	for(auto i : std::views::iota(0u, SwapChainBufferCount))
 	{
@@ -310,6 +309,18 @@ bool CDirectx3D::OnResize(int width, int height)
 	CD3DX12_RESOURCE_BARRIER barrier(CD3DX12_RESOURCE_BARRIER::Transition(m_depthStencilBuffer.Get(),
 		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 	m_commandList->ResourceBarrier(1, &barrier);
+
+	ReturnIfFalse(ExcuteCommandLists());
+	ReturnIfFalse(FlushCommandQueue());
+
+	return true;
+}
+
+bool CDirectx3D::LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
+{
+	ReturnIfFalse(ResetCommandLists());
+
+	ReturnIfFalse(loadGraphicMemory(m_device.Get(), m_commandList.Get()));
 
 	ReturnIfFalse(ExcuteCommandLists());
 	ReturnIfFalse(FlushCommandQueue());

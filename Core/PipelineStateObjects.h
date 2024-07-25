@@ -5,7 +5,8 @@
 #include <wrl.h>
 
 class CShader;
-class CRenderer;
+class CDirectx3D;
+class CRootSignature;
 struct ID3D12Device;
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct ID3D12PipelineState;
@@ -14,20 +15,20 @@ enum class GraphicsPSO : int;
 class CPipelineStateObjects
 {
 public:
-	CPipelineStateObjects(CRenderer* renderer);
+	CPipelineStateObjects(CDirectx3D* directx3D);
 	~CPipelineStateObjects();
 
 	CPipelineStateObjects() = delete;
 	CPipelineStateObjects(const CPipelineStateObjects&) = delete;
 	CPipelineStateObjects& operator=(const CPipelineStateObjects&) = delete;
 
-	bool Build(CShader* shader);
+	bool Build(CRootSignature* rootSignature, CShader* shader);
 
 	ID3D12PipelineState* GetPso(GraphicsPSO type) noexcept;
 
 private:
 	void MakePSOPipelineState(GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
-	bool CreatePipelineState(CShader* shader, GraphicsPSO psoType);
+	bool CreatePipelineState(CRootSignature* rootSignature, CShader* shader, GraphicsPSO psoType);
 
 	void MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
@@ -43,6 +44,6 @@ private:
 	void MakeDebugDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 
 private:
-	CRenderer* m_renderer;
+	CDirectx3D* m_directx3D;
 	std::map<GraphicsPSO, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_psoList;
 };

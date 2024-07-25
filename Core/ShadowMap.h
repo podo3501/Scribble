@@ -3,7 +3,7 @@
 #include <wrl.h>
 #include "d3dx12.h"
 
-class CRenderer;
+class CDirectx3D;
 class CDescriptorHeap;
 struct ID3D12Device;
 struct ID3D12Resource;
@@ -11,7 +11,7 @@ struct ID3D12Resource;
 class CShadowMap
 {
 public:
-	CShadowMap(CRenderer* renderer, CDescriptorHeap* descHeap);
+	CShadowMap(CDescriptorHeap* descHeap);
 	~CShadowMap();
 
 	CShadowMap() = delete;
@@ -25,16 +25,15 @@ public:
 	D3D12_VIEWPORT Viewport() const;
 	D3D12_RECT ScissorRect() const;
 
-	bool Initialize();
-	bool OnResize(UINT newWidth, UINT newHeight);
+	bool Initialize(CDirectx3D* directx3D);
+	bool OnResize(CDirectx3D* directx3D, UINT newWidth, UINT newHeight);
 
 private:
 	void BuildDescriptors();
-	bool BuildResource();
+	bool BuildResource(CDirectx3D* directx3D);
 	bool CreateResource(ID3D12Device* device);
 
 private:
-	CRenderer* m_renderer;
 	CDescriptorHeap* m_descHeap;
 
 	D3D12_VIEWPORT m_viewport{};

@@ -55,13 +55,13 @@ public:
 	bool FlushCommandQueue();
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
 	bool OnResize(int width, int height);
+	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory);
 	bool Set4xMsaaState(HWND hwnd, int width, int height, bool value);
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;
 
 	inline ID3D12Device* GetDevice() const;
 	inline ID3D12GraphicsCommandList* GetCommandList() const;
-	inline ID3D12Fence* GetFence() const;
 
 	inline ID3D12Resource* GetDepthStencilBufferResource() const;
 	ID3D12Resource* CurrentBackBuffer() const;
@@ -101,5 +101,4 @@ private:
 
 inline ID3D12Device* CDirectx3D::GetDevice() const { return m_device.Get(); }
 inline ID3D12GraphicsCommandList* CDirectx3D::GetCommandList() const {	return m_commandList.Get(); }
-inline ID3D12Fence* CDirectx3D::GetFence() const { return m_fence.Get(); }
 inline ID3D12Resource* CDirectx3D::GetDepthStencilBufferResource() const { return m_depthStencilBuffer.Get(); };

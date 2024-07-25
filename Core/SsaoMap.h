@@ -5,7 +5,7 @@
 #include <DirectXMath.h>
 #include "d3dx12.h"
 
-class CRenderer;
+class CDirectx3D;
 class CDescriptorHeap;
 class CFrameResources;
 struct ID3D12RootSignature;
@@ -27,7 +27,7 @@ enum class SsaoRegisterType : int
 class CSsaoMap
 {
 public:
-	CSsaoMap(CRenderer* renderer, CDescriptorHeap* descHeap);
+	CSsaoMap(CDescriptorHeap* descHeap);
 	~CSsaoMap();
 
 	CSsaoMap(const CSsaoMap& rhs) = delete;
@@ -36,7 +36,7 @@ public:
 	static const DXGI_FORMAT AmbientMapFormat = DXGI_FORMAT_R16_UNORM;
 	static const DXGI_FORMAT NormalMapFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 
-	bool Initialize(ID3D12Resource* depthStencilBuffer, UINT width, UINT height);
+	bool Initialize(CDirectx3D* directx3D, UINT width, UINT height);
 	UINT SsaoMapWidth() const;
 	UINT SsaoMapHeight() const;
 
@@ -45,7 +45,7 @@ public:
 
 	void RebuildDescriptors(ID3D12Resource* depthStencilBuffer);
 	void SetPSOs(ID3D12PipelineState* ssaoPso, ID3D12PipelineState* ssaoBlurPso);
-	bool OnResize(UINT newWidth, UINT newHeight);
+	bool OnResize(CDirectx3D* directx3D, UINT newWidth, UINT newHeight);
 	void ComputeSsao(
 		ID3D12GraphicsCommandList* cmdList,
 		CFrameResources* currFrame,
@@ -55,13 +55,12 @@ private:
 	void BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, CFrameResources* currFrame, int blurCount);
 	void BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur);
 
-	bool BuildResources();
-	bool BuildRandomVectorTexture();
+	bool BuildResources(CDirectx3D* directx3D);
+	bool BuildRandomVectorTexture(CDirectx3D* directx3D);
 	bool CreateResources(ID3D12Device* device);
 	bool CreateRandomVectorTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
 
 private:
-	CRenderer* m_renderer;
 	CDescriptorHeap* m_descHeap;
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_ssaoRootSig;

@@ -34,7 +34,7 @@ public:
 	CFrameResources(const CFrameResources&) = delete;
 	CFrameResources& operator=(const CFrameResources&) = delete;
 
-	bool BuildFrameResources(ID3D12Device* device,
+	bool Build(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
 	bool PrepareFrame(CRenderer* renderer);
 	UINT64 ForwardFrame();

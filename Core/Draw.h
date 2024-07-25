@@ -4,7 +4,7 @@
 #include <map>
 
 class CDirectx3D;
-class CRenderer;
+class CRootSignature;
 class CPipelineStateObjects;
 class CFrameResources;
 class CShadowMap;
@@ -14,22 +14,21 @@ struct ID3D12Device;
 struct RenderItem;
 struct ID3D12GraphicsCommandList;
 enum class GraphicsPSO : int;
-enum class SrvOffset : int;
-enum class RootSignature : int;
 
 class CDraw
 {
 	using AllRenderItems = std::map<GraphicsPSO, std::unique_ptr<RenderItem>>;
 
 public:
-	CDraw();
+	CDraw(CDirectx3D* directx3D);
 	~CDraw();
 
+	CDraw() = delete;
 	CDraw(const CDraw&) = delete;
 	CDraw& operator=(const CDraw&) = delete;
 
-	bool Initialize(CRenderer* renderer, CDescriptorHeap* descHeap, CPipelineStateObjects* pso);
-	bool Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems& renderItem);
+	bool Initialize(CDescriptorHeap* descHeap, CPipelineStateObjects* pso);
+	bool Excute(CRootSignature* rootSignature, CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems& renderItem);
 	void OnResize(int width, int height);
 
 private:
@@ -37,11 +36,8 @@ private:
 	void DrawNormalsAndDepth(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems& renderItem);
 	void DrawRenderItems(CFrameResources* frameRes, GraphicsPSO pso, RenderItem* renderItem);
 
-	ID3D12RootSignature* GetRootSignature(RootSignature sigType);
-
 private:
 	CDirectx3D* m_directx3D;
-	CRenderer* m_renderer;
 	ID3D12Device* m_device;
 	ID3D12GraphicsCommandList* m_cmdList;
 	CDescriptorHeap* m_descHeap;

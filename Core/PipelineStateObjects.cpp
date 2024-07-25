@@ -5,12 +5,12 @@
 #include "./Shader.h"
 #include "./d3dUtil.h"
 #include "./Directx3D.h"
-#include "./Renderer.h"
+#include "./RootSignature.h"
 #include "./SsaoMap.h"
 
 CPipelineStateObjects::~CPipelineStateObjects() = default;
-CPipelineStateObjects::CPipelineStateObjects(CRenderer* renderer)
-	: m_renderer{ renderer }
+CPipelineStateObjects::CPipelineStateObjects(CDirectx3D* directx3D)
+	: m_directx3D{ directx3D }
 	, m_psoList{}
 {}
 
@@ -23,21 +23,33 @@ ID3D12PipelineState* CPipelineStateObjects::GetPso(GraphicsPSO type) noexcept
 	return find->second.Get();
 }
 
-bool CPipelineStateObjects::Build(CShader* shader)
+bool CPipelineStateObjects::Build(CRootSignature* rootSignature, CShader* shader)
 {
-	return (std::ranges::all_of(shader->GetPSOList(), [this, shader](auto pso) {
-		return CreatePipelineState(shader, pso);
+	return (std::ranges::all_of(shader->GetPSOList(), [this, rootSignature, shader](auto pso) {
+		return CreatePipelineState(rootSignature, shader, pso);
 		}));
 }
 
-bool CPipelineStateObjects::CreatePipelineState(CShader* shader, GraphicsPSO psoType)
+void SetRootSignature(CRootSignature* rootSignature, GraphicsPSO psoType, D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc)
+{
+	if (psoType == GraphicsPSO::SsaoMap || psoType == GraphicsPSO::SsaoBlur)
+	{
+		psoDesc->pRootSignature = rootSignature->Get(RootSignature::Ssao);
+		return;
+	}
+
+	psoDesc->pRootSignature = rootSignature->Get(RootSignature::Common);
+}
+
+bool CPipelineStateObjects::CreatePipelineState(CRootSignature* rootSignature, CShader* shader, GraphicsPSO psoType)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	ReturnIfFalse(shader->SetPipelineStateDesc(psoType, &psoDesc));
 
+	ReturnIfFalse(shader->SetPipelineStateDesc(psoType, &psoDesc));
+	SetRootSignature(rootSignature, psoType, &psoDesc);
 	MakePSOPipelineState(psoType, &psoDesc);
 
-	ID3D12Device* device = m_renderer->GetDevice();
+	ID3D12Device* device = m_directx3D->GetDevice();
 	ReturnIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_psoList[psoType])));
 
 	return true;
@@ -69,13 +81,12 @@ void CPipelineStateObjects::MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* ps
 	psoDesc->NodeMask = 0;
 	psoDesc->SampleMask = UINT_MAX;
 	psoDesc->NumRenderTargets = 1;
-	psoDesc->pRootSignature = m_renderer->GetRootSignature(RootSignature::Common);
 	psoDesc->BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc->DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-	m_renderer->GetDirectx3D()->SetPipelineStateDesc(psoDesc);
+	m_directx3D->SetPipelineStateDesc(psoDesc);
 }
 
 void CPipelineStateObjects::MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept
@@ -128,7 +139,6 @@ void CPipelineStateObjects::MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* 
 void CPipelineStateObjects::MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept
 {
 	psoDesc->InputLayout = { nullptr, 0 };
-	psoDesc->pRootSignature = m_renderer->GetRootSignature(RootSignature::Ssao);
 	psoDesc->DepthStencilState.DepthEnable = false;
 	psoDesc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	psoDesc->RTVFormats[0] = CSsaoMap::AmbientMapFormat;

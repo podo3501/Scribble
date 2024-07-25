@@ -5,7 +5,7 @@
 #include "../Include/Types.h"
 #include "./FrameResources.h"
 #include "./Directx3D.h"
-#include "./Renderer.h"
+#include "./RootSignature.h"
 #include "./CoreDefine.h"
 #include "./headerUtility.h"
 #include "./ShadowMap.h"
@@ -14,9 +14,8 @@
 #include "./DescriptorHeap.h"
 
 CDraw::~CDraw() = default;
-CDraw::CDraw()
-	: m_directx3D{ nullptr }
-	, m_renderer{ nullptr }
+CDraw::CDraw(CDirectx3D* directx3D)
+	: m_directx3D{ directx3D }
 	, m_device{ nullptr }
 	, m_cmdList{ nullptr }
 	, m_descHeap{ nullptr }
@@ -26,17 +25,15 @@ CDraw::CDraw()
 	, m_scissorRect{}
 {}
 
-bool CDraw::Initialize(CRenderer* renderer, CDescriptorHeap* descHeap, CPipelineStateObjects* pso)
+bool CDraw::Initialize(CDescriptorHeap* descHeap, CPipelineStateObjects* pso)
 {
-	m_renderer = renderer;
 	m_descHeap = descHeap;
-	m_directx3D = m_renderer->GetDirectx3D();
-	m_device = m_renderer->GetDevice();
+	m_device = m_directx3D->GetDevice();
 	m_cmdList = m_directx3D->GetCommandList();
-	m_shadowMap = std::make_unique<CShadowMap>(m_renderer, descHeap);
+	m_shadowMap = std::make_unique<CShadowMap>(descHeap);
 	m_pso = pso;
 
-	ReturnIfFalse(m_shadowMap->Initialize());
+	ReturnIfFalse(m_shadowMap->Initialize(m_directx3D));
 
 	return true;
 }
@@ -53,23 +50,18 @@ void CDraw::OnResize(int width, int height)
 	m_scissorRect = { 0, 0, width, height };
 }
 
-ID3D12RootSignature* CDraw::GetRootSignature(RootSignature sigType)
-{
-	return m_renderer->GetRootSignature(sigType);
-}
-
 D3D12_GPU_VIRTUAL_ADDRESS GetFrameResourceAddress(CFrameResources* frameRes, eBufferType bufType)
 {
 	return frameRes->GetResource(bufType)->GetGPUVirtualAddress();
 }
 
-bool CDraw::Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems& renderItem)
+bool CDraw::Excute(CRootSignature* rootSignature, CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems& renderItem)
 {
 	auto cmdListAlloc = frameRes->GetCurrCmdListAlloc();
 	ReturnIfFailed(cmdListAlloc->Reset());
 	ReturnIfFailed(m_cmdList->Reset(cmdListAlloc, nullptr));
 
-	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Common));
+	m_cmdList->SetGraphicsRootSignature(rootSignature->Get(RootSignature::Common));
 
 	m_descHeap->SetSrvDescriptorHeaps(m_cmdList);
 
@@ -79,10 +71,10 @@ bool CDraw::Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems&
 	DrawSceneToShadowMap(frameRes, renderItem);
 	DrawNormalsAndDepth(frameRes, ssaoMap, renderItem);
 
-	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Ssao));
+	m_cmdList->SetGraphicsRootSignature(rootSignature->Get(RootSignature::Ssao));
 	ssaoMap->ComputeSsao(m_cmdList, frameRes, 3);
 
-	m_cmdList->SetGraphicsRootSignature(GetRootSignature(RootSignature::Common));
+	m_cmdList->SetGraphicsRootSignature(rootSignature->Get(RootSignature::Common));
 
 	m_cmdList->RSSetViewports(1, &m_screenViewport);
 	m_cmdList->RSSetScissorRects(1, &m_scissorRect);
@@ -119,7 +111,6 @@ bool CDraw::Excute(CFrameResources* frameRes, CSsaoMap* ssaoMap, AllRenderItems&
 
 void CDraw::DrawSceneToShadowMap(CFrameResources* frameRes, AllRenderItems& renderItem)
 {
-	CDirectx3D* directx3D = m_renderer->GetDirectx3D();
 	m_cmdList->RSSetViewports(1, &RvToLv(m_shadowMap->Viewport()));
 	m_cmdList->RSSetScissorRects(1, &RvToLv(m_shadowMap->ScissorRect()));
 

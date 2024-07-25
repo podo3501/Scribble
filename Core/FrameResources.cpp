@@ -44,7 +44,7 @@ bool CFrameResources::Resource::CreateUpdateBuffer(
 	return true;
 }
 
-bool CFrameResources::BuildFrameResources(ID3D12Device* device,
+bool CFrameResources::Build(ID3D12Device* device,
 	UINT passCount, UINT instanceCount, UINT matCount)
 {
 	for (auto i : std::views::iota(0, gFrameResourceCount))
