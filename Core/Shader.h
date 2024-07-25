@@ -7,7 +7,6 @@
 #include <d3dcommon.h>
 #include <array>
 #include <string>
-#include "../Core/headerUtility.h"
 
 struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 struct D3D12_INPUT_ELEMENT_DESC;

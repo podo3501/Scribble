@@ -7,7 +7,6 @@
 #include "./Directx3D.h"
 #include "./RootSignature.h"
 #include "./CoreDefine.h"
-#include "./headerUtility.h"
 #include "./ShadowMap.h"
 #include "./PipelineStateObjects.h"
 #include "./SsaoMap.h"
@@ -155,7 +154,7 @@ void CDraw::DrawNormalsAndDepth(CFrameResources* frameRes, CSsaoMap* ssaoMap, Al
 	m_cmdList->OMSetRenderTargets(1, &normalMapRtv, true, &dsvCommon);
 	m_cmdList->SetGraphicsRootConstantBufferView(EtoV(MainRegisterType::Pass), GetFrameResourceAddress(frameRes, eBufferType::PassCB));
 
-	m_cmdList->SetPipelineState(m_pso->GetPso(GraphicsPSO::SsaoDrawNormals));
+	m_cmdList->SetPipelineState(m_pso->GetPso(GraphicsPSO::DrawNormals));
 	DrawRenderItems(frameRes, GraphicsPSO::NormalOpaque, renderItem[GraphicsPSO::NormalOpaque].get());
 
 	m_cmdList->SetPipelineState(m_pso->GetPso(GraphicsPSO::SkinnedDrawNormals));

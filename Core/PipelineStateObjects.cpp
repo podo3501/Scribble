@@ -64,11 +64,11 @@ void CPipelineStateObjects::MakePSOPipelineState(GraphicsPSO psoType, D3D12_GRAP
 	case GraphicsPSO::Sky:										MakeSkyDesc(psoDesc);										break;
 	case GraphicsPSO::Opaque:								MakeOpaqueDesc(psoDesc);									break;
 	case GraphicsPSO::NormalOpaque:					MakeNormalOpaqueDesc(psoDesc);					break;
+	case GraphicsPSO::DrawNormals:						MakeDrawNormals(psoDesc);								break;
 	case GraphicsPSO::SkinnedOpaque:					MakeSkinnedOpaqueDesc(psoDesc);					break;
 	case GraphicsPSO::SkinnedShadowOpaque:	MakeSkinnedShadowOpaqueDesc(psoDesc);		break;
 	case GraphicsPSO::SkinnedDrawNormals:		MakeSkinnedDrawNormals(psoDesc);					break;
 	case GraphicsPSO::ShadowMap:						MakeShadowDesc(psoDesc);									break;
-	case GraphicsPSO::SsaoDrawNormals:				MakeDrawNormals(psoDesc);								break;
 	case GraphicsPSO::SsaoMap:							MakeSsaoDesc(psoDesc);										break;
 	case GraphicsPSO::SsaoBlur:								MakeSsaoBlurDesc(psoDesc);								break;
 	case GraphicsPSO::Debug:									MakeDebugDesc(psoDesc);									break;
@@ -98,6 +98,14 @@ void CPipelineStateObjects::MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoD
 void CPipelineStateObjects::MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept
 {}
 
+void CPipelineStateObjects::MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept
+{
+	psoDesc->RTVFormats[0] = CSsaoMap::NormalMapFormat;
+	psoDesc->SampleDesc.Count = 1;
+	psoDesc->SampleDesc.Quality = 0;
+	psoDesc->DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+}
+
 void CPipelineStateObjects::MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept
 {
 	psoDesc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
@@ -126,14 +134,6 @@ void CPipelineStateObjects::MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* p
 	psoDesc->RasterizerState.SlopeScaledDepthBias = 1.0f;
 	psoDesc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
 	psoDesc->NumRenderTargets = 0;
-}
-
-void CPipelineStateObjects::MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept
-{
-	psoDesc->RTVFormats[0] = CSsaoMap::NormalMapFormat;
-	psoDesc->SampleDesc.Count = 1;
-	psoDesc->SampleDesc.Quality = 0;
-	psoDesc->DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 }
 
 void CPipelineStateObjects::MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept

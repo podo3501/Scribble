@@ -37,9 +37,6 @@ public:
 	bool Initialize(const std::wstring& resPath, HWND hwnd, int width, int height, const ShaderFileList& shaderFileList);
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
 
-	inline ID3D12Device* GetDevice() const;
-	inline CDirectx3D* GetDirectx3D() const;
-
 private:
 	bool LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 		const void* verticesData, const void* indicesData, RenderItem* renderItem);
@@ -52,15 +49,9 @@ private:
 	std::unique_ptr<CDraw> m_draw;
 	std::unique_ptr<CSsaoMap> m_ssaoMap;
 	std::unique_ptr<CDescriptorHeap> m_descHeap;
-
-	bool m_isInitialize{ false };
-	ID3D12Device* m_device{ nullptr };
-	ID3D12GraphicsCommandList* m_cmdList{ nullptr };
-
 	std::unique_ptr<CFrameResources> m_frameResources;
 	std::unique_ptr<CPipelineStateObjects> m_pso;
-};
 
-inline ID3D12Device* CRenderer::GetDevice() const												{ return m_device; }
-inline CDirectx3D* CRenderer::GetDirectx3D() const												{ return m_directx3D.get(); }
+	bool m_isInitialize{ false };
+};
 

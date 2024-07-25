@@ -387,6 +387,8 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::Sky, ShaderType::PS, L"Cube/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::VS, L"Opaque/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::Opaque, ShaderType::PS, L"Opaque/PS.hlsl");
+	InsertShaderFile(GraphicsPSO::DrawNormals, ShaderType::VS, L"DrawNormals/VS.hlsl");
+	InsertShaderFile(GraphicsPSO::DrawNormals, ShaderType::PS, L"DrawNormals/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::VS, L"NormalOpaque/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::NormalOpaque, ShaderType::PS, L"NormalOpaque/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::SkinnedOpaque, ShaderType::VS, L"Skinned/Opaque/VS.hlsl");
@@ -397,8 +399,6 @@ ShaderFileList GetShaderFileList()
 	InsertShaderFile(GraphicsPSO::SkinnedShadowOpaque, ShaderType::PS, L"Skinned/Shadow/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::VS, L"Shadow/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::ShadowMap, ShaderType::PS, L"Shadow/PS.hlsl");
-	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::VS, L"Ssao/DrawNormals/VS.hlsl");
-	InsertShaderFile(GraphicsPSO::SsaoDrawNormals, ShaderType::PS, L"Ssao/DrawNormals/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::SsaoMap, ShaderType::VS, L"Ssao/Ssao/VS.hlsl");
 	InsertShaderFile(GraphicsPSO::SsaoMap, ShaderType::PS, L"Ssao/Ssao/PS.hlsl");
 	InsertShaderFile(GraphicsPSO::SsaoBlur, ShaderType::VS, L"Ssao/SsaoBlur/VS.hlsl");

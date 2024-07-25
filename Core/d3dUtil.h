@@ -92,11 +92,10 @@ inline std::wstring AnsiToWString(const std::string& str)
 class CoreUtil
 {
 public:
+    static void LogAdapters(IDXGIFactory4* dxgiFactory, DXGI_FORMAT backBufferFormat);
 
     static bool IsKeyDown(int vkeyCode);
-
     static std::string ToString(HRESULT hr);
-
     static UINT CalcConstantBufferByteSize(UINT byteSize)
     {
         // Constant buffers must be a multiple of the minimum hardware
@@ -150,6 +149,13 @@ struct MaterialConstants
 	// Used in texture mapping.
     DirectX::XMFLOAT4X4 MatTransform = {};
 };
+
+template <typename E>
+constexpr auto
+EtoV(E enumerator) noexcept
+{
+    return static_cast<std::underlying_type_t<E>>(enumerator);
+}
 
 template <class _Tp>
 _Tp& RvToLv(_Tp&& __value)

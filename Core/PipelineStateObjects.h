@@ -33,12 +33,12 @@ private:
 	void MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeSkyDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
+	void MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeNormalOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeSkinnedOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeSkinnedShadowOpaqueDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeSkinnedDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeShadowDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
-	void MakeDrawNormals(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeSsaoDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeSsaoBlurDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;
 	void MakeDebugDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) noexcept;

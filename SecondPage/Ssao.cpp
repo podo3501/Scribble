@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "../Include/FrameResourceData.h"
 #include "./Camera.h"
+#include "./MathHelper.h"
 
 using namespace DirectX;
 
@@ -83,16 +84,6 @@ void CSsao::GetOffsetVectors(DirectX::XMFLOAT4 offsets[14])
 	std::copy(&m_offsets[0], &m_offsets[14], &offsets[0]);
 }
 
-float ARandF()
-{
-	return (float)(rand()) / (float)RAND_MAX;
-}
-
-float ARandF(float a, float b)
-{
-	return a + ARandF() * (b - a);
-}
-
 void CSsao::BuildOffsetVectors()
 {
 	// 8 cube corners
@@ -120,7 +111,7 @@ void CSsao::BuildOffsetVectors()
 
 	for (auto i : std::views::iota(0, 14))
 	{
-		float s = ARandF(0.25f, 1.0f);
+		float s = MathHelper::RandF(0.25f, 1.0f);
 		XMVECTOR v = s * XMVector4Normalize(XMLoadFloat4(&m_offsets[i]));
 
 		XMStoreFloat4(&m_offsets[i], v);

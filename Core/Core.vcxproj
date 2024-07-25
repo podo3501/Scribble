@@ -148,7 +148,6 @@
     <ClInclude Include="Directx3D.h" />
     <ClInclude Include="Draw.h" />
     <ClInclude Include="FrameResources.h" />
-    <ClInclude Include="headerUtility.h" />
     <ClInclude Include="PipelineStateObjects.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RootSignature.h" />

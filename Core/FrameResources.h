@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 
-class CRenderer;
 class CUploadBuffer;
 struct ID3D12Device;
 struct ID3D12CommandAllocator;
@@ -36,7 +35,6 @@ public:
 
 	bool Build(ID3D12Device* device,
 		UINT passCount, UINT instanceCount, UINT matCount);
-	bool PrepareFrame(CRenderer* renderer);
 	UINT64 ForwardFrame();
 	bool SetUploadBuffer(eBufferType bufferType, const void* bufferData, size_t dataSize);
 

@@ -69,9 +69,6 @@ public:
 private:
 	bool InitDirect3D(HWND hwnd, int width, int height);
 
-	void LogAdapters();
-	void LogAdapterOutputs(IDXGIAdapter* adapter);
-	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 	bool CreateCommandObjects();
 	bool CreateSwapChain(HWND hwnd, int width, int height);
 

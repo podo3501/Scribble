@@ -3,19 +3,9 @@
 #include <ranges>
 #include <WindowsX.h>
 #include "./CoreDefine.h"
-#include "./headerUtility.h"
 #include "./DescriptorHeap.h"
 
 using Microsoft::WRL::ComPtr;
-
-constexpr bool gOutputDebugWindow = false;
-
-template<typename T>
-void OutputDebugWindow(T&& output) 
-{ 
-	if (gOutputDebugWindow == false) return;
-	::OutputDebugString(std::forward<T>(output)); 
-}
 
 CDirectx3D::CDirectx3D()
 	: m_dxgiFactory{ nullptr }
@@ -102,89 +92,13 @@ bool CDirectx3D::InitDirect3D(HWND hwnd, int width, int height)
 	assert(m_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 
 	#ifdef _DEBUG
-	LogAdapters();
+	CoreUtil::LogAdapters(m_dxgiFactory.Get(), m_backBufferFormat);
 	#endif
 
 	ReturnIfFalse(CreateCommandObjects());
 	ReturnIfFalse(CreateSwapChain(hwnd, width, height));
 
 	return true;
-}
-
-void CDirectx3D::LogAdapters()
-{
-	UINT i = 0;
-	IDXGIAdapter* adapter = nullptr;
-	std::vector<IDXGIAdapter*> adapterList;
-	while (m_dxgiFactory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_ADAPTER_DESC desc;
-		adapter->GetDesc(&desc);
-
-		std::wstring text = L"***Adapter: ";
-		text += desc.Description;
-		text += L"\n";
-
-		OutputDebugWindow(text.c_str());
-	
-		adapterList.push_back(adapter);
-
-		++i;
-	}
-
-	for (size_t i = 0; i < adapterList.size(); ++i)
-	{
-		LogAdapterOutputs(adapterList[i]);
-		ReleaseCom(adapterList[i]);
-	}
-}
-
-
-void CDirectx3D::LogAdapterOutputs(IDXGIAdapter* adapter)
-{
-	UINT i = 0;
-	IDXGIOutput* output = nullptr;
-	while (adapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
-	{
-		DXGI_OUTPUT_DESC desc;
-		output->GetDesc(&desc);
-
-		std::wstring text = L"***Output: ";
-		text += desc.DeviceName;
-		text += L"\n";
-		OutputDebugWindow(text.c_str());
-
-		LogOutputDisplayModes(output, m_backBufferFormat);
-
-		ReleaseCom(output);
-
-		++i;
-	}
-}
-
-void CDirectx3D::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
-{
-	UINT count = 0;
-	UINT flags = 0;
-
-	// Call with nullptr to get list count.
-	output->GetDisplayModeList(format, flags, &count, nullptr);
-
-	std::vector<DXGI_MODE_DESC> modeList(count);
-	output->GetDisplayModeList(format, flags, &count, &modeList[0]);
-
-	for (auto& x : modeList)
-	{
-		UINT n = x.RefreshRate.Numerator;
-		UINT d = x.RefreshRate.Denominator;
-		std::wstring text =
-			L"Width = " + std::to_wstring(x.Width) + L" " +
-			L"Height = " + std::to_wstring(x.Height) + L" " +
-			L"Refresh = " + std::to_wstring(n) + L"/" + std::to_wstring(d) +
-			L"\n";
-
-		OutputDebugWindow(text.c_str());
-	}
 }
 
 bool CDirectx3D::CreateCommandObjects()

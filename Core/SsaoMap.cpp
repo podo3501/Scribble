@@ -12,7 +12,6 @@
 #include "./FrameResources.h"
 #include "./DescriptorHeap.h"
 #include "./CoreDefine.h"
-#include "./headerUtility.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -262,16 +261,6 @@ bool CSsaoMap::CreateResources(ID3D12Device* device)
 	return true;
 }
 
-float RandF()
-{
-	return (float)(rand()) / (float)RAND_MAX;
-}
-
-float RandF(float a, float b)
-{
-	return a + RandF() * (b - a);
-}
-
 bool CSsaoMap::BuildRandomVectorTexture(CDirectx3D* directx3D)
 {
 	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
@@ -313,18 +302,15 @@ bool CSsaoMap::CreateRandomVectorTexture(ID3D12Device* device, ID3D12GraphicsCom
 		nullptr,
 		IID_PPV_ARGS(m_randomVectorMapUploadBuffer.GetAddressOf())));
 
-	XMCOLOR initData[256 * 256]{};
+	auto RandFloat = []()->float { return (float)(rand()) / (float)RAND_MAX; };
+
+	std::vector<XMCOLOR> initData{};
 	for (auto i : std::views::iota(0, 256))
-	{
 		for (auto j : std::views::iota(0, 256))
-		{
-			XMFLOAT3 v(RandF(), RandF(), RandF());
-			initData[i * 256 + j] = XMCOLOR(v.x, v.y, v.z, 0.0f);
-		}
-	}
+			initData.emplace_back(RandFloat(), RandFloat(), RandFloat(), 0.0f);
 
 	D3D12_SUBRESOURCE_DATA subResourceData = {};
-	subResourceData.pData = initData;
+	subResourceData.pData = initData.data();
 	subResourceData.RowPitch = 256 * sizeof(XMCOLOR);
 	subResourceData.SlicePitch = subResourceData.RowPitch * 256;
 

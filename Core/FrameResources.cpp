@@ -3,7 +3,6 @@
 #include <ranges>
 #include "./d3dUtil.h"
 #include "./UploadBuffer.h"
-#include "./Renderer.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/FrameResourceData.h"
 
@@ -64,16 +63,6 @@ bool CFrameResources::SetUploadBuffer(eBufferType bufferType, const void* buffer
 
 	CUploadBuffer* uploadBuffer = GetUploadBuffer(bufferType);
 	uploadBuffer->CopyDataList(bufferData, dataSize);
-
-	return true;
-}
-
-bool CFrameResources::PrepareFrame(CRenderer* renderer)
-{
-	m_frameResIdx = (m_frameResIdx + 1) % gFrameResourceCount;
-	if (m_fenceCount == 0)
-		return true;
-	ReturnIfFalse(renderer->WaitUntilGpuFinished(m_fenceCount));
 
 	return true;
 }

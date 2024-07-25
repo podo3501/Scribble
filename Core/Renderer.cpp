@@ -2,7 +2,6 @@
 #include <ranges>
 #include "./Directx3D.h"
 #include "./d3dUtil.h"
-#include "./headerUtility.h"
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
 #include "./CoreDefine.h"
@@ -45,8 +44,6 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 	m_rootSignature = std::make_unique<CRootSignature>();
 	m_descHeap = std::make_unique<CDescriptorHeap>();
 	ReturnIfFalse(m_directx3D->Initialize(hwnd, width, height, m_descHeap.get()));
-	m_device = m_directx3D->GetDevice();
-	m_cmdList = m_directx3D->GetCommandList();
 
 	m_shader = std::make_unique<CShader>(resPath, shaderFileList);
 	m_texture = std::make_unique<CTexture>(resPath);
@@ -55,9 +52,10 @@ bool CRenderer::Initialize(const std::wstring& resPath, HWND hwnd, int width, in
 	m_pso = std::make_unique<CPipelineStateObjects>(m_directx3D.get());
 	m_frameResources = std::make_unique<CFrameResources>();
 	
-	ReturnIfFalse(m_rootSignature->Build(m_device));
+	ID3D12Device* device = m_directx3D->GetDevice();
+	ReturnIfFalse(m_rootSignature->Build(device));
 	ReturnIfFalse(m_pso->Build(m_rootSignature.get(), m_shader.get()));
-	ReturnIfFalse(m_frameResources->Build(m_device, gPassCBCount, gInstanceBufferCount, gMaterialBufferCount));
+	ReturnIfFalse(m_frameResources->Build(device, gPassCBCount, gInstanceBufferCount, gMaterialBufferCount));
 	ReturnIfFalse(m_draw->Initialize(m_descHeap.get(), m_pso.get()));
 	ReturnIfFalse(m_ssaoMap->Initialize(m_directx3D.get(), width, height));
 

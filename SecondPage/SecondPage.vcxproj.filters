@@ -36,9 +36,6 @@
     <Filter Include="리소스 파일\Shaders\Ssao\SsaoBlur">
       <UniqueIdentifier>{ecf39fcf-65c4-4dcc-b571-2c5afe7c8478}</UniqueIdentifier>
     </Filter>
-    <Filter Include="리소스 파일\Shaders\Ssao\DrawNormals">
-      <UniqueIdentifier>{89c935a4-7ce2-4e12-9c2c-56c464025591}</UniqueIdentifier>
-    </Filter>
     <Filter Include="리소스 파일\Shaders\Debug">
       <UniqueIdentifier>{1b055f21-603a-494a-82ed-657d52ca4e6e}</UniqueIdentifier>
     </Filter>
@@ -53,6 +50,9 @@
     </Filter>
     <Filter Include="리소스 파일\Shaders\Skinned\Shadow">
       <UniqueIdentifier>{60579300-fc98-425a-aa0b-62070ed5c007}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="리소스 파일\Shaders\DrawNormals">
+      <UniqueIdentifier>{926923b4-6185-4e57-bd05-8a4be876111d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -207,9 +207,6 @@
     <None Include="..\Resource\Shaders\Ssao\Utility.hlsli">
       <Filter>리소스 파일\Shaders\Ssao</Filter>
     </None>
-    <None Include="..\Resource\Shaders\Ssao\DrawNormals\Type.hlsli">
-      <Filter>리소스 파일\Shaders\Ssao\DrawNormals</Filter>
-    </None>
     <None Include="..\Resource\Shaders\Debug\Type.hlsli">
       <Filter>리소스 파일\Shaders\Debug</Filter>
     </None>
@@ -221,6 +218,9 @@
     </None>
     <None Include="..\Resource\Shaders\Skinned\Shadow\Type.hlsli">
       <Filter>리소스 파일\Shaders\Skinned\Shadow</Filter>
+    </None>
+    <None Include="..\Resource\Shaders\DrawNormals\Type.hlsli">
+      <Filter>리소스 파일\Shaders\DrawNormals</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -260,12 +260,6 @@
     <FxCompile Include="..\Resource\Shaders\Ssao\SsaoBlur\VS.hlsl">
       <Filter>리소스 파일\Shaders\Ssao\SsaoBlur</Filter>
     </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\Ssao\DrawNormals\PS.hlsl">
-      <Filter>리소스 파일\Shaders\Ssao\DrawNormals</Filter>
-    </FxCompile>
-    <FxCompile Include="..\Resource\Shaders\Ssao\DrawNormals\VS.hlsl">
-      <Filter>리소스 파일\Shaders\Ssao\DrawNormals</Filter>
-    </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Debug\PS.hlsl">
       <Filter>리소스 파일\Shaders\Debug</Filter>
     </FxCompile>
@@ -289,6 +283,12 @@
     </FxCompile>
     <FxCompile Include="..\Resource\Shaders\Skinned\Shadow\VS.hlsl">
       <Filter>리소스 파일\Shaders\Skinned\Shadow</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\DrawNormals\PS.hlsl">
+      <Filter>리소스 파일\Shaders\DrawNormals</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Resource\Shaders\DrawNormals\VS.hlsl">
+      <Filter>리소스 파일\Shaders\DrawNormals</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

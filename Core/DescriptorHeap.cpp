@@ -3,7 +3,6 @@
 #include "../Include/types.h"
 #include "./CoreDefine.h"
 #include "./d3dUtil.h"
-#include "./headerUtility.h"
 
 CDescriptorHeap::~CDescriptorHeap() = default;
 CDescriptorHeap::CDescriptorHeap()

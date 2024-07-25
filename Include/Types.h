@@ -27,12 +27,12 @@ enum class GraphicsPSO : int
 {
 	Sky,
 	Opaque,
+	DrawNormals,
 	NormalOpaque,
 	SkinnedOpaque,
 	SkinnedShadowOpaque,
 	SkinnedDrawNormals,
 	ShadowMap,
-	SsaoDrawNormals,
 	SsaoMap,
 	SsaoBlur,
 	Debug,

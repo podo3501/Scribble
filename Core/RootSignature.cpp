@@ -2,7 +2,6 @@
 #include "./CoreDefine.h"
 #include "./SsaoMap.h"
 #include "./d3dUtil.h"
-#include "./headerUtility.h"
 
 using Microsoft::WRL::ComPtr;
 
