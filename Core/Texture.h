@@ -1,18 +1,6 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include <wrl.h>
-#include <memory>
-
 class CDescriptorHeap;
-struct ID3D12Device;
-struct ID3D12Resource;
-struct ID3D12GraphicsCommandList;
-struct ID3D12DescriptorHeap;
-
 enum class SrvOffset : int;
 
 class CTexture

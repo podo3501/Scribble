@@ -1,12 +1,5 @@
 #pragma once
 
-#include <d3d12.h>
-#include <wrl.h>
-
-struct ID3D12Device;
-struct ID3D12Resource;
-struct ID3D12DescriptorHeap;
-struct ID3D12GraphicsCommandList;
 enum class SrvOffset : int;
 enum class DsvOffset : int;
 enum class RtvOffset : int;
@@ -57,6 +50,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_srvDescHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_dsvDescHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvDescHeap;
+
+	//std::unique_ptr<DirectX::DescriptorHeap> m_srvDxDescHeap;
 };
 
 inline void CDescriptorHeap::SetupFirstBackBuffer() { m_currBackBuffer = 0; }

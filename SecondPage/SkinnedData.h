@@ -1,9 +1,4 @@
 #pragma once
-#include <DirectXMath.h>
-#include <vector>
-#include <unordered_map>
-#include <string>
-#include <wrl.h>
 
 class CSkinnedData;
 

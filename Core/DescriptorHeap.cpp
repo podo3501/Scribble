@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "./DescriptorHeap.h"
-#include <d3d12.h>
 #include "../Include/types.h"
 #include "./CoreDefine.h"
 #include "./d3dUtil.h"

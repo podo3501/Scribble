@@ -1,12 +1,7 @@
 #pragma once
 
-#include <wrl.h>
-#include "d3dx12.h"
-
 class CDirectx3D;
 class CDescriptorHeap;
-struct ID3D12Device;
-struct ID3D12Resource;
 
 class CShadowMap
 {

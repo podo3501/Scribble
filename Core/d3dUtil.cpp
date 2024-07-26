@@ -1,8 +1,7 @@
-﻿#include "./d3dUtil.h"
-#include <comdef.h>
-#include <fstream>
+﻿#include "pch.h"
+#include "./d3dUtil.h"
 #include <stack>
-#include "../Core/DirectXTK12Inc/WICTextureLoader.h"
+#include "../DirectXTK12/Inc/WICTextureLoader.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -394,6 +393,3 @@ std::vector<D3D12_STATIC_SAMPLER_DESC> CoreUtil::GetSsaoSamplers()
 
     return samplers;
 }
-
-
-

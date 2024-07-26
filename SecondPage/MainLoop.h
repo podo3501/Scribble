@@ -1,11 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <Windows.h>
-#include <map>
-
 interface IRenderer;
 class CWindow;
 class CCamera;

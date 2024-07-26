@@ -1,13 +1,5 @@
 ﻿#pragma once
 
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <memory>
-#include <string>
-#include <DirectXMath.h>
-#include <DirectXCollision.h>
-
 struct InstanceData;
 struct SubRenderItem;
 struct PassConstants;

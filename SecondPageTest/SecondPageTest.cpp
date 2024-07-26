@@ -1,11 +1,4 @@
 #include "pch.h"
-#include <d3d12.h>
-#include <dxgi.h>
-#include <dxgi1_4.h>
-#include <memory>
-#include <unordered_map>
-#include <functional>
-#include <ranges>
 #include "./InterfaceTest.h"
 #include "../Include/RenderItem.h"
 #include "../Include/RendererDefine.h"
@@ -23,7 +16,6 @@
 #include "../SecondPage/MockData.h"
 #include "../SecondPage/Helper.h"
 #include "../SecondPage/Utility.h"
-#include <DirectXMath.h>
 
 using enum GraphicsPSO;
 using enum ShaderType;

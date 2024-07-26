@@ -1,6 +1,5 @@
+#include "pch.h"
 #include "PipelineStateObjects.h"
-#include <ranges>
-#include <algorithm>
 #include "../Include/Types.h"
 #include "./Shader.h"
 #include "./d3dUtil.h"

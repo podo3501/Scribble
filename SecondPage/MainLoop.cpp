@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "MainLoop.h"
-#include <sstream>
 #include "../Include/RendererDefine.h"
 #include "../Include/RenderItem.h"
 #include "../Include/interface.h"

@@ -1,15 +1,8 @@
 #pragma once
 
-#include <map>
-#include <vector>
-#include <wrl.h>
-
 class CShader;
 class CDirectx3D;
 class CRootSignature;
-struct ID3D12Device;
-struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
-struct ID3D12PipelineState;
 enum class GraphicsPSO : int;
 
 class CPipelineStateObjects

@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "Window.h"
-#include <algorithm>
 
 LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -143,7 +143,7 @@ bool CWindow::Initialize(bool bShow)
 	wc.hInstance = m_appInst;
 	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+	wc.hbrBackground = NULL;// (HBRUSH)GetStockObject(NULL_BRUSH);
 	wc.lpszMenuName = 0;
 	wc.lpszClassName = m_className.c_str();
 

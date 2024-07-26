@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "./RootSignature.h"
 #include "./CoreDefine.h"
 #include "./SsaoMap.h"

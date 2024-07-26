@@ -1,11 +1,5 @@
 #pragma once
 
-#include <map>
-#include <vector>
-#include <string>
-#include <memory>
-#include <DirectXMath.h>
-
 class CSetupData;
 class CMaterial;
 struct Material;

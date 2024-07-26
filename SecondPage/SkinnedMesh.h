@@ -1,11 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <memory>
-#include <map>
-#include <combaseapi.h>
-
 interface IRenderer;
 class CSkinnedData;
 class CLoadM3D;

@@ -1,6 +1,5 @@
-﻿#include "Camera.h"
-#include <ranges>
-#include <algorithm>
+﻿#include "pch.h"
+#include "./Camera.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
 #include "./MathHelper.h"
@@ -328,5 +327,3 @@ void CCamera::FindVisibleSubRenderItems(SubRenderItems& subRenderItems, Instance
 		visibleInstance.insert(visibleInstance.end(), curVisible.begin(), curVisible.end()); 
 	}
 }
-
-

@@ -17,13 +17,9 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 // http://go.microsoft.com/fwlink/?LinkId=248929
 //--------------------------------------------------------------------------------------
-
+#include "pch.h"
 #include <assert.h>
-#include <algorithm>
-#include <memory>
-#include <wrl.h>
 #include "./d3dUtil.h"
-
 #include "DDSTextureLoader.h" 
 
 using namespace Microsoft::WRL;

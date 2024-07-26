@@ -1,6 +1,5 @@
+#include "pch.h"
 #include "Shader.h"
-#include <ranges>
-#include <algorithm>
 #include "../Core/d3dUtil.h"
 #include "../Include/RendererDefine.h"
 #include "../Include/Types.h"

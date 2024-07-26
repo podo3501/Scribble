@@ -1,6 +1,6 @@
+#include "pch.h"
 #include "LoadM3D.h"
 #include "SkinnedData.h"
-#include <fstream>
 #include "../Include/FrameResourceData.h"
 #include "./SkinnedData.h"
 

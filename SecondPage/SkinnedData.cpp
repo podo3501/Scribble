@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "SkinnedData.h"
-#include <ranges>
 
 using namespace DirectX;
 

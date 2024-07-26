@@ -1,9 +1,5 @@
+#include "pch.h"
 #include "KeyInput.h"
-#include <windows.h>
-#include <windowsx.h>
-#include <algorithm>
-#include <ranges>
-#include <DirectXMath.h>
 
 bool CKeyInput::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& lr)
 {

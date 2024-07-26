@@ -1,12 +1,5 @@
 #pragma once
 
-#include <wrl.h>
-#include <vector>
-#include <map>
-#include <memory>
-#include <string>
-#include <DirectXCollision.h>
-
 interface IRenderer;
 class CGeometry;
 struct InstanceData;

@@ -1,6 +1,5 @@
-﻿#include "./FrameResources.h"
-#include <d3d12.h>
-#include <ranges>
+﻿#include "pch.h"
+#include "./FrameResources.h"
 #include "./d3dUtil.h"
 #include "./UploadBuffer.h"
 #include "../Include/RendererDefine.h"

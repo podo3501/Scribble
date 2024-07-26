@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "Shadow.h"
-#include <ranges>
 #include "../Include/FrameResourceData.h"
 #include "../Include/RendererDefine.h"
 

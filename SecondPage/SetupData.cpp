@@ -1,6 +1,5 @@
+#include "pch.h"
 #include "./SetupData.h"
-#include <algorithm>
-#include <ranges>
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/Interface.h"

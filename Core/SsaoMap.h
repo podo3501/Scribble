@@ -1,18 +1,8 @@
 #pragma once
 
-#include <wrl.h>
-#include <vector>
-#include <DirectXMath.h>
-#include "d3dx12.h"
-
 class CDirectx3D;
 class CDescriptorHeap;
 class CFrameResources;
-struct ID3D12RootSignature;
-struct ID3D12Device;
-struct ID3D12GraphicsCommandList;
-struct ID3D12Resource;
-struct ID3D12PipelineState;
 
 enum class SsaoRegisterType : int
 {

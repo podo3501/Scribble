@@ -1,11 +1,5 @@
 #pragma once
 
-#include <wtypes.h>
-#include <string>
-#include <functional>
-#include <utility>
-#include <vector>
-
 class CWindow
 {
 public:

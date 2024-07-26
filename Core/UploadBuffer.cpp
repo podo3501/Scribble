@@ -1,6 +1,6 @@
+#include "pch.h"
 #include "./UploadBuffer.h"
 #include "./d3dUtil.h"
-#include <ranges>
 
 CUploadBuffer::CUploadBuffer(size_t typeSize, UINT elementCount, bool isConstantBuffer) 
     : m_uploadBuffer{ nullptr }

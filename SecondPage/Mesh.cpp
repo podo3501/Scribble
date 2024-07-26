@@ -1,7 +1,5 @@
+#include "pch.h"
 #include "Mesh.h"
-#include <algorithm>
-#include <ranges>
-#include <fstream>
 #include "./Utility.h"
 #include "../Include/Interface.h"
 #include "../Include/FrameResourceData.h"

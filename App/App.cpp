@@ -1,8 +1,5 @@
+#include "pch.h"
 #include "App.h"
-#include <crtdbg.h>
-#include <memory>
-#include <dxgi1_6.h>
-#include <dxgidebug.h>
 #include "../Include/Interface.h"
 #include "../SecondPage/Window.h"
 #include "../SecondPage/MainLoop.h"

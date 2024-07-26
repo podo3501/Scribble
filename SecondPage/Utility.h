@@ -1,9 +1,5 @@
 #pragma once
 
-#include <string>
-#include <wrl.h>
-#include <assert.h>
-
 class CException
 {
 public:

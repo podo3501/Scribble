@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "./Renderer.h"
-#include <ranges>
 #include "./Directx3D.h"
 #include "./d3dUtil.h"
 #include "../Include/RenderItem.h"
@@ -149,7 +149,3 @@ void CRenderer::Set4xMsaaState(HWND hwnd, int width, int height, bool value)
 {
 	m_directx3D->Set4xMsaaState(hwnd, width, height, value);
 }
-
-
-
-

@@ -1,10 +1,5 @@
+#include "pch.h"
 #include "./SsaoMap.h"
-#include <d3d12.h>
-#include <wrl.h>
-#include <vector>
-#include <DirectXPackedVector.h>
-#include <ranges>
-#include "d3dx12.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/types.h"
 #include "./Directx3D.h"

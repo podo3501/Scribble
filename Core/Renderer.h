@@ -1,10 +1,5 @@
 #pragma once
 
-#include <d3d12.h>
-#include <wrl.h>
-#include <functional>
-#include <memory>
-#include <array>
 #include "../Include/Interface.h"
 
 class CDirectx3D;
@@ -16,7 +11,7 @@ class CDraw;
 class CPipelineStateObjects;
 class CDescriptorHeap;
 
-class CRenderer : public IRenderer
+class CRenderer final : public IRenderer
 {
 public:
 	CRenderer();

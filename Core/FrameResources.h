@@ -1,13 +1,6 @@
 ﻿#pragma once
 
-#include <wrl.h>
-#include <memory>
-#include <vector>
-
 class CUploadBuffer;
-struct ID3D12Device;
-struct ID3D12CommandAllocator;
-struct ID3D12Resource;
 enum class eBufferType;
 
 class CFrameResources

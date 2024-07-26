@@ -1,7 +1,4 @@
 #pragma once
-#include <d3d12.h>
-#include <memory>
-#include <map>
 
 class CDirectx3D;
 class CRootSignature;
@@ -10,9 +7,7 @@ class CFrameResources;
 class CShadowMap;
 class CSsaoMap;
 class CDescriptorHeap;
-struct ID3D12Device;
 struct RenderItem;
-struct ID3D12GraphicsCommandList;
 enum class GraphicsPSO : int;
 
 class CDraw

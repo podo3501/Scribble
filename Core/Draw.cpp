@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "./Draw.h"
 #include "./d3dUtil.h"
 #include "../Include/FrameResourceData.h"

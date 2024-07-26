@@ -1,12 +1,9 @@
+#include "pch.h"
 #include "./SkinnedMesh.h"
-#include <DirectXMath.h>
 #include "../Include/Interface.h"
 #include "../Include/FrameResourceData.h"
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
-#include <numbers>
-#include <ranges>
-#include <algorithm>
 #include "./SkinnedData.h"
 #include "./SetupData.h"
 #include "./LoadM3D.h"

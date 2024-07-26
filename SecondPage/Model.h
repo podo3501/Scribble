@@ -1,12 +1,5 @@
 #pragma once
 
-#include <map>
-#include <functional>
-#include <vector>
-#include <string>
-#include <memory>
-#include <Windows.h>
-
 interface IRenderer;
 class CMaterial;
 class CMesh;

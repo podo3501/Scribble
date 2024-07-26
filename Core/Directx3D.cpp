@@ -1,7 +1,6 @@
+#include "pch.h"
 #include "Directx3D.h"
 #include "d3dUtil.h"
-#include <ranges>
-#include <WindowsX.h>
 #include "./CoreDefine.h"
 #include "./DescriptorHeap.h"
 
@@ -324,4 +323,3 @@ ID3D12Resource* CDirectx3D::CurrentBackBuffer() const
 { 
 	return m_swapChainBuffer[m_descHeap->GetCurrBackBuffer()].Get(); 
 }
-

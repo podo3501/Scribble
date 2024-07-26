@@ -1,15 +1,5 @@
 #pragma once
 
-#include <d3d12.h>
-#include <vector>
-#include <map>
-#include <wrl.h>
-#include <d3dcommon.h>
-#include <array>
-#include <string>
-
-struct D3D12_GRAPHICS_PIPELINE_STATE_DESC;
-struct D3D12_INPUT_ELEMENT_DESC;
 enum class GraphicsPSO : int;
 enum class ShaderType : int;
 

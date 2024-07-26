@@ -1,7 +1,5 @@
+#include "pch.h"
 #include "./Model.h"
-#include <algorithm>
-#include <ranges>
-#include <DirectXMath.h>
 #include "../Include/Interface.h"
 #include "../Include/RenderItem.h"
 #include "../Include/FrameResourceData.h"

@@ -1,13 +1,5 @@
 #pragma once
 
-#include <DirectXMath.h>
-#include <memory>
-#include <vector>
-#include <map>
-#include <set>
-#include <string>
-#include <combaseapi.h>
-
 interface IRenderer;
 struct MaterialBuffer;
 enum class SrvOffset : int;

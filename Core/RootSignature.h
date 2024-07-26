@@ -1,13 +1,5 @@
 #pragma once
 
-#include <d3d12.h>
-#include <vector>
-#include <array>
-#include <wrl.h>
-
-struct CD3DX12_ROOT_PARAMETER;
-struct ID3D12RootSignature;
-
 enum class RootSignature : int
 {
 	Common = 0,
@@ -34,5 +26,5 @@ private:
 		std::vector<D3D12_STATIC_SAMPLER_DESC> samplers);
 
 private:
-	std::array< Microsoft::WRL::ComPtr<ID3D12RootSignature>, 2> m_rootSignatures;
+	std::array<Microsoft::WRL::ComPtr<ID3D12RootSignature>, 2> m_rootSignatures;
 };

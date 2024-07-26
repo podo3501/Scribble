@@ -1,6 +1,5 @@
+#include "pch.h"
 #include "./Utility.h"
-
-#include <comdef.h>
 
 CException::CException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
     ErrorCode(hr),

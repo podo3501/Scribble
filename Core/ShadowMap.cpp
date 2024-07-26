@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "./ShadowMap.h"
 #include "../Include/types.h"
 #include "../Include/RendererDefine.h"

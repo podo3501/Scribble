@@ -1,6 +1,5 @@
+#include "pch.h"
 #include "MockData.h"
-#include <algorithm>
-#include <ranges>
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
 #include "../Include/FrameResourceData.h"

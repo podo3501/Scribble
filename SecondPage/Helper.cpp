@@ -1,6 +1,5 @@
+#include "pch.h"
 #include "Helper.h"
-#include <algorithm>
-#include <ranges>
 #include "../Include/RenderItem.h"
 #include "../Include/Types.h"
 #include "./GameTimer.h"

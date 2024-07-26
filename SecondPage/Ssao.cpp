@@ -1,7 +1,5 @@
+#include "pch.h"
 #include "./Ssao.h"
-#include <DirectXMath.h>
-#include <ranges>
-#include <assert.h>
 #include "../Include/FrameResourceData.h"
 #include "./Camera.h"
 #include "./MathHelper.h"

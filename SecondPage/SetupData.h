@@ -1,12 +1,5 @@
 #pragma once
 
-#include <wrl.h>
-#include <vector>
-#include <string>
-#include <memory>
-#include <map>
-#include <unordered_map>
-
 interface IRenderer;
 class CMaterial;
 class CMesh;

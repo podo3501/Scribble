@@ -1,9 +1,5 @@
 #pragma once
 
-#include<vector>
-#include<functional>
-#include<Windows.h>
-
 class CKeyInput
 {
 public:

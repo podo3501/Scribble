@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Texture.h"
 #include "./DDSTextureLoader.h"
 #include "./d3dUtil.h"
