@@ -16,7 +16,7 @@ public:
 	CTexture& operator=(const CTexture&) = delete;
 
 	void CreateShaderResourceView(CDescriptorHeap* descHeap);
-	bool Upload(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const TextureList& textureList);
+	bool Upload(ID3D12Device* device, ID3D12CommandQueue* cmdQueue, const TextureList& textureList);
 	inline std::vector<std::wstring> GetListSrvTexture2D();
 private:
 	struct TextureMemory

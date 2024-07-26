@@ -145,7 +145,6 @@
     <ClInclude Include="CoreDefine.h" />
     <ClInclude Include="d3dUtil.h" />
     <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DescriptorHeap.h" />
     <ClInclude Include="Directx3D.h" />
     <ClInclude Include="Draw.h" />
@@ -162,7 +161,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="d3dUtil.cpp" />
-    <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DescriptorHeap.cpp" />
     <ClCompile Include="Directx3D.cpp" />
     <ClCompile Include="Draw.cpp" />

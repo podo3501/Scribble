@@ -51,7 +51,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_dsvDescHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvDescHeap;
 
-	//std::unique_ptr<DirectX::DescriptorHeap> m_srvDxDescHeap;
+	std::unique_ptr<DirectX::DescriptorHeap> m_srvDxDescHeap;
 };
 
 inline void CDescriptorHeap::SetupFirstBackBuffer() { m_currBackBuffer = 0; }

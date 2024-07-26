@@ -5,11 +5,7 @@
 //***************************************************************************************
 
 #pragma once
-
 #include <D3Dcompiler.h>
-#include <unordered_map>
-#include <fstream>
-#include "./DDSTextureLoader.h"
 
 extern const int gNumFrameResources;
 

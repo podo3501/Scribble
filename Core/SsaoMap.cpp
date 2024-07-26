@@ -196,7 +196,7 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 
 bool CSsaoMap::BuildResources(CDirectx3D* directx3D)
 {
-	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
 		return CreateResources(device); }));
 }
 
@@ -258,7 +258,7 @@ bool CSsaoMap::CreateResources(ID3D12Device* device)
 
 bool CSsaoMap::BuildRandomVectorTexture(CDirectx3D* directx3D)
 {
-	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
 		return CreateRandomVectorTexture(device, cmdList); }));
 }
 

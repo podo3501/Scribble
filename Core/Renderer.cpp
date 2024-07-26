@@ -105,15 +105,15 @@ bool CRenderer::LoadMesh(GraphicsPSO pso, const void* verticesData, const void* 
 	if (m_pso->GetPso(pso) == nullptr)
 		return false;	//renderer에서 PSO가 준비되지 않았다.
 
-	return m_directx3D->LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
+	return m_directx3D->LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
 		return LoadMesh(device, cmdList, verticesData, indicesData, renderItem); });
 }
 
 bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename)
 {
 	ReturnIfFalse(m_directx3D->LoadData(
-		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)->bool {
-			return (m_texture->Upload(device, cmdList, textureList)); }));
+		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
+			return (m_texture->Upload(device, cmdQueue, textureList)); }));
 
 	m_texture->CreateShaderResourceView(m_descHeap.get());
 	(*srvFilename) = m_texture->GetListSrvTexture2D();

@@ -229,11 +229,12 @@ bool CDirectx3D::OnResize(int width, int height)
 	return true;
 }
 
-bool CDirectx3D::LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)> loadGraphicMemory)
+bool CDirectx3D::LoadData(
+	std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)> loadGraphicMemory)
 {
 	ReturnIfFalse(ResetCommandLists());
 
-	ReturnIfFalse(loadGraphicMemory(m_device.Get(), m_commandList.Get()));
+	ReturnIfFalse(loadGraphicMemory(m_device.Get(), m_commandList.Get(), m_commandQueue.Get()));
 
 	ReturnIfFalse(ExcuteCommandLists());
 	ReturnIfFalse(FlushCommandQueue());
