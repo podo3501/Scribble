@@ -90,6 +90,7 @@
 #endif
 
 #include "../DirectXTK12/Inc/Audio.h"
+#include "../DirectXTK12/Inc/BufferHelpers.h"
 #include "../DirectXTK12/Inc/CommonStates.h"
 #include "../DirectXTK12/Inc/DirectXHelpers.h"
 #include "../DirectXTK12/Inc/DDSTextureLoader.h"

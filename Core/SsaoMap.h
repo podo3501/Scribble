@@ -48,7 +48,7 @@ private:
 	bool BuildResources(CDirectx3D* directx3D);
 	bool BuildRandomVectorTexture(CDirectx3D* directx3D);
 	bool CreateResources(ID3D12Device* device);
-	bool CreateRandomVectorTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
+	bool CreateRandomVectorTexture(ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch);
 
 private:
 	CDescriptorHeap* m_descHeap;
@@ -59,7 +59,6 @@ private:
 	ID3D12PipelineState* m_blurPso;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_randomVectorMap;
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_randomVectorMapUploadBuffer;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_normalMap;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_ambientMap0;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_ambientMap1;

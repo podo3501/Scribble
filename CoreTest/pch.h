@@ -88,3 +88,24 @@
 #ifdef _DEBUG
 #include <dxgidebug.h>
 #endif
+
+#include "../DirectXTK12/Inc/Audio.h"
+#include "../DirectXTK12/Inc/BufferHelpers.h"
+#include "../DirectXTK12/Inc/CommonStates.h"
+#include "../DirectXTK12/Inc/DirectXHelpers.h"
+#include "../DirectXTK12/Inc/DDSTextureLoader.h"
+#include "../DirectXTK12/Inc/DescriptorHeap.h"
+#include "../DirectXTK12/Inc/Effects.h"
+#include "../DirectXTK12/Inc/GamePad.h"
+#include "../DirectXTK12/Inc/GeometricPrimitive.h"
+#include "../DirectXTK12/Inc/GraphicsMemory.h"
+#include "../DirectXTK12/Inc/Keyboard.h"
+#include "../DirectXTK12/Inc/Model.h"
+#include "../DirectXTK12/Inc/Mouse.h"
+#include "../DirectXTK12/Inc/PrimitiveBatch.h"
+#include "../DirectXTK12/Inc/ResourceUploadBatch.h"
+#include "../DirectXTK12/Inc/RenderTargetState.h"
+#include "../DirectXTK12/Inc/SimpleMath.h"
+#include "../DirectXTK12/Inc/SpriteBatch.h"
+#include "../DirectXTK12/Inc/SpriteFont.h" 
+#include "../DirectXTK12/Inc/VertexTypes.h"

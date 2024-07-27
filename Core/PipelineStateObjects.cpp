@@ -81,6 +81,7 @@ void CPipelineStateObjects::MakeBasicDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* ps
 	psoDesc->SampleMask = UINT_MAX;
 	psoDesc->NumRenderTargets = 1;
 	psoDesc->BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	//psoDesc->BlendState = DirectX::CommonStates::Opaque;
 	psoDesc->DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc->RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;

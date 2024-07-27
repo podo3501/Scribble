@@ -21,9 +21,9 @@ CTexture::CTexture(std::wstring resPath)
 {}
 CTexture::~CTexture() = default;
 
-bool CTexture::Upload(ID3D12Device* device, ID3D12CommandQueue* cmdQueue, const TextureList& textureList)
+bool CTexture::Upload(ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch, const TextureList& textureList)
 {
-	return std::ranges::all_of(textureList, [this, device, cmdQueue](auto& tex) {
+	return std::ranges::all_of(textureList, [this, device, &uploadBatch](auto& tex) {
 		auto& type = tex.first;
 		auto& filename = tex.second;
 		auto texMemory = std::make_unique<TextureMemory>();
@@ -31,15 +31,9 @@ bool CTexture::Upload(ID3D12Device* device, ID3D12CommandQueue* cmdQueue, const 
 		texMemory->path = m_resPath + m_filePath;
 		texMemory->filename = filename;
 		std::wstring fullFilename = texMemory->path + texMemory->filename;
-
-		ResourceUploadBatch resourceUpload(device);
-		resourceUpload.Begin();
 		
-		ReturnIfFailed(CreateDDSTextureFromFile(device, resourceUpload,
-			fullFilename.c_str(), texMemory->resource.ReleaseAndGetAddressOf()));// , texMemory->uploadHeap));
-
-		auto uploadResourcesFinished = resourceUpload.End(cmdQueue);
-		uploadResourcesFinished.wait();
+		ReturnIfFailed(CreateDDSTextureFromFile(device, uploadBatch,
+			fullFilename.c_str(), texMemory->resource.GetAddressOf()));
 
 		m_textureMemories.emplace_back(std::make_pair(type, std::move(texMemory)));
 

@@ -28,7 +28,7 @@ D3D12_RECT CShadowMap::ScissorRect() const		{	return m_scissorRect;	}
 
 bool CShadowMap::BuildResource(CDirectx3D* directx3D)
 {
-	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
+	return (directx3D->LoadData([this](ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)->bool {
 		return CreateResource(device); }));
 }
 

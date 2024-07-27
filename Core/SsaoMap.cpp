@@ -19,7 +19,6 @@ CSsaoMap::CSsaoMap(CDescriptorHeap* descHeap)
 	, m_ssaoPso{ nullptr }
 	, m_blurPso{ nullptr }
 	, m_randomVectorMap{ nullptr }
-	, m_randomVectorMapUploadBuffer{ nullptr }
 	, m_normalMap{ nullptr }
 	, m_ambientMap0{ nullptr }
 	, m_ambientMap1{ nullptr }
@@ -196,7 +195,7 @@ void CSsaoMap::BlurAmbientMap(ID3D12GraphicsCommandList* cmdList, bool horzBlur)
 
 bool CSsaoMap::BuildResources(CDirectx3D* directx3D)
 {
-	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
+	return (directx3D->LoadData([this](ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)->bool {
 		return CreateResources(device); }));
 }
 
@@ -258,45 +257,12 @@ bool CSsaoMap::CreateResources(ID3D12Device* device)
 
 bool CSsaoMap::BuildRandomVectorTexture(CDirectx3D* directx3D)
 {
-	return (directx3D->LoadData([this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
-		return CreateRandomVectorTexture(device, cmdList); }));
+	return (directx3D->LoadData([this](ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)->bool {
+		return CreateRandomVectorTexture(device, uploadBatch); }));
 }
 
-bool CSsaoMap::CreateRandomVectorTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
+bool CSsaoMap::CreateRandomVectorTexture(ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)
 {
-	D3D12_RESOURCE_DESC texDesc{};
-	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
-	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	texDesc.Alignment = 0;
-	texDesc.Width = 256;
-	texDesc.Height = 256;
-	texDesc.DepthOrArraySize = 1;
-	texDesc.MipLevels = 1;
-	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	texDesc.SampleDesc.Count = 1;
-	texDesc.SampleDesc.Quality = 0;
-	texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-	ReturnIfFailed(device->CreateCommittedResource(
-		&RvToLv(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
-		D3D12_HEAP_FLAG_NONE,
-		&texDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_randomVectorMap)));
-
-	const UINT num2DSubresources = texDesc.DepthOrArraySize * texDesc.MipLevels;
-	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_randomVectorMap.Get(), 0, num2DSubresources);
-
-	ReturnIfFailed(device->CreateCommittedResource(
-		&RvToLv(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD)),
-		D3D12_HEAP_FLAG_NONE,
-		&RvToLv(CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize)),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(m_randomVectorMapUploadBuffer.GetAddressOf())));
-
 	auto RandFloat = []()->float { return (float)(rand()) / (float)RAND_MAX; };
 
 	std::vector<XMCOLOR> initData{};
@@ -309,12 +275,8 @@ bool CSsaoMap::CreateRandomVectorTexture(ID3D12Device* device, ID3D12GraphicsCom
 	subResourceData.RowPitch = 256 * sizeof(XMCOLOR);
 	subResourceData.SlicePitch = subResourceData.RowPitch * 256;
 
-	cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_randomVectorMap.Get(),
-		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST)));
-	UpdateSubresources(cmdList, m_randomVectorMap.Get(), m_randomVectorMapUploadBuffer.Get(),
-		0, 0, num2DSubresources, &subResourceData);
-	cmdList->ResourceBarrier(1, &RvToLv(CD3DX12_RESOURCE_BARRIER::Transition(m_randomVectorMap.Get(),
-		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ)));
+	ReturnIfFailed(DirectX::CreateTextureFromMemory(device, uploadBatch, 256, 256, DXGI_FORMAT_R8G8B8A8_UNORM,
+		subResourceData, m_randomVectorMap.GetAddressOf()));
 
 	return true;
 }

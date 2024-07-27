@@ -55,7 +55,8 @@
 --mathhelper를 app에서만 쓸수 있게 한다. 
 --core 리팩토링
 
-DirectXTK12에서 DescriptorHeap을 붙여본다.
+DirectXTK12에서 DescriptorHeap을 붙인다
+리소스 Load부분을 toolkit으로 바꾼다.
 
 
 

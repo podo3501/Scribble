@@ -85,17 +85,23 @@ bool CRenderer::WaitUntilGpuFinished(UINT64 fenceCount)
 	return m_directx3D->WaitUntilGpuFinished(fenceCount);
 }
 
-bool CRenderer::LoadMesh(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, 
+bool CRenderer::LoadMesh(ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch,
 	const void* verticesData, const void* indicesData, RenderItem* renderItem)
 {
-	auto CreateDefaultBuffer = [device, cmdList](auto data, auto& bufferView, auto& uploader, auto& bufferGpu)->bool {
-		ReturnIfFalse(CoreUtil::CreateDefaultBuffer( device, cmdList, data, bufferView.SizeInBytes, uploader, &bufferGpu));
-		bufferView.BufferLocation = bufferGpu->GetGPUVirtualAddress();
-		return true;
-		};
+	ReturnIfFailed(DirectX::CreateStaticBuffer(device, uploadBatch, verticesData,
+		renderItem->vertexBufferView.SizeInBytes / renderItem->vertexBufferView.StrideInBytes,
+		renderItem->vertexBufferView.StrideInBytes,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		&renderItem->vertexBufferGPU));
 
-	ReturnIfFalse(CreateDefaultBuffer(verticesData, renderItem->vertexBufferView, renderItem->vertexBufferUploader, renderItem->vertexBufferGPU));
-	ReturnIfFalse(CreateDefaultBuffer(indicesData, renderItem->indexBufferView, renderItem->indexBufferUploader, renderItem->indexBufferGPU));
+	ReturnIfFailed(DirectX::CreateStaticBuffer(device, uploadBatch, indicesData,
+		renderItem->indexBufferView.SizeInBytes / sizeof(std::int32_t),
+		sizeof(std::int32_t),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		&renderItem->indexBufferGPU));
+
+	renderItem->vertexBufferView.BufferLocation = renderItem->vertexBufferGPU->GetGPUVirtualAddress();
+	renderItem->indexBufferView.BufferLocation = renderItem->indexBufferGPU->GetGPUVirtualAddress();
 
 	return true;
 }
@@ -105,15 +111,15 @@ bool CRenderer::LoadMesh(GraphicsPSO pso, const void* verticesData, const void* 
 	if (m_pso->GetPso(pso) == nullptr)
 		return false;	//renderer에서 PSO가 준비되지 않았다.
 
-	return m_directx3D->LoadData([&, this](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
-		return LoadMesh(device, cmdList, verticesData, indicesData, renderItem); });
+	return m_directx3D->LoadData([&, this](ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)->bool {
+		return LoadMesh(device, uploadBatch, verticesData, indicesData, renderItem); });
 }
 
 bool CRenderer::LoadTexture(const TextureList& textureList, std::vector<std::wstring>* srvFilename)
 {
 	ReturnIfFalse(m_directx3D->LoadData(
-		[this, &textureList](ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)->bool {
-			return (m_texture->Upload(device, cmdQueue, textureList)); }));
+		[this, &textureList](ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)->bool {
+			return (m_texture->Upload(device, uploadBatch, textureList)); }));
 
 	m_texture->CreateShaderResourceView(m_descHeap.get());
 	(*srvFilename) = m_texture->GetListSrvTexture2D();

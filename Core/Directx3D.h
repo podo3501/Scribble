@@ -19,7 +19,7 @@ public:
 	bool FlushCommandQueue();
 	bool WaitUntilGpuFinished(UINT64 fenceCount);
 	bool OnResize(int width, int height);
-	bool LoadData(std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)> loadGraphicMemory);
+	bool LoadData(std::function<bool(ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)> loadGraphicMemory);
 	bool Set4xMsaaState(HWND hwnd, int width, int height, bool value);
 
 	void SetPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC* inoutDesc) noexcept;

@@ -230,14 +230,15 @@ bool CDirectx3D::OnResize(int width, int height)
 }
 
 bool CDirectx3D::LoadData(
-	std::function<bool(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, ID3D12CommandQueue* cmdQueue)> loadGraphicMemory)
+	std::function<bool(ID3D12Device* device, DirectX::ResourceUploadBatch& uploadBatch)> loadGraphicMemory)
 {
-	ReturnIfFalse(ResetCommandLists());
+	DirectX::ResourceUploadBatch resourceUpload(m_device.Get());
+	resourceUpload.Begin();
 
-	ReturnIfFalse(loadGraphicMemory(m_device.Get(), m_commandList.Get(), m_commandQueue.Get()));
+	ReturnIfFalse(loadGraphicMemory(m_device.Get(), resourceUpload));
 
-	ReturnIfFalse(ExcuteCommandLists());
-	ReturnIfFalse(FlushCommandQueue());
+	auto uploadResourcesFinished = resourceUpload.End(m_commandQueue.Get());
+	uploadResourcesFinished.wait();
 
 	return true;
 }
