@@ -1,4 +1,4 @@
-# DirectX 12 Game Engine Development Log
+# DirectX 12 3D Game Engine Development
 DirectX 12 기반 게임 엔진 개발 과정에서의 주요 구현 및 리팩토링 내역 정리
 
 ---
