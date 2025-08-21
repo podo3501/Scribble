@@ -1,9 +1,10 @@
-# DirectX 12 3D Game Engine Development
-DirectX 12 기반 게임 엔진 개발 과정에서의 주요 구현 및 리팩토링 내역 정리
+# DirectX 12 3D Game Engine Development(TDD 기반 개발)
+DirectX 12 기반 테스트 중심 게임 엔진 개발 과정에서의 주요 구현 및 리팩토링 내역 정리
 
 ---
 
 ## 프로젝트 구조 및 기반 시스템
+- TDD 기반 리소스 관리 및 유닛 테스트 (Google Test / GMock)
 - DirectX 12 엔진 초기 구조 설계 및 **Renderer / Core 모듈 분리**
 - 업데이트 루프와 렌더링 루프 **분리**
 - **모델·뷰 구조 분리** 및 데이터/렌더링 모듈화
@@ -42,6 +43,5 @@ DirectX 12 기반 게임 엔진 개발 과정에서의 주요 구현 및 리팩�
 
 ---
 
-## 테스트 및 개발 환경
-- **Google Test 환경 구축** 및 TDD 기반 개발
+## 개발 환경
 - **HLSL 쉐이더 추가** 및 CSO 파일 관리
