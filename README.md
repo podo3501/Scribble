@@ -1,5 +1,7 @@
 # DirectX 12 3D Game Engine Development(TDD 기반 개발)
-DirectX 12 기반 테스트 중심 게임 엔진 개발 과정에서의 주요 구현 및 리팩토링 내역 정리
+
+이 프로젝트는 DirectX 12 기반 3D 게임 엔진으로, TDD(GTest/GMock)를 통해 안정성과 유지보수성을 확보했습니다.
+렌더링 시스템에서는 Shadow Map, SSAO, Skinned Mesh, Instancing 등 게임 그래픽 기법을 지원하며, Renderer/Core 모듈 분리와 인터페이스 기반 설계로 확장성을 확보했습니다.
 
 ---
 
