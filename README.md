@@ -6,7 +6,7 @@
 ---
 
 ## 프로젝트 구조 및 기반 시스템
-- TDD 기반 리소스 관리 및 유닛 테스트 (Google Test / GMock)
+- TDD 기반 개발(Google Test / GMock)
 - DirectX 12 엔진 초기 구조 설계 및 **Renderer / Core 모듈 분리**
 - 업데이트 루프와 렌더링 루프 **분리**
 - **모델·뷰 구조 분리** 및 데이터/렌더링 모듈화
