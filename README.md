@@ -8,35 +8,22 @@
 ## 프로젝트 구조 및 기반 시스템
 - TDD 기반 개발(Google Test / GMock)
 - DirectX 12 엔진 초기 구조 설계
-- **모델·뷰 구조 분리** 및 데이터/렌더링 모듈화
 - Renderer를 **인터페이스 기반 구조**로 전환
 
 ---
 
 ## 렌더링 및 그래픽스 기능
-- **큐브맵 텍스처** 로딩 및 렌더링 구현
-- **Normal Map 적용** 및 HLSL 쉐이더 작성
-- **Shadow Map** 렌더링 구현
-- **SSAO (Screen Space Ambient Occlusion)** 구현
+- **큐브맵 텍스처** 로딩 및 렌더링
+- **Normal Map 적용**
+- **Shadow Map** 렌더링
+- **SSAO (Screen Space Ambient Occlusion)**
 - **Skinned Mesh** 로딩, 애니메이션 렌더링
 
 ---
 
 ## 리소스 관리 및 최적화
 - Texture 핸들러 **오프셋 관리 개선**
-- SetupData 구조 개선 및 **리소스 경로 정리**
 - DirectXTK 통합 및 **그래픽 메모리 로딩 로직 교체**
-
----
-
-## 입력 및 카메라 시스템
-- **키 입력 리스너** 및 카메라 제어 시스템 구현
-- 윈도우 메시지 처리 및 **KeyInputManager**로 로직 이동
-
----
-
-## 개발 환경
-- **HLSL 쉐이더 추가** 및 CSO 파일 관리
 
 ---
 
