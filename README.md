@@ -6,7 +6,6 @@
 ---
 
 ## 프로젝트 구조 및 기반 시스템
-- TDD 기반 개발(Google Test / GMock)
 - DirectX 12 엔진 초기 구조 설계
 - Renderer를 **인터페이스 기반 구조**로 전환
 
